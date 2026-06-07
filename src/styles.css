@@ -183,3 +183,17 @@
 .route-line {
   animation: dashFlow 1.5s linear infinite;
 }
+
+/* ── Rounded corners on all content images ── */
+/* Full-bleed / background images that should stay square
+   get data-no-round on their <img> tag */
+img:not([data-no-round]) {
+  border-radius: 12px;
+}
+
+/* Hero and map are inside overflow-hidden wrappers so override back to 0
+   to avoid double-radius on the wrapper + the img itself */
+section.relative.overflow-hidden img,
+[data-no-round] {
+  border-radius: 0 !important;
+}

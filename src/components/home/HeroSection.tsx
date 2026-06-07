@@ -35,6 +35,7 @@ export default function HeroSection() {
           src={heroImg}
           alt="Leather journals on aged wood"
           className="w-full h-full object-cover"
+          data-no-round
         />
         <div
           className="absolute inset-0"

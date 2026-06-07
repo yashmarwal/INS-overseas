@@ -192,8 +192,8 @@ export default function GlobalReach() {
         </div>
 
         <div
-          className="mt-8 md:mt-16 relative w-full"
-          style={{ height: "clamp(320px, 75vw, 500px)" }}
+          className="mt-8 md:mt-16 relative w-full rounded-xl overflow-hidden"
+          style={{ height: "clamp(420px, 92vw, 520px)" }}
         >
           <ComposableMap
             projection={projection as never}
