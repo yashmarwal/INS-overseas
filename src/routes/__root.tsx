@@ -3,13 +3,10 @@ import {
   Outlet,
   createRootRouteWithContext,
   useRouter,
-  HeadContent,
-  Scripts,
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
-import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import Navigation from "@/components/ui/Navigation";
 import Footer from "@/components/ui/Footer";
@@ -48,43 +45,15 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "INS Overseas — Handmade Leather Journals & Artisan Stationery | Wholesale from Jaipur" },
-      { name: "description", content: "Premium handmade leather journals, cotton rag paper & artisan stationery manufactured in Jaipur, India since 1995. Wholesale export to 40+ countries." },
-      { property: "og:title", content: "INS Overseas — Handmade Leather Journals & Artisan Stationery" },
-      { property: "og:description", content: "Handcrafted in Sanganer, Jaipur since 1995. Wholesale export to 40+ countries." },
-      { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "INS Overseas" },
-    ],
-    links: [{ rel: "stylesheet", href: appCss }],
-  }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
 
-function RootShell({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body className="grain-overlay">
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
-
 function ScrollToTop() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   useEffect(() => {
-    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [path]);
   return null;
 }
