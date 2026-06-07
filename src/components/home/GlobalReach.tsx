@@ -191,7 +191,10 @@ export default function GlobalReach() {
           </h2>
         </div>
 
-        <div className="mt-12 md:mt-16 relative w-full" style={{ height: "min(500px, 56vw)", minHeight: 300 }}>
+        <div
+          className="mt-8 md:mt-16 relative w-full"
+          style={{ height: "clamp(320px, 75vw, 500px)" }}
+        >
           <ComposableMap
             projection={projection as never}
             width={MAP_WIDTH}
@@ -250,7 +253,7 @@ export default function GlobalReach() {
                   style={{ fontFamily: "Jost, sans-serif", fontSize: 7.5, fontWeight: 400, letterSpacing: "0.1em" }}
                   fill="#FAF7F0"
                   opacity={0.8}
-                  className="hidden md:[display:initial]"
+                  className="hidden md:block"
                 >
                   {r.to.toUpperCase()}
                 </text>
