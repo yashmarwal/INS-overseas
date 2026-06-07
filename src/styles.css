@@ -1,0 +1,185 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Jost:wght@300;400;500&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-parchment: var(--parchment);
+  --color-parchment-dark: var(--parchment-dark);
+  --color-cream: var(--cream);
+  --color-umber: var(--umber);
+  --color-umber-dark: var(--umber-dark);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-ink: var(--ink);
+  --color-warm-grey: var(--warm-grey);
+  --color-warm-grey-light: var(--warm-grey-light);
+  --color-leather: var(--leather);
+  --color-sage: var(--sage);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --font-display: 'Cormorant Garamond', serif;
+  --font-accent: 'Playfair Display', serif;
+  --font-body: 'Jost', sans-serif;
+  --font-sans: 'Jost', sans-serif;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  --ease-luxury: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  --parchment: #F5EFE0;
+  --parchment-dark: #EDE3CC;
+  --cream: #FAF7F0;
+  --umber: #6B4C2A;
+  --umber-dark: #4A3219;
+  --gold: #C9973A;
+  --gold-light: #E8B96A;
+  --ink: #1A1410;
+  --warm-grey: #8B7D6B;
+  --warm-grey-light: #C4B8A8;
+  --leather: #8B5E3C;
+  --sage: #7A8C6E;
+
+  --background: #FAF7F0;
+  --foreground: #1A1410;
+  --primary: #6B4C2A;
+  --primary-foreground: #FAF7F0;
+  --secondary: #F5EFE0;
+  --secondary-foreground: #1A1410;
+  --muted: #EDE3CC;
+  --muted-foreground: #6B4C2A;
+  --accent: #C9973A;
+  --accent-foreground: #1A1410;
+  --border: #C4B8A8;
+  --input: #C4B8A8;
+  --ring: #C9973A;
+  --card: #FAF7F0;
+  --card-foreground: #1A1410;
+  --popover: #FAF7F0;
+  --popover-foreground: #1A1410;
+  --destructive: #b3261e;
+  --destructive-foreground: #FAF7F0;
+  --radius: 0.5rem;
+}
+
+.dark { color-scheme: light; }
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html { scroll-behavior: smooth; }
+  body {
+    background-color: var(--cream);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); font-weight: 400; }
+  ::selection { background: var(--gold); color: var(--ink); }
+  img { filter: sepia(0.12) saturate(1.08) brightness(0.97); }
+}
+
+/* Grain overlay */
+.grain-overlay::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+}
+
+/* Hand-torn divider */
+.torn-edge-bottom {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 30' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L1200 0 L1200 18 Q1180 24 1160 20 T1120 22 T1080 18 T1040 24 T1000 19 T960 23 T920 20 T880 25 T840 18 T800 22 T760 20 T720 26 T680 19 T640 23 T600 18 T560 25 T520 20 T480 22 T440 19 T400 24 T360 20 T320 26 T280 18 T240 23 T200 20 T160 25 T120 19 T80 22 T40 20 L0 24 Z' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 30' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L1200 0 L1200 18 Q1180 24 1160 20 T1120 22 T1080 18 T1040 24 T1000 19 T960 23 T920 20 T880 25 T840 18 T800 22 T760 20 T720 26 T680 19 T640 23 T600 18 T560 25 T520 20 T480 22 T440 19 T400 24 T360 20 T320 26 T280 18 T240 23 T200 20 T160 25 T120 19 T80 22 T40 20 L0 24 Z' fill='black'/%3E%3C/svg%3E");
+  mask-size: 100% 100%;
+}
+
+/* Linen texture */
+.linen {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(74,50,25,0.04) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgba(74,50,25,0.04) 0 1px, transparent 1px 4px);
+}
+
+/* Hide native cursor on supported pointer devices */
+@media (hover: hover) and (pointer: fine) {
+  body, a, button, [role="button"] { cursor: none; }
+
+  /* Restore native cursor inside admin panel */
+  [data-admin],
+  [data-admin] *,
+  [data-admin] a,
+  [data-admin] button,
+  [data-admin] input,
+  [data-admin] textarea,
+  [data-admin] select,
+  [data-admin] label {
+    cursor: auto;
+  }
+  [data-admin] button,
+  [data-admin] a,
+  [data-admin] [role="button"] {
+    cursor: pointer;
+  }
+  [data-admin] input,
+  [data-admin] textarea {
+    cursor: text;
+  }
+}
+
+/* Marquee */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marquee 40s linear infinite; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--parchment); }
+::-webkit-scrollbar-thumb { background: var(--umber); border-radius: 0; }
+
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* Route line animated dash flow for GlobalReach map */
+@keyframes dashFlow {
+  from { stroke-dashoffset: 20; }
+  to   { stroke-dashoffset: 0; }
+}
+.route-line {
+  animation: dashFlow 1.5s linear infinite;
+}
