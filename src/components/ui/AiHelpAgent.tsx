@@ -1,6 +1,101 @@
 import { useState, useEffect } from "react";
-import { Feather, X, Send } from "lucide-react";
+import { X, Send } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+
+// ── Morphing trigger button ───────────────────────────────────────────────────
+function MorphButton({ open, onClick }: { open: boolean; onClick: () => void }) {
+  const [showLeaf, setShowLeaf] = useState(true);
+
+  useEffect(() => {
+    if (open) return;
+    const interval = setInterval(() => setShowLeaf(prev => !prev), 2000);
+    return () => clearInterval(interval);
+  }, [open]);
+
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ scale: 1.08 }}
+      whileTap={{ scale: 0.94 }}
+      className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-40 w-[56px] h-[56px] rounded-full shadow-2xl flex items-center justify-center overflow-hidden"
+      style={{ background: "#6B4C2A" }}
+      aria-label="Ask INS Overseas"
+    >
+      {/* Pulsing ring — only when closed */}
+      {!open && (
+        <motion.span
+          className="absolute inset-0 rounded-full"
+          style={{ background: "rgba(107,76,42,0.4)" }}
+          animate={{ scale: [1, 1.5, 1.5], opacity: [0.5, 0, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+        />
+      )}
+
+      <AnimatePresence mode="wait">
+        {open ? (
+          <motion.div
+            key="close"
+            initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
+            exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <X size={20} color="#FAF7F0" />
+          </motion.div>
+        ) : showLeaf ? (
+          <motion.div
+            key="leaf"
+            initial={{ opacity: 0, scale: 0.6, rotate: -20 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            exit={{ opacity: 0, scale: 0.6, rotate: 20 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+              <motion.path
+                d="M12 2C6 2 3 7 3 12C3 17 7 21 12 21C17 21 21 17 21 12C21 7 16 2 12 2Z"
+                fill="#C9973A"
+                opacity={0.25}
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <path
+                d="M12 3C12 3 5 6 5 13C5 17.4 8.1 20.5 12 21C12 21 7 14 12 9C12 9 17 14 12 21C15.9 20.5 19 17.4 19 13C19 6 12 3 12 3Z"
+                fill="#FAF7F0"
+              />
+              <motion.line
+                x1="12" y1="21" x2="12" y2="23"
+                stroke="#C9973A"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ delay: 0.3, duration: 0.4 }}
+              />
+            </svg>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="ask"
+            initial={{ opacity: 0, y: 10, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.8 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col items-center leading-none"
+          >
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 15, color: "#FAF7F0", letterSpacing: "0.05em" }}>
+              Ask
+            </span>
+            <motion.span
+              style={{ display: "block", height: 1, background: "#C9973A", width: 0 }}
+              animate={{ width: 20 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  );
+}
 
 type Msg = { role: "user" | "agent"; text: string };
 
@@ -204,13 +299,7 @@ export default function AiHelpAgent() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-40 w-[52px] h-[52px] rounded-full bg-umber text-cream flex items-center justify-center shadow-2xl hover:bg-umber-dark transition-colors"
-        aria-label="Ask INS Overseas"
-      >
-        {open ? <X size={20} onClick={handleClose} /> : <Feather size={20} />}
-      </button>
+      <MorphButton open={open} onClick={() => setOpen(o => !o)} />
       <AnimatePresence>
         {open && (
           <motion.div
