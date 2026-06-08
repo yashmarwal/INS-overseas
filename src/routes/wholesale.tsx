@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import PageHero from "@/components/shared/PageHero";
 import SectionHeading from "@/components/shared/SectionHeading";
 import { Globe, Award, Package, Layers, Leaf, Clock } from "lucide-react";
+import { useFormSubmit } from "@/hooks/useFormSubmit";
 
 export const Route = createFileRoute("/wholesale")({
   head: () => ({
@@ -30,6 +33,102 @@ const steps = [
   "Place Order (50% advance)",
   "Production & Delivery (3–4 weeks)",
 ];
+
+function WholesaleForm() {
+  const { submit, status } = useFormSubmit();
+  const [fields, setFields] = useState({
+    company: "", contact: "", email: "", phone: "",
+    country: "", business: "", interest: "", volume: "", referral: "",
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFields(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submit({
+      subject: `Wholesale Registration — ${fields.company} (${fields.country}) — INS Overseas`,
+      from_name: fields.contact,
+      ...fields,
+    });
+    if (status !== "error") {
+      setFields({ company: "", contact: "", email: "", phone: "", country: "", business: "", interest: "", volume: "", referral: "" });
+    }
+  };
+
+  const fieldDefs: [keyof typeof fields, string][] = [
+    ["company",  "Company Name"],
+    ["contact",  "Contact Person"],
+    ["email",    "Email"],
+    ["phone",    "Phone"],
+    ["country",  "Country"],
+    ["business", "Business Type"],
+    ["interest", "Products of Interest"],
+    ["volume",   "Estimated Annual Volume"],
+  ];
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {fieldDefs.map(([n, l]) => (
+        <input
+          key={n}
+          required={n !== "volume"}
+          name={n}
+          placeholder={l}
+          value={fields[n]}
+          onChange={handleChange}
+          className="bg-transparent border-b border-warm-grey py-3 text-sm focus:outline-none focus:border-gold placeholder-warm-grey"
+        />
+      ))}
+      <textarea
+        name="referral"
+        rows={3}
+        placeholder="How did you hear about us?"
+        value={fields.referral}
+        onChange={handleChange}
+        className="sm:col-span-2 bg-transparent border-b border-warm-grey py-3 text-sm focus:outline-none focus:border-gold placeholder-warm-grey resize-none"
+      />
+
+      <button
+        type="submit"
+        disabled={status === "submitting"}
+        className="sm:col-span-2 mt-4 bg-umber text-cream px-8 py-4 uppercase text-[12px] disabled:opacity-60 hover:bg-umber-dark transition-colors inline-flex items-center justify-center gap-3"
+        style={{ letterSpacing: "0.15em", fontWeight: 500 }}
+      >
+        {status === "submitting" ? (
+          <><Loader2 size={14} className="animate-spin" /> Submitting...</>
+        ) : "Submit Registration"}
+      </button>
+
+      {status === "success" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sm:col-span-2 flex items-center gap-3 bg-sage/20 text-umber-dark rounded-sm px-4 py-3"
+        >
+          <CheckCircle size={18} className="text-sage shrink-0" />
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 14 }}>
+            Registration received! We'll send our catalogue within 24 hours.
+          </p>
+        </motion.div>
+      )}
+
+      {status === "error" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sm:col-span-2 flex items-center gap-3 bg-red-50 text-red-700 rounded-sm px-4 py-3"
+        >
+          <AlertCircle size={18} className="shrink-0" />
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 14 }}>
+            Submission failed. Please email Sezan@ins-overseas.com directly.
+          </p>
+        </motion.div>
+      )}
+    </form>
+  );
+}
 
 function Wholesale() {
   return (
@@ -78,20 +177,7 @@ function Wholesale() {
       <section className="bg-parchment-dark linen py-24">
         <div className="max-w-3xl mx-auto px-5 sm:px-8">
           <SectionHeading eyebrow="Register" title={<>Wholesale <em className="italic font-light">Registration</em></>} />
-          <form className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6" onSubmit={(e) => { e.preventDefault(); alert("Thank you — we'll send our catalogue within 24 hours."); }}>
-            {[
-              ["company", "Company Name"], ["contact", "Contact Person"],
-              ["email", "Email"], ["phone", "Phone"],
-              ["country", "Country"], ["business", "Business Type"],
-              ["interest", "Products of Interest"], ["volume", "Estimated Annual Volume"],
-            ].map(([n, l]) => (
-              <input key={n} required name={n} placeholder={l} className="bg-transparent border-b border-warm-grey py-3 text-sm focus:outline-none focus:border-gold placeholder-warm-grey" />
-            ))}
-            <textarea name="referral" rows={3} placeholder="How did you hear about us?" className="sm:col-span-2 bg-transparent border-b border-warm-grey py-3 text-sm focus:outline-none focus:border-gold placeholder-warm-grey" />
-            <button className="sm:col-span-2 mt-4 bg-umber text-cream px-8 py-4 uppercase text-[12px]" style={{ letterSpacing: "0.15em", fontWeight: 500 }}>
-              Submit Registration
-            </button>
-          </form>
+          <WholesaleForm />
         </div>
       </section>
     </>
