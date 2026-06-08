@@ -69,8 +69,9 @@ const activeRoutes: Route[] = [
 // Build the projection once so icon math matches the map exactly.
 const MAP_WIDTH = 980;
 const MAP_HEIGHT = 500;
+const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 const projection = geoEqualEarth()
-  .scale(160)
+  .scale(isMobile ? 120 : 160)
   .center([10, 10])
   .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
 
@@ -193,7 +194,7 @@ export default function GlobalReach() {
 
         <div
           className="mt-8 md:mt-16 relative w-full rounded-xl overflow-hidden"
-          style={{ height: "clamp(420px, 92vw, 520px)" }}
+          style={{ height: "min(500px, 56vw)", minHeight: 260 }}
         >
           <ComposableMap
             projection={projection as never}

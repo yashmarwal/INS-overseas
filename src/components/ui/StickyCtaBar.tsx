@@ -94,12 +94,8 @@ export default function StickyCtaBar() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:hidden fixed z-40"
-            style={{
-              bottom: "calc(env(safe-area-inset-bottom) + 16px)",
-              left: "50%",
-              transform: "translateX(-50%)",
-            }}
+            className="lg:hidden fixed z-40 left-0 right-0 flex justify-center items-center"
+            style={{ bottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
           >
             {/* Glow behind pill */}
             <div
