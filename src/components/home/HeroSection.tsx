@@ -1,8 +1,6 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { useSiteImage } from "@/hooks/useSiteImage";
 
 // Preloader exits at ~2.0s. Hero starts animating at 2.1s.
 const BASE = 2.1;
@@ -19,24 +17,29 @@ const stampUp = (delay: number) => ({
 });
 
 export default function HeroSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 800], [0, 320]);
-  const heroImg = useSiteImage("hero_main");
-
   return (
     <section
-      ref={ref}
       className="relative h-[100svh] md:h-screen w-full overflow-hidden bg-ink"
     >
-      {/* Parallax background */}
-      <motion.div style={{ y }} className="absolute inset-0 -top-20 -bottom-20">
+      {/* GIF background — desktop and mobile variants */}
+      <div className="absolute inset-0">
+        {/* Desktop GIF — hidden on mobile */}
         <img
-          src={heroImg}
-          alt="Leather journals on aged wood"
-          className="w-full h-full object-cover"
+          src="/hero-desktop.gif"
+          alt=""
+          className="hidden md:block w-full h-full object-cover"
+          style={{ filter: "brightness(0.85)" }}
           data-no-round
         />
+        {/* Mobile GIF — hidden on desktop */}
+        <img
+          src="/hero-mobile.gif"
+          alt=""
+          className="block md:hidden w-full h-full object-cover"
+          style={{ filter: "brightness(0.85)" }}
+          data-no-round
+        />
+        {/* Dark overlay — unchanged */}
         <div
           className="absolute inset-0"
           style={{
@@ -44,7 +47,7 @@ export default function HeroSection() {
               "linear-gradient(to bottom, rgba(26,20,16,0.2) 0%, rgba(26,20,16,0.75) 60%, rgba(26,20,16,0.95) 100%)",
           }}
         />
-      </motion.div>
+      </div>
 
       {/* Content — eyebrow top, main content bottom */}
       <div
