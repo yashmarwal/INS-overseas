@@ -13,10 +13,13 @@ export type ProductImage = {
 };
 
 export const PRODUCT_CATEGORIES = [
-  { id: "leather-journals",    label: "Leather Journals",    icon: "📓" },
-  { id: "handmade-paper",      label: "Handmade Paper",      icon: "📄" },
-  { id: "stationery",          label: "Stationery",          icon: "✉️"  },
-  { id: "leather-accessories", label: "Leather Accessories", icon: "👜" },
+  { id: "leather-journals",          label: "Leather Journals",          icon: "📓" },
+  { id: "leather-bags",              label: "Leather Bags",              icon: "👜" },
+  { id: "handmade-paper-gift-box",   label: "Handmade Paper Gift Box",   icon: "🎁" },
+  { id: "handmade-paper-gift-bag",   label: "Handmade Paper Gift Bag",   icon: "🛒️" },
+  { id: "handmade-paper-sheets",     label: "Handmade Paper Sheets",     icon: "📄" },
+  { id: "handmade-sheet-paper",      label: "Handmade Sheet Paper",      icon: "🗒️" },
+  { id: "handmade-stationery",       label: "Handmade Stationery",       icon: "✉️"  },
 ] as const;
 
 export type ProductCategory = typeof PRODUCT_CATEGORIES[number]["id"];

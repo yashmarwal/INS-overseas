@@ -4,7 +4,7 @@ const stats = [
   { label: "Established", value: 1995, suffix: "", prefix: "EST. " },
   { label: "Countries Served", value: 40, suffix: "+" },
   { label: "Years of Craft", value: 30, suffix: "" },
-  { label: "Products Shipped", value: 10000, suffix: "+" },
+  { label: "Products Shipped", value: 895700, suffix: "+" },
 ];
 
 function Stat({ value, suffix, prefix, label }: { value: number; suffix?: string; prefix?: string; label: string }) {

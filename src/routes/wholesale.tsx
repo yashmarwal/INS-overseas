@@ -8,7 +8,7 @@ export const Route = createFileRoute("/wholesale")({
   head: () => ({
     meta: [
       { title: "Wholesale Leather Journals & Handmade Paper | INS Overseas B2B" },
-      { name: "description", content: "Source handmade leather journals, cotton rag paper and artisan stationery from Jaipur. MOQ from 50 units. Full OEM, custom branding, export to 40+ countries." },
+      { name: "description", content: "Source handmade leather journals, cotton rag paper and artisan stationery from Jaipur. MOQ from 200 units. Full OEM, custom branding, export to 40+ countries." },
     ],
   }),
   component: Wholesale,
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/wholesale")({
 const usps = [
   { icon: Award, title: "30 Years Experience" },
   { icon: Globe, title: "Export to 40+ Countries" },
-  { icon: Package, title: "MOQ from 50 Units" },
+  { icon: Package, title: "MOQ from 200 Units" },
   { icon: Layers, title: "Custom OEM Available" },
   { icon: Leaf, title: "Eco-Certified Materials" },
   { icon: Clock, title: "Fast Lead Times" },

@@ -9,7 +9,7 @@ export const Route = createFileRoute("/gallery")({
   head: () => ({
     meta: [
       { title: "Gallery — INS Overseas" },
-      { name: "description", content: "Handcrafted leather journals and artisan paper products made in Sanganer, Jaipur. Browse our workshop and product gallery." },
+      { name: "description", content: "Handcrafted leather journals and artisan paper products made in Sanganer, Jaipur. Browse our workspace and product gallery." },
     ],
   }),
   component: GalleryPage,
@@ -23,7 +23,7 @@ function GalleryPage() {
     <>
       <PageHero
         eyebrow="Our Work"
-        title={<>From Our <em className="italic font-light">Workshop</em></>}
+        title={<>From Our <em className="italic font-light">Workspace</em></>}
         subtitle="Handcrafted leather journals and artisan paper products made in Sanganer, Jaipur."
       />
 

@@ -10,7 +10,7 @@ export default function WholesaleCta() {
       <div className="absolute inset-0">
         <img
           src={bgImg}
-          alt="Artisan workshop"
+          alt="Artisan workspace"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-ink/75" />

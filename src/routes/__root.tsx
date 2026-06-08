@@ -23,7 +23,7 @@ function NotFoundComponent() {
       <div>
         <p className="text-gold uppercase text-xs tracking-[0.3em]">404</p>
         <h1 className="mt-4 text-5xl text-ink" style={{ fontFamily: "var(--font-display)" }}>Page not found</h1>
-        <p className="mt-3 text-umber">The page you're looking for has wandered off the workshop floor.</p>
+        <p className="mt-3 text-umber">The page you're looking for has wandered off the workspace floor.</p>
         <a href="/" className="inline-block mt-8 border border-umber text-umber px-6 py-3 uppercase text-xs tracking-[0.15em]">Return Home</a>
       </div>
     </div>

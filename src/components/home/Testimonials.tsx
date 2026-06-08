@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -18,34 +18,63 @@ export default function Testimonials() {
     setCurrent((p) => (p + dir + testimonials.length) % testimonials.length);
   };
 
+  // Auto-advance every 4 seconds (both desktop and mobile)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDirection(1);
+      setCurrent((p) => (p + 1) % testimonials.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [current]);
+
   const t = testimonials[current];
 
   return (
     <section className="bg-parchment py-16 md:py-24 lg:py-32 overflow-hidden">
       <div className="max-w-3xl mx-auto px-5 sm:px-8 text-center relative">
-        {/* Desktop: show all stacked (hidden on mobile) */}
-        <div className="hidden md:block">
-          {testimonials.map((t, i) => (
-            <div key={i} className={`${i % 2 === 0 ? "bg-parchment" : "bg-cream"} py-20 -mx-8 px-8 relative overflow-hidden`}>
-              <span className="absolute -top-12 left-1/2 -translate-x-1/2 text-gold/20 select-none pointer-events-none" style={{ fontFamily: "var(--font-display)", fontSize: 200, lineHeight: 1 }}>"</span>
-              <motion.blockquote
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.9 }}
-                className="italic text-umber-dark relative"
+
+        {/* Desktop: horizontal auto-scrolling carousel */}
+        <div className="hidden md:block relative overflow-hidden">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={current}
+              custom={direction}
+              initial={{ opacity: 0, x: direction * 80 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: direction * -80 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="py-20 px-8 text-center"
+            >
+              <span
+                className="absolute -top-12 left-1/2 -translate-x-1/2 text-gold/20 select-none pointer-events-none"
+                style={{ fontFamily: "var(--font-display)", fontSize: 200, lineHeight: 1 }}
+              >
+                "
+              </span>
+              <blockquote
+                className="italic text-umber-dark relative max-w-3xl mx-auto"
                 style={{ fontFamily: "var(--font-accent)", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(18px, 2vw, 26px)", lineHeight: 1.55 }}
               >
-                {t.quote}
-              </motion.blockquote>
+                {testimonials[current].quote}
+              </blockquote>
               <div className="mt-8 flex items-center justify-center gap-4">
                 <span className="h-px w-10 bg-gold" />
                 <p className="uppercase text-[11px] text-umber" style={{ fontFamily: "var(--font-body)", fontWeight: 400, letterSpacing: "0.2em" }}>
-                  {t.name} · {t.role} · {t.country}
+                  {testimonials[current].name} · {testimonials[current].role} · {testimonials[current].country}
                 </p>
               </div>
-            </div>
-          ))}
+            </motion.div>
+          </AnimatePresence>
+          {/* Dot indicators — desktop */}
+          <div className="flex items-center justify-center gap-2 pb-8">
+            {testimonials.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => { setDirection(i > current ? 1 : -1); setCurrent(i); }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${i === current ? "bg-gold w-8" : "bg-umber/25 w-1.5"}`}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Mobile: swipeable single card */}

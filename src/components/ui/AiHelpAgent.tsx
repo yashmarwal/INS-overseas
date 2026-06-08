@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Feather, X, Send } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -57,7 +57,7 @@ const knowledgeBase = [
   {
     keywords: ["price", "pricing", "cost", "how much", "rate", "catalogue", "catalog"],
     response:
-      "We don't publish prices publicly as they depend on product specs, quantity, and customisation. We'll send you our complete price list and catalogue within 24 hours of your enquiry. WhatsApp us at +91 96804 78483 or email info@insoverseas.com to request it.",
+      "We don't publish prices publicly as they depend on product specs, quantity, and customisation. We'll send you our complete price list and catalogue within 24 hours of your enquiry. WhatsApp us at +91 96804 78483 or email Sezan@ins-overseas.com to request it.",
   },
   {
     keywords: ["discount", "repeat", "bulk", "volume"],
@@ -142,12 +142,12 @@ const knowledgeBase = [
   {
     keywords: ["contact", "reach", "phone", "email", "whatsapp", "call"],
     response:
-      "You can reach us anytime:\n📱 WhatsApp: +91 96804 78483\n📧 Email: info@insoverseas.com\nWe're available Monday to Saturday. We typically respond within a few hours.",
+      "You can reach us anytime:\n📱 WhatsApp: +91 96804 78483\n📧 Email: Sezan@ins-overseas.com\nWe're available Monday to Saturday. We typically respond within a few hours.",
   },
   {
     keywords: ["hours", "open", "working hours", "available", "saturday", "sunday"],
     response:
-      "We are available 24 hours, Monday to Saturday. WhatsApp us at +91 96804 78483 or email info@insoverseas.com anytime.",
+      "We are available 24 hours, Monday to Saturday. WhatsApp us at +91 96804 78483 or email Sezan@ins-overseas.com anytime.",
   },
   {
     keywords: ["order", "start", "begin", "first step", "how to order", "place order", "get started"],
@@ -157,7 +157,7 @@ const knowledgeBase = [
 ];
 
 const fallbackResponse =
-  "Thank you for your question! For the most accurate answer, please reach out to our team directly:\n📱 WhatsApp: +91 96804 78483\n📧 Email: info@insoverseas.com\nWe respond within a few hours, Monday to Saturday.";
+  "Thank you for your question! For the most accurate answer, please reach out to our team directly:\n📱 WhatsApp: +91 96804 78483\n📧 Email: Sezan@ins-overseas.com\nWe respond within a few hours, Monday to Saturday.";
 
 const getResponse = (input: string): string => {
   const lower = input.toLowerCase();
@@ -180,6 +180,22 @@ export default function AiHelpAgent() {
   ]);
   const [input, setInput] = useState("");
 
+  // Android back button: push history state when chat opens,
+  // intercept popstate to close chat instead of navigating away
+  useEffect(() => {
+    if (open) {
+      window.history.pushState({ chatOpen: true }, "");
+      const handlePopState = () => setOpen(false);
+      window.addEventListener("popstate", handlePopState);
+      return () => window.removeEventListener("popstate", handlePopState);
+    }
+  }, [open]);
+
+  const handleClose = () => {
+    setOpen(false);
+    if (window.history.state?.chatOpen) window.history.back();
+  };
+
   const send = (text: string) => {
     if (!text.trim()) return;
     setMsgs((m) => [...m, { role: "user", text }, { role: "agent", text: getResponse(text) }]);
@@ -193,7 +209,7 @@ export default function AiHelpAgent() {
         className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-40 w-[52px] h-[52px] rounded-full bg-umber text-cream flex items-center justify-center shadow-2xl hover:bg-umber-dark transition-colors"
         aria-label="Ask INS Overseas"
       >
-        {open ? <X size={20} /> : <Feather size={20} />}
+        {open ? <X size={20} onClick={handleClose} /> : <Feather size={20} />}
       </button>
       <AnimatePresence>
         {open && (

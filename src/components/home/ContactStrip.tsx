@@ -16,7 +16,7 @@ export default function ContactStrip() {
           <div className="mt-10 space-y-6">
             <Row icon={MapPin}>Jain Nasiya Road, Near Jain Hostel, Sanganer, Jaipur – 302029, Rajasthan, India</Row>
             <Row icon={Phone}><a href="tel:+919680478483" className="hover:text-gold-light">+91 96804 78483</a></Row>
-            <Row icon={Mail}><a href="mailto:info@insoverseas.com" className="hover:text-gold-light">info@insoverseas.com</a></Row>
+            <Row icon={Mail}><a href="mailto:Sezan@ins-overseas.com" className="hover:text-gold-light">Sezan@ins-overseas.com</a></Row>
             <Row icon={Clock}>Mon – Sat · 24 Hours</Row>
           </div>
         </motion.div>

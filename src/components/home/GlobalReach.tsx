@@ -333,7 +333,7 @@ export default function GlobalReach() {
           <Stat value={40} suffix="+" label="Countries" />
           <Stat value={3} label="Continents" />
           <Stat value={1995} label="Since" />
-          <Stat value={10000} suffix="+" label="Orders Shipped" />
+          <Stat value={895700} suffix="+" label="Products Shipped" />
         </div>
 
         <motion.div

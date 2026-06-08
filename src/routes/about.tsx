@@ -38,7 +38,7 @@ function About() {
             here has lifted cotton-pulp sheets from manual vats and dried them under the Rajasthan sun.
           </p>
           <p>
-            We started small: one workshop, three artisans, a single export order to a London stationer.
+            We started small: one workspace, three artisans, a single export order to a London stationer.
             Today our atelier ships journals, papers and leather goods to more than forty countries — but
             the craft has not changed. The same vats. The same hands. The same patient rhythm.
           </p>

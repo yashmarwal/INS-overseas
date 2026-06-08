@@ -3,12 +3,12 @@ import SectionHeading from "@/components/shared/SectionHeading";
 import { useSiteImage } from "@/hooks/useSiteImage";
 
 const products = [
-  { name: "Vintage Buffalo Leather Journal",  cat: "Leather Journals", desc: "A5, wrap-around strap, 240 deckle pages",         sectionKey: "product_1" },
-  { name: "Handmade Deckle Edge Notebook",     cat: "Paper",            desc: "Cotton rag, unlined, A5",                         sectionKey: "product_2" },
-  { name: "Leather Crossbody Bag",             cat: "Accessories",      desc: "Full-grain, hand-fitted brass buckles",            sectionKey: "product_3" },
-  { name: "Set of 6 Luxury Greeting Cards",    cat: "Stationery",       desc: "Cotton paper, hand-stamped",                      sectionKey: "product_4" },
-  { name: "Corporate Leather Diary",           cat: "Leather Journals", desc: "Custom embossing available",                      sectionKey: "product_5" },
-  { name: "Paper Gift Bags Set (12pc)",        cat: "Stationery",       desc: "Recycled cotton, ribbon handles",                  sectionKey: "product_6" },
+  { name: "Vintage Buffalo Leather Journal",  cat: "Leather Journals",         desc: "A5, wrap-around strap, 240 deckle pages",         sectionKey: "featured_1" },
+  { name: "Handmade Deckle Edge Notebook",     cat: "Handmade Paper Sheets",    desc: "Cotton rag, unlined, A5",                         sectionKey: "featured_2" },
+  { name: "Leather Crossbody Bag",             cat: "Leather Bags",             desc: "Full-grain, hand-fitted brass buckles",            sectionKey: "featured_3" },
+  { name: "Set of 6 Luxury Greeting Cards",    cat: "Handmade Stationery",      desc: "Cotton paper, hand-stamped",                      sectionKey: "featured_4" },
+  { name: "Corporate Leather Diary",           cat: "Leather Journals",         desc: "Custom embossing available",                      sectionKey: "featured_5" },
+  { name: "Paper Gift Bags Set (12pc)",        cat: "Handmade Paper Gift Bag",  desc: "Recycled cotton, ribbon handles",                  sectionKey: "featured_6" },
 ];
 
 function ProductItem({ p, i }: { p: (typeof products)[0]; i: number }) {
@@ -48,8 +48,25 @@ export default function FeaturedProducts() {
     <section className="bg-parchment py-14 md:py-24 lg:py-32 overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
         <SectionHeading eyebrow="Bestsellers" title={<>Most Loved <em className="italic font-light">This Season</em></>} />
+        {/* Swipe hint — mobile only */}
+        <div className="flex md:hidden items-center gap-2 mt-3">
+          <motion.span
+            animate={{ x: [0, 8, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            className="text-warm-grey"
+            style={{ fontSize: 16 }}
+          >
+            ←→
+          </motion.span>
+          <span
+            className="text-warm-grey"
+            style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 12, letterSpacing: "0.08em" }}
+          >
+            Swipe to explore
+          </span>
+        </div>
       </div>
-      <div className="mt-16 overflow-x-auto no-scrollbar">
+      <div className="mt-10 md:mt-16 overflow-x-auto no-scrollbar">
         <div className="flex gap-6 px-5 sm:px-8 lg:px-20 pb-4 snap-x snap-mandatory">
           {products.map((p, i) => (
             <ProductItem key={p.name} p={p} i={i} />

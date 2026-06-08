@@ -14,13 +14,13 @@ export const Route = createFileRoute("/our-craft")({
 });
 
 const timeline = [
-  ["1995", "Founded in a single workshop in Sanganer, Jaipur."],
+  ["1995", "Founded in a single workspace in Sanganer, Jaipur."],
   ["2000", "First overseas order shipped — a stationery boutique in London."],
   ["2005", "Expanded to leather journal production."],
   ["2010", "Reached 20 countries. Custom OEM line launched."],
   ["2015", "Sustainability certification process initiated."],
   ["2020", "Crossed 40 countries served, 5,000+ products shipped."],
-  ["2025", "10,000+ products. New atelier wing for accessories."],
+  ["2025", "895,700+ products. New atelier wing for accessories."],
 ];
 
 function OurCraft() {
@@ -29,7 +29,7 @@ function OurCraft() {
       <PageHero
         eyebrow="The Atelier"
         title={<>The Craft, <em className="italic font-light text-gold-light">Step by Step</em></>}
-        subtitle="Walk through our Sanganer workshop — from cotton-rag pulping to leather binding to global export."
+        subtitle="Walk through our Sanganer workspace — from cotton-rag pulping to leather binding to global export."
         image="https://images.unsplash.com/photo-1597149959983-9ac80c4a9e64?auto=format&fit=crop&w=2200&q=80"
       />
       <CraftProcess />

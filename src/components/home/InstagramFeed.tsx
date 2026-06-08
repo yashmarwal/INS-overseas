@@ -14,7 +14,7 @@ export default function InstagramFeed() {
   return (
     <section className="bg-cream py-12 md:py-24 lg:py-32">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-        <SectionHeading eyebrow="@ins_overseas" title={<>From Our <em className="italic font-light">Workshop</em></>} />
+        <SectionHeading eyebrow="@ins_overseas" title={<>From Our <em className="italic font-light">Workspace</em></>} />
 
         {/* Grid: 2 cols on mobile, 3 on md+ */}
         <div className="mt-10 md:mt-14 grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-5">
@@ -31,7 +31,7 @@ export default function InstagramFeed() {
               className="group relative aspect-square overflow-hidden block"
               data-cursor-view
             >
-              <img src={src} alt="Workshop" className="w-full h-full object-cover transition-transform duration-[1800ms] group-hover:scale-110" />
+              <img src={src} alt="Workspace" className="w-full h-full object-cover transition-transform duration-[1800ms] group-hover:scale-110" />
               <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/60 transition-colors duration-500 flex items-center justify-center text-cream opacity-0 group-hover:opacity-100" style={{ fontFamily: "var(--font-body)", letterSpacing: "0.2em", fontSize: 11 }}>
                 VIEW ON INSTAGRAM
               </div>

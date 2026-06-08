@@ -17,7 +17,7 @@ function Contact() {
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { icon: MessageCircle, label: "WhatsApp", sub: "Fastest response", href: "https://wa.me/919680478483", cta: "Open WhatsApp" },
-            { icon: Mail, label: "Email", sub: "Detailed enquiries", href: "mailto:info@insoverseas.com", cta: "Send Email" },
+            { icon: Mail, label: "Email", sub: "Detailed enquiries", href: "mailto:Sezan@ins-overseas.com", cta: "Send Email" },
             { icon: Phone, label: "Call", sub: "Mon–Sat, 24 hours", href: "tel:+919680478483", cta: "Call Now" },
           ].map((c) => (
             <a key={c.label} href={c.href} target="_blank" rel="noreferrer" className="bg-cream p-8 border border-warm-grey-light hover:border-gold transition-colors">

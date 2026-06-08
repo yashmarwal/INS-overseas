@@ -71,7 +71,7 @@ export default function Footer() {
             <a href="tel:+919680478483" className="hover:text-gold">+91 96804 78483</a>
           </p>
           <p className="text-sm">
-            <a href="mailto:info@insoverseas.com" className="hover:text-gold">info@insoverseas.com</a>
+            <a href="mailto:Sezan@ins-overseas.com" className="hover:text-gold">Sezan@ins-overseas.com</a>
           </p>
           <p className="text-sm mt-3 text-warm-grey">Mon–Sat · 24 Hours</p>
         </div>
