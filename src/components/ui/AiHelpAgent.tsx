@@ -308,8 +308,12 @@ export default function AiHelpAgent() {
             exit={{ opacity: 0, y: 40, scale: 0.98 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className="fixed z-40 bg-cream border border-warm-grey-light shadow-2xl flex flex-col
-              inset-x-0 bottom-0 h-[72vh] rounded-t-2xl
+              inset-x-0 bottom-0 rounded-t-2xl
               md:inset-x-auto md:bottom-24 md:left-6 md:w-[320px] md:h-[440px] md:rounded-none"
+            style={{
+              height: "72vh",
+              paddingBottom: "env(safe-area-inset-bottom)",
+            }}
           >
             <div className="md:hidden flex justify-center pt-2 pb-1">
               <span className="block h-1 w-8 rounded-full bg-warm-grey/50" />
@@ -362,7 +366,8 @@ export default function AiHelpAgent() {
                 e.preventDefault();
                 send(input);
               }}
-              className="border-t border-warm-grey-light/40 p-3 flex gap-2"
+              className="border-t border-warm-grey-light/40 p-3 flex gap-2 shrink-0"
+              style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
             >
               <input
                 value={input}
