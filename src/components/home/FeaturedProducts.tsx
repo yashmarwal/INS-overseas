@@ -1,5 +1,4 @@
-import { useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import SectionHeading from "@/components/shared/SectionHeading";
 import { useSiteImage } from "@/hooks/useSiteImage";
@@ -42,88 +41,60 @@ function ProductCard({ p }: { p: (typeof products)[0] }) {
 }
 
 export default function FeaturedProducts() {
-  const outerRef = useRef<HTMLDivElement>(null);   // drag constraint boundary
-  const [isDragging, setIsDragging] = useState(false);
-  const [activeIdx, setActiveIdx] = useState(0);
-
   return (
     <section className="bg-parchment py-14 md:py-24 lg:py-32 overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
         <SectionHeading eyebrow="Bestsellers" title={<>Most Loved <em className="italic font-light">This Season</em></>} />
-
-        {/* Swipe hint — fades out after first drag */}
-        <AnimatePresence>
-          {!isDragging && (
-            <motion.div
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="md:hidden flex items-center justify-center gap-2 mt-4"
-            >
-              <motion.div
-                animate={{ x: [-6, 6, -6] }}
-                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-                className="flex items-center gap-1.5"
-              >
-                <ChevronLeft size={14} className="text-warm-grey" />
-                <span
-                  className="text-warm-grey"
-                  style={{ fontFamily: "var(--font-body)", fontSize: 11, letterSpacing: "0.12em" }}
-                >
-                  SWIPE
-                </span>
-                <ChevronRight size={14} className="text-warm-grey" />
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
-      <div className="mt-8 md:mt-14 relative">
-        {/* Outer container — sets drag boundaries + clips overflow */}
-        <div
-          ref={outerRef}
-          className="overflow-hidden w-full"
-        >
-          {/* Inner track — this is what actually drags */}
+      <div className="mt-10 relative">
+        {/* Swipe hint — mobile only */}
+        <div className="md:hidden flex items-center justify-center gap-2 mb-5">
           <motion.div
-            className="flex gap-5 cursor-grab active:cursor-grabbing px-5 sm:px-8 lg:px-20"
-            drag="x"
-            dragConstraints={outerRef}
-            dragElastic={0.12}
-            onDragStart={() => setIsDragging(true)}
-            onDragEnd={() => setIsDragging(false)}
-            whileTap={{ cursor: "grabbing" }}
-            style={{ userSelect: "none" }}
+            animate={{ x: [-5, 5, -5] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            className="flex items-center gap-2"
           >
-            {products.map((p, i) => (
-              <motion.div
-                key={p.name}
-                className="shrink-0 w-[75vw] sm:w-[320px] md:w-[280px] lg:w-[260px]"
-                whileHover={{ y: -4 }}
-                transition={{ duration: 0.3 }}
-                onViewportEnter={() => setActiveIdx(i)}
-              >
-                <ProductCard p={p} />
-              </motion.div>
-            ))}
+            <ChevronLeft size={14} className="text-warm-grey" />
+            <span
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 11,
+                letterSpacing: "0.15em",
+                color: "var(--color-warm-grey, #9A8F85)",
+              }}
+            >
+              SWIPE TO EXPLORE
+            </span>
+            <ChevronRight size={14} className="text-warm-grey" />
           </motion.div>
         </div>
 
-        {/* Desktop dot indicators */}
-        <div className="hidden md:flex justify-center gap-2 mt-10">
-          {products.map((_, i) => (
-            <motion.div
-              key={i}
-              className="h-1 rounded-full bg-umber/25 transition-all duration-300"
-              animate={{ width: i === activeIdx ? 24 : 8, opacity: i === activeIdx ? 1 : 0.4 }}
-            />
+        {/* Scroll container — native momentum + snap */}
+        <div
+          className="flex gap-5 overflow-x-auto no-scrollbar px-5 sm:px-8 lg:px-20 pb-2"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            scrollSnapType: "x mandatory",
+          }}
+        >
+          {products.map((p) => (
+            <div
+              key={p.name}
+              className="shrink-0 w-[72vw] sm:w-[300px] md:w-auto md:flex-1"
+              style={{ scrollSnapAlign: "start" }}
+            >
+              <ProductCard p={p} />
+            </div>
           ))}
         </div>
 
-        {/* Right gradient fade — shows more content available */}
+        {/* Right fade edge — signals more content on mobile */}
         <div
-          className="md:hidden absolute top-0 right-0 w-16 h-full pointer-events-none"
-          style={{ background: "linear-gradient(to left, #F5EFE0 0%, transparent 100%)" }}
+          className="md:hidden absolute top-0 right-0 w-12 h-full pointer-events-none z-10"
+          style={{
+            background: "linear-gradient(to left, #F5EFE0 0%, transparent 100%)",
+          }}
         />
       </div>
     </section>
