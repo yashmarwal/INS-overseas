@@ -32,12 +32,13 @@ const videos = [
   { id: "1199824422" },
 ];
 
-// ── PHOTOS — add Supabase public URLs or direct links here ──
+// ── PHOTOS — real workspace images ──
 const photos = [
-  "https://images.unsplash.com/photo-1597149959983-9ac80c4a9e64?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=1200&q=80",
+  "/manufacturing/workspace-1.jpg",
+  "/manufacturing/workspace-2.jpg",
+  "/manufacturing/workspace-3.jpg",
+  "/manufacturing/workspace-4.jpg",
+  "/manufacturing/workspace-5.jpg",
 ];
 
 type ActiveMedia =
