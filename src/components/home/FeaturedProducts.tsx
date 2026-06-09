@@ -42,7 +42,7 @@ function ProductCard({ p }: { p: (typeof products)[0] }) {
 }
 
 export default function FeaturedProducts() {
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const outerRef = useRef<HTMLDivElement>(null);   // drag constraint boundary
   const [isDragging, setIsDragging] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -79,29 +79,35 @@ export default function FeaturedProducts() {
       </div>
 
       <div className="mt-8 md:mt-14 relative">
-        {/* Draggable carousel */}
-        <motion.div
-          ref={carouselRef}
-          className="flex gap-5 cursor-grab active:cursor-grabbing px-5 sm:px-8 lg:px-20"
-          drag="x"
-          dragConstraints={carouselRef}
-          onDragStart={() => setIsDragging(true)}
-          onDragEnd={() => setIsDragging(false)}
-          whileTap={{ cursor: "grabbing" }}
-          style={{ userSelect: "none" }}
+        {/* Outer container — sets drag boundaries + clips overflow */}
+        <div
+          ref={outerRef}
+          className="overflow-hidden w-full"
         >
-          {products.map((p, i) => (
-            <motion.div
-              key={p.name}
-              className="shrink-0 w-[75vw] sm:w-[320px] md:w-[280px] lg:w-[260px]"
-              whileHover={{ y: -4 }}
-              transition={{ duration: 0.3 }}
-              onViewportEnter={() => setActiveIdx(i)}
-            >
-              <ProductCard p={p} />
-            </motion.div>
-          ))}
-        </motion.div>
+          {/* Inner track — this is what actually drags */}
+          <motion.div
+            className="flex gap-5 cursor-grab active:cursor-grabbing px-5 sm:px-8 lg:px-20"
+            drag="x"
+            dragConstraints={outerRef}
+            dragElastic={0.12}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={() => setIsDragging(false)}
+            whileTap={{ cursor: "grabbing" }}
+            style={{ userSelect: "none" }}
+          >
+            {products.map((p, i) => (
+              <motion.div
+                key={p.name}
+                className="shrink-0 w-[75vw] sm:w-[320px] md:w-[280px] lg:w-[260px]"
+                whileHover={{ y: -4 }}
+                transition={{ duration: 0.3 }}
+                onViewportEnter={() => setActiveIdx(i)}
+              >
+                <ProductCard p={p} />
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
 
         {/* Desktop dot indicators */}
         <div className="hidden md:flex justify-center gap-2 mt-10">
