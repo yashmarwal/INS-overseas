@@ -5,12 +5,18 @@ import { Play, X, ChevronLeft, ChevronRight } from "lucide-react";
 // ── ADD ALL VIMEO IDs HERE ──
 // e.g. https://vimeo.com/123456789 → id: "123456789"
 const videos = [
-  { id: "YOUR_VIMEO_ID_1" },
-  { id: "YOUR_VIMEO_ID_2" },
-  { id: "YOUR_VIMEO_ID_3" },
-  { id: "YOUR_VIMEO_ID_4" },
-  { id: "YOUR_VIMEO_ID_5" },
-  { id: "YOUR_VIMEO_ID_6" },
+  { id: "1199824555" },
+  { id: "1199824554" },
+  { id: "1199824476" },
+  { id: "1199824479" },
+  { id: "1199824489" },
+  { id: "1199824507" },
+  { id: "1199824375" },
+  { id: "1199824461" },
+  { id: "1199824372" },
+  { id: "1199824373" },
+  { id: "1199824374" },
+  { id: "1199824422" },
 ];
 
 type Video = typeof videos[number];
