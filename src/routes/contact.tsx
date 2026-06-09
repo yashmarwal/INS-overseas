@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import PageHero from "@/components/shared/PageHero";
 import ContactStrip from "@/components/home/ContactStrip";
 import { MessageCircle, Mail, Phone } from "lucide-react";
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/contact")({
       { title: "Contact INS Overseas — Wholesale Enquiries, Jaipur India" },
       { name: "description", content: "Get in touch with INS Overseas for wholesale enquiries, custom orders and B2B partnerships. Located in Sanganer, Jaipur. WhatsApp: +91 96804 78483. Email: Sezan@ins-overseas.com" },
       { property: "og:title", content: "Contact INS Overseas" },
-      { property: "og:url", content: "https://insoverseas.com/contact" },
+      { property: "og:url", content: "https://ins-overseas.com/contact" },
     ],
   }),
   component: Contact,

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProductImages, PRODUCT_CATEGORIES } from "@/hooks/useProductImages";
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/products")({
       { name: "description", content: "Browse our full range of handmade leather journals, seed paper, paper gift boxes, paper gift bags, leather bags and artisan stationery. Wholesale from Jaipur, India." },
       { name: "keywords", content: "handmade leather journal wholesale, seed paper manufacturer, paper gift box wholesale India, leather bag manufacturer Jaipur, handmade stationery wholesale" },
       { property: "og:title", content: "Products — Leather Journals, Seed Paper & Artisan Gifts | INS Overseas" },
-      { property: "og:url", content: "https://insoverseas.com/products" },
+      { property: "og:url", content: "https://ins-overseas.com/products" },
     ],
   }),
   component: ProductsPage,
@@ -147,7 +147,7 @@ function ProductsPage() {
                     )}
 
                     <a
-                      href={`mailto:info@insoverseas.com?subject=Enquiry: ${encodeURIComponent(img.product_name || "Product")}`}
+                      href={`mailto:Sezan@ins-overseas.com?subject=Enquiry: ${encodeURIComponent(img.product_name || "Product")}`}
                       className="inline-flex items-center gap-2 mt-2 text-umber uppercase hover:gap-3 transition-all"
                       style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11, letterSpacing: "0.15em" }}
                     >

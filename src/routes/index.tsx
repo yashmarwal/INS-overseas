@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import HeroSection from "@/components/home/HeroSection";
 import TrustBar from "@/components/home/TrustBar";
 import ProductCategories from "@/components/home/ProductCategories";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
       { name: "keywords", content: "handmade leather journal wholesale India, cotton rag paper manufacturer Jaipur, leather journal exporter, handmade paper wholesale" },
       { property: "og:title", content: "INS Overseas — Handmade Leather Journals & Eco-Friendly Paper" },
       { property: "og:description", content: "Four-generation family craft from Sanganer, Jaipur. Wholesale leather journals, seed paper, gift boxes & artisan stationery exported to 40+ countries." },
-      { property: "og:url", content: "https://insoverseas.com/" },
+      { property: "og:url", content: "https://ins-overseas.com/" },
     ],
   }),
   component: Home,

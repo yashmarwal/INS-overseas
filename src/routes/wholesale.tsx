@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/wholesale")({
       { name: "description", content: "Partner with INS Overseas for wholesale handmade leather journals, cotton rag paper and artisan gift products. MOQ 200 units. Export to 40+ countries. Request our B2B catalogue." },
       { name: "keywords", content: "handmade paper wholesale India, leather journal wholesale MOQ, B2B handmade journal exporter, artisan paper wholesale Jaipur, handmade gift product wholesale India" },
       { property: "og:title", content: "Wholesale — Partner With INS Overseas" },
-      { property: "og:url", content: "https://insoverseas.com/wholesale" },
+      { property: "og:url", content: "https://ins-overseas.com/wholesale" },
     ],
   }),
   component: Wholesale,

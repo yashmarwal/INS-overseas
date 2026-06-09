@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import PageHero from "@/components/shared/PageHero";
 import SectionHeading from "@/components/shared/SectionHeading";
 import TrustBar from "@/components/home/TrustBar";
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/about")({
       { title: "About Us — Four-Generation Handmade Paper Legacy | INS Overseas Jaipur" },
       { name: "description", content: "INS Overseas is one of India's largest manufacturers of eco-friendly handmade paper and leather journals. A four-generation family legacy from Sanganer, Jaipur since 1995." },
       { property: "og:title", content: "About INS Overseas — India's Leading Eco-Friendly Paper Manufacturer" },
-      { property: "og:url", content: "https://insoverseas.com/about" },
+      { property: "og:url", content: "https://ins-overseas.com/about" },
     ],
   }),
   component: About,

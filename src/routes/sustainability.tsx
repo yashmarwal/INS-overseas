@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import PageHero from "@/components/shared/PageHero";
 import SustainabilitySection from "@/components/home/SustainabilitySection";
 import SectionHeading from "@/components/shared/SectionHeading";
@@ -10,7 +10,7 @@ export const Route = createFileRoute("/sustainability")({
       { title: "Sustainability — Eco-Friendly Handmade Paper | INS Overseas" },
       { name: "description", content: "100% recycled cotton rag paper, no trees, no harsh chemicals. INS Overseas champions eco-friendly papermaking with zero-waste manufacturing in Sanganer, Jaipur." },
       { property: "og:title", content: "Sustainability — Eco-Friendly Handmade Paper Manufacturing" },
-      { property: "og:url", content: "https://insoverseas.com/sustainability" },
+      { property: "og:url", content: "https://ins-overseas.com/sustainability" },
     ],
   }),
   component: Sust,

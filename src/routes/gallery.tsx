@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/gallery")({
       { title: "Gallery — Handmade Journals & Artisan Paper Products | INS Overseas" },
       { name: "description", content: "Browse our workspace and product gallery — handcrafted leather journals, seed paper, gift boxes and artisan stationery made in Sanganer, Jaipur." },
       { property: "og:title", content: "Gallery — INS Overseas Workspace & Products" },
-      { property: "og:url", content: "https://insoverseas.com/gallery" },
+      { property: "og:url", content: "https://ins-overseas.com/gallery" },
     ],
   }),
   component: GalleryPage,
