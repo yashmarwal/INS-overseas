@@ -4,7 +4,14 @@ import ContactStrip from "@/components/home/ContactStrip";
 import { MessageCircle, Mail, Phone } from "lucide-react";
 
 export const Route = createFileRoute("/contact")({
-  head: () => ({ meta: [{ title: "Contact | INS Overseas" }, { name: "description", content: "Reach our team in Sanganer, Jaipur. WhatsApp, email, phone, and detailed enquiry form." }] }),
+  head: () => ({
+    meta: [
+      { title: "Contact INS Overseas — Wholesale Enquiries, Jaipur India" },
+      { name: "description", content: "Get in touch with INS Overseas for wholesale enquiries, custom orders and B2B partnerships. Located in Sanganer, Jaipur. WhatsApp: +91 96804 78483. Email: Sezan@ins-overseas.com" },
+      { property: "og:title", content: "Contact INS Overseas" },
+      { property: "og:url", content: "https://insoverseas.com/contact" },
+    ],
+  }),
   component: Contact,
 });
 

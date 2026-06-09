@@ -17,10 +17,13 @@ import ContactStrip from "@/components/home/ContactStrip";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "INS Overseas — Handmade Leather Journals & Artisan Stationery | Wholesale from Jaipur" },
-      { name: "description", content: "Premium handmade leather journals, cotton rag paper & artisan stationery manufactured in Jaipur, India since 1995. Wholesale export to 40+ countries. Request our catalogue." },
+      { title: "INS Overseas — Handmade Leather Journals & Eco-Friendly Paper | Wholesale Jaipur" },
+      { name: "description", content: "India's largest manufacturer of handmade leather journals, cotton rag paper, seed paper & artisan gift products. Wholesale export to 40+ countries from Sanganer, Jaipur since 1995." },
+      { name: "keywords", content: "handmade leather journal wholesale India, cotton rag paper manufacturer Jaipur, leather journal exporter, handmade paper wholesale" },
+      { property: "og:title", content: "INS Overseas — Handmade Leather Journals & Eco-Friendly Paper" },
+      { property: "og:description", content: "Four-generation family craft from Sanganer, Jaipur. Wholesale leather journals, seed paper, gift boxes & artisan stationery exported to 40+ countries." },
+      { property: "og:url", content: "https://insoverseas.com/" },
     ],
-  }),
   component: Home,
 });
 

@@ -7,10 +7,11 @@ import { motion } from "framer-motion";
 export const Route = createFileRoute("/sustainability")({
   head: () => ({
     meta: [
-      { title: "Sustainability | INS Overseas — Tree-Free Cotton Rag Paper" },
-      { name: "description", content: "Our paper is 100% cotton rag, made from textile industry waste. Zero deforestation, chemical-free, zero-waste manufacturing." },
+      { title: "Sustainability — Eco-Friendly Handmade Paper | INS Overseas" },
+      { name: "description", content: "100% recycled cotton rag paper, no trees, no harsh chemicals. INS Overseas champions eco-friendly papermaking with zero-waste manufacturing in Sanganer, Jaipur." },
+      { property: "og:title", content: "Sustainability — Eco-Friendly Handmade Paper Manufacturing" },
+      { property: "og:url", content: "https://insoverseas.com/sustainability" },
     ],
-  }),
   component: Sust,
 });
 

@@ -6,10 +6,11 @@ import { motion } from "framer-motion";
 export const Route = createFileRoute("/our-craft")({
   head: () => ({
     meta: [
-      { title: "Our Craft | INS Overseas — From Cotton Rags to Finished Journals" },
-      { name: "description", content: "The Sanganer way of making paper and binding journals — manual vats, sun drying, hand-stitched leather. A 30-year craft tradition." },
+      { title: "Our Craft — How We Make Handmade Paper & Leather Journals | INS Overseas" },
+      { name: "description", content: "From recycled cotton rags to finished leather journals — discover the traditional Sanganer papermaking process passed down through four generations at INS Overseas." },
+      { property: "og:title", content: "Our Craft — Traditional Sanganer Papermaking" },
+      { property: "og:url", content: "https://insoverseas.com/our-craft" },
     ],
-  }),
   component: OurCraft,
 });
 

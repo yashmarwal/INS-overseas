@@ -10,10 +10,12 @@ import { useFormSubmit } from "@/hooks/useFormSubmit";
 export const Route = createFileRoute("/wholesale")({
   head: () => ({
     meta: [
-      { title: "Wholesale Leather Journals & Handmade Paper | INS Overseas B2B" },
-      { name: "description", content: "Source handmade leather journals, cotton rag paper and artisan stationery from Jaipur. MOQ from 200 units. Full OEM, custom branding, export to 40+ countries." },
+      { title: "Wholesale Partner Program — INS Overseas | B2B Handmade Paper & Journals" },
+      { name: "description", content: "Partner with INS Overseas for wholesale handmade leather journals, cotton rag paper and artisan gift products. MOQ 200 units. Export to 40+ countries. Request our B2B catalogue." },
+      { name: "keywords", content: "handmade paper wholesale India, leather journal wholesale MOQ, B2B handmade journal exporter, artisan paper wholesale Jaipur, handmade gift product wholesale India" },
+      { property: "og:title", content: "Wholesale — Partner With INS Overseas" },
+      { property: "og:url", content: "https://insoverseas.com/wholesale" },
     ],
-  }),
   component: Wholesale,
 });
 

@@ -181,14 +181,11 @@ const groups: { cat: string; items: [string, string][] }[] = [
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "FAQ | INS Overseas" },
-      {
-        name: "description",
-        content:
-          "Answers to common questions about MOQ, shipping, custom orders, materials, sustainability and payments.",
-      },
+      { title: "FAQ — Wholesale Orders, Shipping & Custom Products | INS Overseas" },
+      { name: "description", content: "Answers to the most common wholesale questions about INS Overseas — MOQ, shipping, custom orders, payment, lead times, certifications and more." },
+      { property: "og:title", content: "Frequently Asked Questions — INS Overseas" },
+      { property: "og:url", content: "https://insoverseas.com/faq" },
     ],
-  }),
   component: FAQ,
 });
 

@@ -8,10 +8,12 @@ import { Mail } from "lucide-react";
 export const Route = createFileRoute("/products")({
   head: () => ({
     meta: [
-      { title: "Products — INS Overseas" },
-      { name: "description", content: "Browse our full range of leather journals, handmade paper, artisan stationery and leather accessories. Wholesale enquiries welcome." },
+      { title: "Products — Leather Journals, Seed Paper, Gift Boxes | INS Overseas" },
+      { name: "description", content: "Browse our full range of handmade leather journals, seed paper, paper gift boxes, paper gift bags, leather bags and artisan stationery. Wholesale from Jaipur, India." },
+      { name: "keywords", content: "handmade leather journal wholesale, seed paper manufacturer, paper gift box wholesale India, leather bag manufacturer Jaipur, handmade stationery wholesale" },
+      { property: "og:title", content: "Products — Leather Journals, Seed Paper & Artisan Gifts | INS Overseas" },
+      { property: "og:url", content: "https://insoverseas.com/products" },
     ],
-  }),
   component: ProductsPage,
 });
 

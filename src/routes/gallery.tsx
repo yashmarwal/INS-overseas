@@ -8,10 +8,11 @@ import PageHero from "@/components/shared/PageHero";
 export const Route = createFileRoute("/gallery")({
   head: () => ({
     meta: [
-      { title: "Gallery — INS Overseas" },
-      { name: "description", content: "Handcrafted leather journals and artisan paper products made in Sanganer, Jaipur. Browse our workspace and product gallery." },
+      { title: "Gallery — Handmade Journals & Artisan Paper Products | INS Overseas" },
+      { name: "description", content: "Browse our workspace and product gallery — handcrafted leather journals, seed paper, gift boxes and artisan stationery made in Sanganer, Jaipur." },
+      { property: "og:title", content: "Gallery — INS Overseas Workspace & Products" },
+      { property: "og:url", content: "https://insoverseas.com/gallery" },
     ],
-  }),
   component: GalleryPage,
 });
 

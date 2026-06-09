@@ -8,14 +8,11 @@ import { Leaf, Globe, Star, Award } from "lucide-react";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About Us | INS Overseas — India's Leading Handmade Paper Manufacturer" },
-      {
-        name: "description",
-        content:
-          "INS Overseas is one of India's largest manufacturers and exporters of eco-friendly handmade paper and premium handmade gift products. A four-generation legacy from Sanganer, Jaipur.",
-      },
+      { title: "About Us — Four-Generation Handmade Paper Legacy | INS Overseas Jaipur" },
+      { name: "description", content: "INS Overseas is one of India's largest manufacturers of eco-friendly handmade paper and leather journals. A four-generation family legacy from Sanganer, Jaipur since 1995." },
+      { property: "og:title", content: "About INS Overseas — India's Leading Eco-Friendly Paper Manufacturer" },
+      { property: "og:url", content: "https://insoverseas.com/about" },
     ],
-  }),
   component: About,
 });
 
