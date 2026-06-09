@@ -2,8 +2,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, X, ChevronLeft, ChevronRight } from "lucide-react";
 
-// ── ADD ALL VIMEO IDs HERE ──
-// e.g. https://vimeo.com/123456789 → id: "123456789"
 const videos = [
   { id: "1199824555" },
   { id: "1199824554" },
@@ -26,6 +24,10 @@ const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
 export default function FactoryVideo() {
   const [activeVideo, setActiveVideo] = useState<Video | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(3);
+
+  const visibleVideos = videos.slice(0, visibleCount);
+  const hasMore = visibleCount < videos.length;
 
   const openVideo = (video: Video, index: number) => {
     setActiveVideo(video);
@@ -82,75 +84,67 @@ export default function FactoryVideo() {
           </p>
         </div>
 
-        {/* Featured first video — large */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="relative cursor-pointer group mb-4 overflow-hidden"
-          style={{ aspectRatio: "16/7" }}
-          onClick={() => openVideo(videos[0], 0)}
-        >
-          <img
-            src={`https://vumbnail.com/${videos[0].id}.jpg`}
-            alt="INS Overseas workspace video"
-            className="w-full h-full object-cover transition-transform duration-[3000ms] group-hover:scale-105"
-            style={{ filter: "brightness(0.65) sepia(0.15)" }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{ background: "linear-gradient(to top, rgba(26,20,16,0.5) 0%, rgba(26,20,16,0.1) 60%)" }}
-          />
-          {/* Corner accents */}
-          <div className="absolute top-5 left-5 w-8 h-8 border-t border-l border-gold/50" />
-          <div className="absolute top-5 right-5 w-8 h-8 border-t border-r border-gold/50" />
-
-          {/* Play button */}
-          <div className="absolute inset-0 flex items-center justify-center">
+        {/* Uniform grid — 3 cols desktop, 2 tablet, 1 mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {visibleVideos.map((video, i) => (
             <motion.div
-              whileHover={{ scale: 1.1 }}
-              className="w-20 h-20 rounded-full bg-gold/80 group-hover:bg-gold flex items-center justify-center shadow-2xl transition-colors duration-300"
+              key={video.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              className="relative cursor-pointer group overflow-hidden"
+              style={{ aspectRatio: "16/10" }}
+              onClick={() => openVideo(video, i)}
             >
-              <Play size={28} className="text-ink ml-2" fill="#1A1410" />
+              <img
+                src={`https://vumbnail.com/${video.id}.jpg`}
+                alt="INS Overseas workspace"
+                className="w-full h-full object-cover transition-transform duration-[2500ms] group-hover:scale-110"
+                style={{ filter: "brightness(0.65) sepia(0.15)" }}
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: "linear-gradient(to top, rgba(26,20,16,0.7) 0%, rgba(26,20,16,0.1) 60%)" }}
+              />
+              {/* Play icon — always visible, scales on hover */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  className="w-14 h-14 rounded-full bg-gold/80 group-hover:bg-gold flex items-center justify-center transition-colors duration-300"
+                >
+                  <Play size={20} className="text-ink ml-1" fill="#1A1410" />
+                </motion.div>
+              </div>
             </motion.div>
-          </div>
-        </motion.div>
+          ))}
+        </div>
 
-        {/* Remaining videos — grid */}
-        {videos.length > 1 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-            {videos.slice(1).map((video, i) => (
-              <motion.div
-                key={video.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.07 }}
-                className="relative cursor-pointer group overflow-hidden"
-                style={{ aspectRatio: "16/10" }}
-                onClick={() => openVideo(video, i + 1)}
-              >
-                <img
-                  src={`https://vumbnail.com/${video.id}.jpg`}
-                  alt="INS Overseas workspace video"
-                  className="w-full h-full object-cover transition-transform duration-[2500ms] group-hover:scale-110"
-                  style={{ filter: "brightness(0.6) sepia(0.15)" }}
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{ background: "rgba(26,20,16,0.3)" }}
-                />
-                {/* Play icon — appears on hover */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-12 h-12 rounded-full bg-gold/80 flex items-center justify-center">
-                    <Play size={16} className="text-ink ml-1" fill="#1A1410" />
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
+        {/* Show More / Show Less */}
+        <div className="flex justify-center mt-8 gap-4">
+          {hasMore && (
+            <motion.button
+              onClick={() => setVisibleCount((c) => c + 3)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="inline-flex items-center gap-3 border border-gold/40 text-gold uppercase px-8 py-3 hover:bg-gold/10 transition-colors"
+              style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11, letterSpacing: "0.2em" }}
+            >
+              Show More Videos
+              <ChevronRight size={14} />
+            </motion.button>
+          )}
+          {visibleCount > 3 && (
+            <motion.button
+              onClick={() => setVisibleCount(3)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="inline-flex items-center gap-3 text-warm-grey uppercase px-8 py-3 hover:text-cream transition-colors"
+              style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 11, letterSpacing: "0.2em" }}
+            >
+              Show Less
+            </motion.button>
+          )}
+        </div>
       </div>
 
       {/* ── Modal ── */}
