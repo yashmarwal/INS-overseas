@@ -71,6 +71,24 @@ function Products() {
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<DynamicProduct | null>(null);
 
+  // Back gesture closes lightbox instead of navigating away
+  useEffect(() => {
+    if (preview) {
+      window.history.pushState({ previewOpen: true }, "");
+      const handlePopState = () => setPreview(null);
+      window.addEventListener("popstate", handlePopState);
+      return () => window.removeEventListener("popstate", handlePopState);
+    }
+  }, [preview]);
+
+  const closePreview = () => {
+    if (window.history.state?.previewOpen) {
+      window.history.back();
+    } else {
+      setPreview(null);
+    }
+  };
+
   // Fetch from Supabase
   useEffect(() => {
     supabase
@@ -113,7 +131,7 @@ function Products() {
   useEffect(() => {
     if (!preview) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPreview(null);
+      if (e.key === "Escape") closePreview();
       if (e.key === "ArrowLeft") goPrev();
       if (e.key === "ArrowRight") goNext();
     };
@@ -249,7 +267,7 @@ function Products() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 bg-ink/90 flex items-center justify-center p-4 md:p-8"
-            onClick={() => setPreview(null)}
+            onClick={closePreview}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.94, y: 20 }}
@@ -262,7 +280,7 @@ function Products() {
             >
               {/* Close */}
               <button
-                onClick={() => setPreview(null)}
+                onClick={closePreview}
                 className="absolute top-4 right-4 z-10 w-9 h-9 flex items-center justify-center bg-ink/10 hover:bg-ink/20 rounded-full transition-colors"
                 aria-label="Close"
               >

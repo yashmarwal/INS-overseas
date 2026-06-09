@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import PageHero from "@/components/shared/PageHero";
 import SectionHeading from "@/components/shared/SectionHeading";
 import TrustBar from "@/components/home/TrustBar";
@@ -64,7 +64,7 @@ function About() {
           </>
         }
         subtitle="A four-generation legacy of handcrafted paper and gift products — born in Sanganer, Jaipur. Exported worldwide."
-        image="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=2200&q=80"
+        image="/about-hero.jpg"
       />
 
       {/* Intro */}
