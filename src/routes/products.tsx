@@ -330,7 +330,7 @@ function Products() {
                     {/* Details list */}
                     <div className="space-y-2.5 mb-8">
                       {([
-                        ["MOQ",       "200 units (mix categories allowed)"],
+                        ["MOQ",       "200 units minimum"],
                         ["Lead Time", "30 days after order confirmation"],
                         ["Custom",    "Logo debossing, embossing, foil available"],
                         ["Shipping",  "Air 7–10 days · Sea 35–40 days"],

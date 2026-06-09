@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import PageHero from "@/components/shared/PageHero";
 import SustainabilitySection from "@/components/home/SustainabilitySection";
 import SectionHeading from "@/components/shared/SectionHeading";
@@ -29,7 +29,6 @@ function Sust() {
         eyebrow="Sustainability"
         title={<>Making Beautiful Things<br /><em className="italic font-light text-gold-light">Without Costing the Earth</em></>}
         subtitle="Every sheet of paper we make starts as discarded cotton from Jaipur's textile mills."
-        image="https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=2200&q=80"
       />
       <section className="bg-cream py-24">
         <div className="max-w-3xl mx-auto px-5 sm:px-8 space-y-6 text-umber-dark leading-relaxed" style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 17 }}>

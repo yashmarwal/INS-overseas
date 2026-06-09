@@ -64,7 +64,6 @@ function About() {
           </>
         }
         subtitle="A four-generation legacy of handcrafted paper and gift products — born in Sanganer, Jaipur. Exported worldwide."
-        image="/about-hero.jpg"
       />
 
       {/* Intro */}
