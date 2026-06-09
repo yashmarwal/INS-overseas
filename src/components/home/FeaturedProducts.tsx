@@ -1,26 +1,22 @@
-import { motion } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import SectionHeading from "@/components/shared/SectionHeading";
 import { useSiteImage } from "@/hooks/useSiteImage";
 
 const products = [
-  { name: "Vintage Buffalo Leather Journal",  cat: "Leather Journals",         desc: "A5, wrap-around strap, 240 deckle pages",         sectionKey: "featured_1" },
-  { name: "Handmade Deckle Edge Notebook",     cat: "Handmade Paper Sheets",    desc: "Cotton rag, unlined, A5",                         sectionKey: "featured_2" },
-  { name: "Leather Crossbody Bag",             cat: "Leather Bags",             desc: "Full-grain, hand-fitted brass buckles",            sectionKey: "featured_3" },
-  { name: "Set of 6 Luxury Greeting Cards",    cat: "Handmade Stationery",      desc: "Cotton paper, hand-stamped",                      sectionKey: "featured_4" },
-  { name: "Corporate Leather Diary",           cat: "Leather Journals",         desc: "Custom embossing available",                      sectionKey: "featured_5" },
-  { name: "Paper Gift Bags Set (12pc)",        cat: "Handmade Paper Gift Bag",  desc: "Recycled cotton, ribbon handles",                  sectionKey: "featured_6" },
+  { name: "Vintage Buffalo Leather Journal",  cat: "Leather Journals",        desc: "A5, wrap-around strap, 240 deckle pages",  sectionKey: "featured_1" },
+  { name: "Handmade Deckle Edge Notebook",    cat: "Handmade Paper Sheets",   desc: "Cotton rag, unlined, A5",                  sectionKey: "featured_2" },
+  { name: "Leather Crossbody Bag",            cat: "Leather Bags",            desc: "Full-grain, hand-fitted brass buckles",     sectionKey: "featured_3" },
+  { name: "Set of 6 Luxury Greeting Cards",   cat: "Handmade Stationery",     desc: "Cotton paper, hand-stamped",               sectionKey: "featured_4" },
+  { name: "Corporate Leather Diary",          cat: "Leather Journals",        desc: "Custom embossing available",               sectionKey: "featured_5" },
+  { name: "Paper Gift Bags Set (12pc)",       cat: "Handmade Paper Gift Bag", desc: "Recycled cotton, ribbon handles",           sectionKey: "featured_6" },
 ];
 
-function ProductItem({ p, i }: { p: (typeof products)[0]; i: number }) {
+function ProductCard({ p }: { p: (typeof products)[0] }) {
   const img = useSiteImage(p.sectionKey);
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.7, delay: i * 0.06 }}
-      className="snap-start shrink-0 w-[85vw] sm:w-[360px]"
-    >
+    <div className="flex flex-col">
       <div className="aspect-[3/4] overflow-hidden bg-parchment-dark">
         <img
           src={img}
@@ -33,45 +29,96 @@ function ProductItem({ p, i }: { p: (typeof products)[0]; i: number }) {
         {p.name}
       </h3>
       <p className="mt-1 text-warm-grey text-sm font-light">{p.desc}</p>
-      <button
-        className="mt-4 border border-umber text-umber text-[11px] uppercase px-5 py-2.5 hover:bg-umber hover:text-cream transition-colors"
-        style={{ letterSpacing: "0.15em" }}
+      <a
+        href={`mailto:Sezan@ins-overseas.com?subject=Enquiry: ${p.name}&body=Hi INS Overseas team,%0D%0A%0D%0AI am interested in ${p.name}. Please share more details including pricing and MOQ.%0D%0A%0D%0AThank you`}
+        className="inline-flex items-center gap-2 mt-3 text-umber uppercase hover:gap-3 transition-all duration-200 group"
+        style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11, letterSpacing: "0.15em" }}
       >
         Enquire
-      </button>
-    </motion.article>
+        <ArrowRight size={12} className="transition-transform duration-200 group-hover:translate-x-1" />
+      </a>
+    </div>
   );
 }
 
 export default function FeaturedProducts() {
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
+
   return (
     <section className="bg-parchment py-14 md:py-24 lg:py-32 overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
         <SectionHeading eyebrow="Bestsellers" title={<>Most Loved <em className="italic font-light">This Season</em></>} />
-        {/* Swipe hint — mobile only */}
-        <div className="flex md:hidden items-center gap-2 mt-3">
-          <motion.span
-            animate={{ x: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            className="text-warm-grey"
-            style={{ fontSize: 16 }}
-          >
-            ←→
-          </motion.span>
-          <span
-            className="text-warm-grey"
-            style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 12, letterSpacing: "0.08em" }}
-          >
-            Swipe to explore
-          </span>
-        </div>
+
+        {/* Swipe hint — fades out after first drag */}
+        <AnimatePresence>
+          {!isDragging && (
+            <motion.div
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="md:hidden flex items-center justify-center gap-2 mt-4"
+            >
+              <motion.div
+                animate={{ x: [-6, 6, -6] }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                className="flex items-center gap-1.5"
+              >
+                <ChevronLeft size={14} className="text-warm-grey" />
+                <span
+                  className="text-warm-grey"
+                  style={{ fontFamily: "var(--font-body)", fontSize: 11, letterSpacing: "0.12em" }}
+                >
+                  SWIPE
+                </span>
+                <ChevronRight size={14} className="text-warm-grey" />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-      <div className="mt-10 md:mt-16 overflow-x-auto no-scrollbar">
-        <div className="flex gap-6 px-5 sm:px-8 lg:px-20 pb-4 snap-x snap-mandatory">
+
+      <div className="mt-8 md:mt-14 relative">
+        {/* Draggable carousel */}
+        <motion.div
+          ref={carouselRef}
+          className="flex gap-5 cursor-grab active:cursor-grabbing px-5 sm:px-8 lg:px-20"
+          drag="x"
+          dragConstraints={carouselRef}
+          onDragStart={() => setIsDragging(true)}
+          onDragEnd={() => setIsDragging(false)}
+          whileTap={{ cursor: "grabbing" }}
+          style={{ userSelect: "none" }}
+        >
           {products.map((p, i) => (
-            <ProductItem key={p.name} p={p} i={i} />
+            <motion.div
+              key={p.name}
+              className="shrink-0 w-[75vw] sm:w-[320px] md:w-[280px] lg:w-[260px]"
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.3 }}
+              onViewportEnter={() => setActiveIdx(i)}
+            >
+              <ProductCard p={p} />
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Desktop dot indicators */}
+        <div className="hidden md:flex justify-center gap-2 mt-10">
+          {products.map((_, i) => (
+            <motion.div
+              key={i}
+              className="h-1 rounded-full bg-umber/25 transition-all duration-300"
+              animate={{ width: i === activeIdx ? 24 : 8, opacity: i === activeIdx ? 1 : 0.4 }}
+            />
           ))}
         </div>
+
+        {/* Right gradient fade — shows more content available */}
+        <div
+          className="md:hidden absolute top-0 right-0 w-16 h-full pointer-events-none"
+          style={{ background: "linear-gradient(to left, #F5EFE0 0%, transparent 100%)" }}
+        />
       </div>
     </section>
   );
