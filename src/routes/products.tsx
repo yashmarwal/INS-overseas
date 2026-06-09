@@ -25,6 +25,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   "handmade-stationery":     "Handmade Stationery",
 };
 
+const CATEGORY_MOQ: Record<string, string> = {
+  "leather-journals":        "200 units minimum",
+  "leather-bags":            "150 units minimum",
+  "handmade-paper-gift-box": "200 units minimum",
+  "handmade-paper-gift-bag": "800 units minimum",
+  "handmade-seed-paper":     "1500 units minimum",
+  "handmade-stationery":     "200 units minimum",
+};
+
 // ── Static fallback products ──────────────────────────────────────────────────
 const staticProducts = [
   { id: "s1",  name: "Vintage Buffalo Leather Journal", category: "leather-journals",        image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=900&q=80",  description: "A5 · wrap-around strap · 240 deckle pages" },
@@ -330,7 +339,7 @@ function Products() {
                     {/* Details list */}
                     <div className="space-y-2.5 mb-8">
                       {([
-                        ["MOQ",       "200 units minimum"],
+                        ["MOQ",       CATEGORY_MOQ[preview.category] || "200 units minimum"],
                         ["Lead Time", "30 days after order confirmation"],
                         ["Custom",    "Logo debossing, embossing, foil available"],
                         ["Shipping",  "Air 7–10 days · Sea 35–40 days"],
