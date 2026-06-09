@@ -1,9 +1,10 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import HeroSection from "@/components/home/HeroSection";
 import TrustBar from "@/components/home/TrustBar";
 import ProductCategories from "@/components/home/ProductCategories";
 import HeritageStory from "@/components/home/HeritageStory";
 import CraftProcess from "@/components/home/CraftProcess";
+import FactoryVideo from "@/components/home/FactoryVideo";
 import SustainabilitySection from "@/components/home/SustainabilitySection";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import GlobalReach from "@/components/home/GlobalReach";
@@ -36,6 +37,7 @@ function Home() {
       <ProductCategories />
       <HeritageStory />
       <CraftProcess />
+      <FactoryVideo />
       <SustainabilitySection />
       <FeaturedProducts />
       <GlobalReach />
