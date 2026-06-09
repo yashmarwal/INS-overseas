@@ -2,46 +2,15 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, X, ChevronLeft, ChevronRight } from "lucide-react";
 
-// ── ADD ALL VIMEO VIDEOS HERE ──
-// Replace each YOUR_VIMEO_ID with the actual number from the Vimeo URL
+// ── ADD ALL VIMEO IDs HERE ──
 // e.g. https://vimeo.com/123456789 → id: "123456789"
 const videos = [
-  {
-    id: "YOUR_VIMEO_ID_1",
-    title: "Cotton to Paper — The Making Process",
-    subtitle: "Papermaking · Sanganer workspace",
-    duration: "2 min",
-  },
-  {
-    id: "YOUR_VIMEO_ID_2",
-    title: "Hand-Stitching the Leather Spine",
-    subtitle: "Leather binding · Artisan craft",
-    duration: "1.5 min",
-  },
-  {
-    id: "YOUR_VIMEO_ID_3",
-    title: "Sun Drying — The Rajasthan Way",
-    subtitle: "Paper drying · Traditional process",
-    duration: "1 min",
-  },
-  {
-    id: "YOUR_VIMEO_ID_4",
-    title: "Inside Our Workspace",
-    subtitle: "Factory tour · Full walkthrough",
-    duration: "4 min",
-  },
-  {
-    id: "YOUR_VIMEO_ID_5",
-    title: "From Raw Cotton to Finished Journal",
-    subtitle: "End to end · Complete process",
-    duration: "3 min",
-  },
-  {
-    id: "YOUR_VIMEO_ID_6",
-    title: "The Artisans of Sanganer",
-    subtitle: "Our team · Stories",
-    duration: "2.5 min",
-  },
+  { id: "YOUR_VIMEO_ID_1" },
+  { id: "YOUR_VIMEO_ID_2" },
+  { id: "YOUR_VIMEO_ID_3" },
+  { id: "YOUR_VIMEO_ID_4" },
+  { id: "YOUR_VIMEO_ID_5" },
+  { id: "YOUR_VIMEO_ID_6" },
 ];
 
 type Video = typeof videos[number];
@@ -73,7 +42,7 @@ export default function FactoryVideo() {
     <section className="bg-ink py-20 md:py-28 lg:py-32 overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
 
-        {/* Heading */}
+        {/* Section heading */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 md:mb-16">
           <div>
             <div className="flex items-center gap-3 mb-5">
@@ -119,19 +88,19 @@ export default function FactoryVideo() {
         >
           <img
             src={`https://vumbnail.com/${videos[0].id}.jpg`}
-            alt={videos[0].title}
+            alt="INS Overseas workspace video"
             className="w-full h-full object-cover transition-transform duration-[3000ms] group-hover:scale-105"
             style={{ filter: "brightness(0.65) sepia(0.15)" }}
           />
           <div
             className="absolute inset-0"
-            style={{ background: "linear-gradient(to top, rgba(26,20,16,0.85) 0%, rgba(26,20,16,0.1) 60%)" }}
+            style={{ background: "linear-gradient(to top, rgba(26,20,16,0.5) 0%, rgba(26,20,16,0.1) 60%)" }}
           />
           {/* Corner accents */}
           <div className="absolute top-5 left-5 w-8 h-8 border-t border-l border-gold/50" />
           <div className="absolute top-5 right-5 w-8 h-8 border-t border-r border-gold/50" />
 
-          {/* Play */}
+          {/* Play button */}
           <div className="absolute inset-0 flex items-center justify-center">
             <motion.div
               whileHover={{ scale: 1.1 }}
@@ -139,29 +108,6 @@ export default function FactoryVideo() {
             >
               <Play size={28} className="text-ink ml-2" fill="#1A1410" />
             </motion.div>
-          </div>
-
-          {/* Info */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-            <div className="flex items-end justify-between">
-              <div>
-                <span
-                  className="text-gold uppercase block mb-2"
-                  style={{ fontFamily: "var(--font-body)", fontSize: 10, letterSpacing: "0.2em" }}
-                >
-                  {videos[0].subtitle}
-                </span>
-                <h3
-                  className="text-cream"
-                  style={{ fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(20px, 2.5vw, 32px)", lineHeight: 1.2 }}
-                >
-                  {videos[0].title}
-                </h3>
-              </div>
-              <span className="text-warm-grey shrink-0 ml-4" style={{ fontFamily: "var(--font-body)", fontSize: 12 }}>
-                {videos[0].duration}
-              </span>
-            </div>
           </div>
         </motion.div>
 
@@ -181,37 +127,19 @@ export default function FactoryVideo() {
               >
                 <img
                   src={`https://vumbnail.com/${video.id}.jpg`}
-                  alt={video.title}
+                  alt="INS Overseas workspace video"
                   className="w-full h-full object-cover transition-transform duration-[2500ms] group-hover:scale-110"
                   style={{ filter: "brightness(0.6) sepia(0.15)" }}
                 />
                 <div
                   className="absolute inset-0"
-                  style={{ background: "linear-gradient(to top, rgba(26,20,16,0.9) 0%, rgba(26,20,16,0.1) 60%)" }}
+                  style={{ background: "rgba(26,20,16,0.3)" }}
                 />
-                {/* Play hover */}
+                {/* Play icon — appears on hover */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="w-12 h-12 rounded-full bg-gold/80 flex items-center justify-center">
                     <Play size={16} className="text-ink ml-1" fill="#1A1410" />
                   </div>
-                </div>
-                {/* Info */}
-                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
-                  <p
-                    className="text-gold uppercase mb-1 hidden md:block"
-                    style={{ fontFamily: "var(--font-body)", fontSize: 9, letterSpacing: "0.18em" }}
-                  >
-                    {video.subtitle}
-                  </p>
-                  <h4
-                    className="text-cream leading-tight"
-                    style={{ fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(12px, 1.5vw, 16px)", lineHeight: 1.25 }}
-                  >
-                    {video.title}
-                  </h4>
-                  <span className="text-warm-grey text-[11px] mt-1 block" style={{ fontFamily: "var(--font-body)" }}>
-                    {video.duration}
-                  </span>
                 </div>
               </motion.div>
             ))}
@@ -245,20 +173,6 @@ export default function FactoryVideo() {
               <X size={18} />
             </button>
 
-            {/* Title */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-4 md:mb-6"
-            >
-              <p className="text-gold uppercase mb-1" style={{ fontFamily: "var(--font-body)", fontSize: 10, letterSpacing: "0.2em" }}>
-                {activeVideo.subtitle}
-              </p>
-              <h3 className="text-cream" style={{ fontFamily: "var(--font-display)", fontWeight: 300, fontSize: "clamp(18px, 2.5vw, 26px)" }}>
-                {activeVideo.title}
-              </h3>
-            </motion.div>
-
             {/* Player */}
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
@@ -276,7 +190,7 @@ export default function FactoryVideo() {
                 frameBorder="0"
                 allow="autoplay; fullscreen; picture-in-picture"
                 allowFullScreen
-                title={activeVideo.title}
+                title="INS Overseas workspace video"
               />
             </motion.div>
 
