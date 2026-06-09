@@ -182,8 +182,8 @@ function AdminPage() {
           url: urlData.publicUrl,
           storage_path: path,
           category: selectedCategory,
-          product_name: productName || "",
-          alt_text: productName || catLabel,
+          product_name: productName.trim() || catLabel,
+          alt_text: productName.trim() || catLabel,
           sort_order: productImages.filter((p) => p.category === selectedCategory).length + i,
         });
       }
@@ -343,10 +343,13 @@ function AdminPage() {
                 type="text"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g. Vintage Buffalo Leather Journal A5"
+                placeholder="e.g. Vintage Buffalo Leather Journal A5 — be specific, this shows on the website"
                 className="w-full bg-transparent py-2 text-ink focus:outline-none text-sm"
                 style={{ borderBottom: "1px solid rgba(107,76,42,0.3)", fontFamily: "var(--font-body)" }}
               />
+              <p className="text-warm-grey/60 text-[11px] mt-1" style={{ fontFamily: "var(--font-body)", color: "rgba(139,125,107,0.6)" }}>
+                This name appears on the product card and in enquiry emails sent to you.
+              </p>
             </div>
 
             {/* Step 3 — Upload */}
