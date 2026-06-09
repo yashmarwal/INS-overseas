@@ -13,6 +13,7 @@ export const Route = createFileRoute("/gallery")({
       { property: "og:title", content: "Gallery — INS Overseas Workspace & Products" },
       { property: "og:url", content: "https://insoverseas.com/gallery" },
     ],
+  }),
   component: GalleryPage,
 });
 

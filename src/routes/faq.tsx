@@ -186,6 +186,7 @@ export const Route = createFileRoute("/faq")({
       { property: "og:title", content: "Frequently Asked Questions — INS Overseas" },
       { property: "og:url", content: "https://insoverseas.com/faq" },
     ],
+  }),
   component: FAQ,
 });
 

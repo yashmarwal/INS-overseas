@@ -11,6 +11,7 @@ export const Route = createFileRoute("/our-craft")({
       { property: "og:title", content: "Our Craft — Traditional Sanganer Papermaking" },
       { property: "og:url", content: "https://insoverseas.com/our-craft" },
     ],
+  }),
   component: OurCraft,
 });
 

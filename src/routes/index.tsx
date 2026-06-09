@@ -24,6 +24,7 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: "Four-generation family craft from Sanganer, Jaipur. Wholesale leather journals, seed paper, gift boxes & artisan stationery exported to 40+ countries." },
       { property: "og:url", content: "https://insoverseas.com/" },
     ],
+  }),
   component: Home,
 });
 

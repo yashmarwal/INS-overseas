@@ -13,6 +13,7 @@ export const Route = createFileRoute("/about")({
       { property: "og:title", content: "About INS Overseas — India's Leading Eco-Friendly Paper Manufacturer" },
       { property: "og:url", content: "https://insoverseas.com/about" },
     ],
+  }),
   component: About,
 });
 

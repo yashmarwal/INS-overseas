@@ -12,6 +12,7 @@ export const Route = createFileRoute("/sustainability")({
       { property: "og:title", content: "Sustainability — Eco-Friendly Handmade Paper Manufacturing" },
       { property: "og:url", content: "https://insoverseas.com/sustainability" },
     ],
+  }),
   component: Sust,
 });
 
