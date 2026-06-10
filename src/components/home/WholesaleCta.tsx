@@ -1,20 +1,10 @@
 import { motion } from "framer-motion";
 import { MessageCircle, Phone, FileText } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useSiteImage } from "@/hooks/useSiteImage";
 
 export default function WholesaleCta() {
-  const bgImg = useSiteImage("wholesale_bg");
   return (
-    <section className="relative py-14 md:py-24 lg:py-44 overflow-hidden">
-      <div className="absolute inset-0">
-        <img
-          src={bgImg}
-          alt="Artisan workspace"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-ink/75" />
-      </div>
+    <section className="relative py-14 md:py-24 lg:py-44 overflow-hidden bg-ink">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
