@@ -21,6 +21,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as JournalIndexRouteImport } from './routes/journal.index'
 import { Route as ProductsStationeryRouteImport } from './routes/products.stationery'
 import { Route as ProductsLeatherJournalsRouteImport } from './routes/products.leather-journals'
 import { Route as ProductsLeatherAccessoriesRouteImport } from './routes/products.leather-accessories'
@@ -87,6 +88,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JournalIndexRoute = JournalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => JournalRoute,
+} as any)
 const ProductsStationeryRoute = ProductsStationeryRouteImport.update({
   id: '/stationery',
   path: '/stationery',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/products/leather-accessories': typeof ProductsLeatherAccessoriesRoute
   '/products/leather-journals': typeof ProductsLeatherJournalsRoute
   '/products/stationery': typeof ProductsStationeryRoute
+  '/journal/': typeof JournalIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,7 +147,6 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
-  '/journal': typeof JournalRouteWithChildren
   '/manufacturing': typeof ManufacturingRoute
   '/our-craft': typeof OurCraftRoute
   '/products': typeof ProductsRouteWithChildren
@@ -151,6 +157,7 @@ export interface FileRoutesByTo {
   '/products/leather-accessories': typeof ProductsLeatherAccessoriesRoute
   '/products/leather-journals': typeof ProductsLeatherJournalsRoute
   '/products/stationery': typeof ProductsStationeryRoute
+  '/journal': typeof JournalIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -171,6 +178,7 @@ export interface FileRoutesById {
   '/products/leather-accessories': typeof ProductsLeatherAccessoriesRoute
   '/products/leather-journals': typeof ProductsLeatherJournalsRoute
   '/products/stationery': typeof ProductsStationeryRoute
+  '/journal/': typeof JournalIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -192,6 +200,7 @@ export interface FileRouteTypes {
     | '/products/leather-accessories'
     | '/products/leather-journals'
     | '/products/stationery'
+    | '/journal/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -200,7 +209,6 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/gallery'
-    | '/journal'
     | '/manufacturing'
     | '/our-craft'
     | '/products'
@@ -211,6 +219,7 @@ export interface FileRouteTypes {
     | '/products/leather-accessories'
     | '/products/leather-journals'
     | '/products/stationery'
+    | '/journal'
   id:
     | '__root__'
     | '/'
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/products/leather-accessories'
     | '/products/leather-journals'
     | '/products/stationery'
+    | '/journal/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -333,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/journal/': {
+      id: '/journal/'
+      path: '/'
+      fullPath: '/journal/'
+      preLoaderRoute: typeof JournalIndexRouteImport
+      parentRoute: typeof JournalRoute
+    }
     '/products/stationery': {
       id: '/products/stationery'
       path: '/stationery'
@@ -373,10 +390,12 @@ declare module '@tanstack/react-router' {
 
 interface JournalRouteChildren {
   JournalSlugRoute: typeof JournalSlugRoute
+  JournalIndexRoute: typeof JournalIndexRoute
 }
 
 const JournalRouteChildren: JournalRouteChildren = {
   JournalSlugRoute: JournalSlugRoute,
+  JournalIndexRoute: JournalIndexRoute,
 }
 
 const JournalRouteWithChildren =
