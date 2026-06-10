@@ -1,48 +1,60 @@
-import { motion } from "framer-motion";
-import SectionHeading from "@/components/shared/SectionHeading";
-
-const imgs = [
-  "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1519682337058-a94d519337bc?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?auto=format&fit=crop&w=600&q=80",
-];
+import { useEffect } from "react";
 
 export default function InstagramFeed() {
-  return (
-    <section className="bg-cream py-12 md:py-24 lg:py-32">
-      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-        <SectionHeading eyebrow="@ins_overseas" title={<>From Our <em className="italic font-light">Workspace</em></>} />
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://w.behold.so/widget.js";
+    script.type = "module";
+    document.head.appendChild(script);
+    return () => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, []);
 
-        {/* Grid: 2 cols on mobile, 3 on md+ */}
-        <div className="mt-10 md:mt-14 grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-5">
-          {imgs.map((src, i) => (
-            <motion.a
-              key={src}
-              href="https://instagram.com/ins_overseas"
-              target="_blank"
-              rel="noreferrer"
-              initial={{ opacity: 0, scale: 1.05 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.7, delay: i * 0.06 }}
-              className="group relative aspect-square overflow-hidden block"
-              data-cursor-view
-            >
-              <img src={src} alt="Workspace" className="w-full h-full object-cover transition-transform duration-[1800ms] group-hover:scale-110" />
-              <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/60 transition-colors duration-500 flex items-center justify-center text-cream opacity-0 group-hover:opacity-100" style={{ fontFamily: "var(--font-body)", letterSpacing: "0.2em", fontSize: 11 }}>
-                VIEW ON INSTAGRAM
-              </div>
-            </motion.a>
-          ))}
-        </div>
-        <div className="text-center mt-8 md:mt-10">
-          <a href="https://instagram.com/ins_overseas" target="_blank" rel="noreferrer" className="inline-block uppercase text-[12px] text-umber border-b border-umber pb-1" style={{ letterSpacing: "0.15em", fontWeight: 500 }}>
-            Follow Us @ins_overseas →
+  // Use a ref-based container so TS doesn't need to know the custom element type
+  const BeholdWidget = "behold-widget" as unknown as React.ElementType;
+
+  return (
+    <section className="bg-cream py-20 md:py-24">
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
+
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+          <div className="flex items-center gap-3">
+            <span className="h-px w-10 bg-gold" />
+            <div>
+              <p
+                className="text-gold uppercase"
+                style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 400, letterSpacing: "0.25em" }}
+              >
+                Follow Our Journey
+              </p>
+              <a
+                href="https://www.instagram.com/ins_overseas"
+                target="_blank"
+                rel="noreferrer"
+                className="text-ink hover:text-umber transition-colors"
+                style={{ fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(20px, 2.5vw, 32px)" }}
+              >
+                @ins_overseas
+              </a>
+            </div>
+          </div>
+          <a
+            href="https://www.instagram.com/ins_overseas"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 border border-umber text-umber uppercase px-5 py-2.5 hover:bg-umber hover:text-cream transition-colors shrink-0"
+            style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11, letterSpacing: "0.15em" }}
+          >
+            Follow on Instagram
           </a>
         </div>
+
+        {/* Live Behold.so Instagram feed widget */}
+        <BeholdWidget feed-id="WuYOWmn4Z0whV9Uh8FpV" />
+
       </div>
     </section>
   );
