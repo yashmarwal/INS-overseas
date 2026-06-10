@@ -13,6 +13,7 @@ import { Route as WholesaleRouteImport } from './routes/wholesale'
 import { Route as SustainabilityRouteImport } from './routes/sustainability'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as OurCraftRouteImport } from './routes/our-craft'
+import { Route as ManufacturingRouteImport } from './routes/manufacturing'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -24,6 +25,7 @@ import { Route as ProductsStationeryRouteImport } from './routes/products.statio
 import { Route as ProductsLeatherJournalsRouteImport } from './routes/products.leather-journals'
 import { Route as ProductsLeatherAccessoriesRouteImport } from './routes/products.leather-accessories'
 import { Route as ProductsHandmadePaperRouteImport } from './routes/products.handmade-paper'
+import { Route as JournalSlugRouteImport } from './routes/journal.$slug'
 
 const WholesaleRoute = WholesaleRouteImport.update({
   id: '/wholesale',
@@ -43,6 +45,11 @@ const ProductsRoute = ProductsRouteImport.update({
 const OurCraftRoute = OurCraftRouteImport.update({
   id: '/our-craft',
   path: '/our-craft',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManufacturingRoute = ManufacturingRouteImport.update({
+  id: '/manufacturing',
+  path: '/manufacturing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JournalRoute = JournalRouteImport.update({
@@ -101,6 +108,11 @@ const ProductsHandmadePaperRoute = ProductsHandmadePaperRouteImport.update({
   path: '/handmade-paper',
   getParentRoute: () => ProductsRoute,
 } as any)
+const JournalSlugRoute = JournalSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => JournalRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -109,11 +121,13 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
-  '/journal': typeof JournalRoute
+  '/journal': typeof JournalRouteWithChildren
+  '/manufacturing': typeof ManufacturingRoute
   '/our-craft': typeof OurCraftRoute
   '/products': typeof ProductsRouteWithChildren
   '/sustainability': typeof SustainabilityRoute
   '/wholesale': typeof WholesaleRoute
+  '/journal/$slug': typeof JournalSlugRoute
   '/products/handmade-paper': typeof ProductsHandmadePaperRoute
   '/products/leather-accessories': typeof ProductsLeatherAccessoriesRoute
   '/products/leather-journals': typeof ProductsLeatherJournalsRoute
@@ -126,11 +140,13 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
-  '/journal': typeof JournalRoute
+  '/journal': typeof JournalRouteWithChildren
+  '/manufacturing': typeof ManufacturingRoute
   '/our-craft': typeof OurCraftRoute
   '/products': typeof ProductsRouteWithChildren
   '/sustainability': typeof SustainabilityRoute
   '/wholesale': typeof WholesaleRoute
+  '/journal/$slug': typeof JournalSlugRoute
   '/products/handmade-paper': typeof ProductsHandmadePaperRoute
   '/products/leather-accessories': typeof ProductsLeatherAccessoriesRoute
   '/products/leather-journals': typeof ProductsLeatherJournalsRoute
@@ -144,11 +160,13 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
-  '/journal': typeof JournalRoute
+  '/journal': typeof JournalRouteWithChildren
+  '/manufacturing': typeof ManufacturingRoute
   '/our-craft': typeof OurCraftRoute
   '/products': typeof ProductsRouteWithChildren
   '/sustainability': typeof SustainabilityRoute
   '/wholesale': typeof WholesaleRoute
+  '/journal/$slug': typeof JournalSlugRoute
   '/products/handmade-paper': typeof ProductsHandmadePaperRoute
   '/products/leather-accessories': typeof ProductsLeatherAccessoriesRoute
   '/products/leather-journals': typeof ProductsLeatherJournalsRoute
@@ -164,10 +182,12 @@ export interface FileRouteTypes {
     | '/faq'
     | '/gallery'
     | '/journal'
+    | '/manufacturing'
     | '/our-craft'
     | '/products'
     | '/sustainability'
     | '/wholesale'
+    | '/journal/$slug'
     | '/products/handmade-paper'
     | '/products/leather-accessories'
     | '/products/leather-journals'
@@ -181,10 +201,12 @@ export interface FileRouteTypes {
     | '/faq'
     | '/gallery'
     | '/journal'
+    | '/manufacturing'
     | '/our-craft'
     | '/products'
     | '/sustainability'
     | '/wholesale'
+    | '/journal/$slug'
     | '/products/handmade-paper'
     | '/products/leather-accessories'
     | '/products/leather-journals'
@@ -198,10 +220,12 @@ export interface FileRouteTypes {
     | '/faq'
     | '/gallery'
     | '/journal'
+    | '/manufacturing'
     | '/our-craft'
     | '/products'
     | '/sustainability'
     | '/wholesale'
+    | '/journal/$slug'
     | '/products/handmade-paper'
     | '/products/leather-accessories'
     | '/products/leather-journals'
@@ -215,7 +239,8 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
   GalleryRoute: typeof GalleryRoute
-  JournalRoute: typeof JournalRoute
+  JournalRoute: typeof JournalRouteWithChildren
+  ManufacturingRoute: typeof ManufacturingRoute
   OurCraftRoute: typeof OurCraftRoute
   ProductsRoute: typeof ProductsRouteWithChildren
   SustainabilityRoute: typeof SustainabilityRoute
@@ -250,6 +275,13 @@ declare module '@tanstack/react-router' {
       path: '/our-craft'
       fullPath: '/our-craft'
       preLoaderRoute: typeof OurCraftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manufacturing': {
+      id: '/manufacturing'
+      path: '/manufacturing'
+      fullPath: '/manufacturing'
+      preLoaderRoute: typeof ManufacturingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/journal': {
@@ -329,8 +361,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsHandmadePaperRouteImport
       parentRoute: typeof ProductsRoute
     }
+    '/journal/$slug': {
+      id: '/journal/$slug'
+      path: '/$slug'
+      fullPath: '/journal/$slug'
+      preLoaderRoute: typeof JournalSlugRouteImport
+      parentRoute: typeof JournalRoute
+    }
   }
 }
+
+interface JournalRouteChildren {
+  JournalSlugRoute: typeof JournalSlugRoute
+}
+
+const JournalRouteChildren: JournalRouteChildren = {
+  JournalSlugRoute: JournalSlugRoute,
+}
+
+const JournalRouteWithChildren =
+  JournalRoute._addFileChildren(JournalRouteChildren)
 
 interface ProductsRouteChildren {
   ProductsHandmadePaperRoute: typeof ProductsHandmadePaperRoute
@@ -357,7 +407,8 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
   GalleryRoute: GalleryRoute,
-  JournalRoute: JournalRoute,
+  JournalRoute: JournalRouteWithChildren,
+  ManufacturingRoute: ManufacturingRoute,
   OurCraftRoute: OurCraftRoute,
   ProductsRoute: ProductsRouteWithChildren,
   SustainabilityRoute: SustainabilityRoute,
