@@ -1,8 +1,7 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import PageHero from "@/components/shared/PageHero";
 import SectionHeading from "@/components/shared/SectionHeading";
 import { Globe, Award, Package, Layers, Leaf, Clock } from "lucide-react";
 import { useFormSubmit } from "@/hooks/useFormSubmit";
@@ -136,12 +135,70 @@ function WholesaleForm() {
 function Wholesale() {
   return (
     <>
-      <PageHero
-        eyebrow="Wholesale"
-        title={<>Partner <em className="italic font-light text-gold-light">With Us</em></>}
-        subtitle="Source handmade leather and paper goods directly from Jaipur. Boutique-grade quality, B2B pricing, custom branding."
-        image="https://images.unsplash.com/photo-1559563458-527698bf5295?auto=format&fit=crop&w=2200&q=80"
-      />
+      {/* Dark text-only hero — no image */}
+      <section className="bg-ink pt-32 pb-20 md:pt-40 md:pb-28">
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] }}
+          >
+            <div className="flex items-center gap-3 mb-8">
+              <span className="h-px w-10 bg-gold" />
+              <span
+                className="text-gold uppercase"
+                style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 11, letterSpacing: "0.25em" }}
+              >
+                For Wholesale Buyers
+              </span>
+            </div>
+            <h1
+              className="text-cream mb-6"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 300,
+                fontSize: "clamp(40px, 6vw, 88px)",
+                lineHeight: 1.0,
+                letterSpacing: "-0.02em",
+                maxWidth: "14ch",
+              }}
+            >
+              Partner With{" "}
+              <em className="italic font-light text-gold-light">INS Overseas</em>
+            </h1>
+            <p
+              className="text-warm-grey max-w-xl leading-relaxed"
+              style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 17, lineHeight: 1.8 }}
+            >
+              India's leading manufacturer of handmade leather journals, cotton rag paper and artisan gift products. MOQ 200 units. Export to 40+ countries since 1995.
+            </p>
+            {/* Quick stats */}
+            <div className="flex flex-wrap gap-10 mt-12 pt-10 border-t border-white/10">
+              {([
+                ["200", "Units MOQ"],
+                ["30",  "Years exporting"],
+                ["40+", "Countries served"],
+                ["25+", "Artisans"],
+              ] as [string, string][]).map(([n, l]) => (
+                <div key={l}>
+                  <p
+                    className="text-gold"
+                    style={{ fontFamily: "var(--font-display)", fontWeight: 300, fontSize: 36, lineHeight: 1 }}
+                  >
+                    {n}
+                  </p>
+                  <p
+                    className="text-warm-grey mt-1 uppercase"
+                    style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 11, letterSpacing: "0.15em" }}
+                  >
+                    {l}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
       <section className="bg-parchment py-24">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
