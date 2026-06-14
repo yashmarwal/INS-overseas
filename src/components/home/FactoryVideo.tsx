@@ -147,7 +147,7 @@ export default function FactoryVideo() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] bg-ink/97 flex flex-col items-center justify-center p-0 md:p-8"
+            className="fixed inset-0 z-[100] bg-ink/97 flex flex-col items-center justify-center p-4 md:p-8"
             onClick={() => setActiveVideo(null)}
             onKeyDown={(e) => {
               if (e.key === "Escape") setActiveVideo(null);
@@ -173,9 +173,10 @@ export default function FactoryVideo() {
               transition={{ duration: 0.3, ease: EASE }}
               className="relative w-full shadow-2xl"
               style={{
-                maxWidth: "min(900px, 100vw)",
+                maxWidth: "min(400px, 92vw)",
                 width: "100%",
-                aspectRatio: "16/9",
+                aspectRatio: "9/16",
+                maxHeight: "75vh",
               }}
               onClick={(e) => e.stopPropagation()}
             >

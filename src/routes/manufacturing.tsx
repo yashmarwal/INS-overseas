@@ -171,7 +171,7 @@ function Manufacturing() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] bg-ink/95 flex items-center justify-center p-0 md:p-8"
+            className="fixed inset-0 z-[100] bg-ink/95 flex items-center justify-center p-4 md:p-8"
             onClick={close}
           >
             {/* Close */}
@@ -191,10 +191,10 @@ function Manufacturing() {
               transition={{ duration: 0.3, ease: EASE }}
               className="relative w-full"
               style={{
-                maxWidth: "min(900px, 100vw)",
+                maxWidth: "min(400px, 92vw)",
                 width: "100%",
-                aspectRatio: active.type === "video" ? "16/9" : undefined,
-                maxHeight: active.type === "video" ? undefined : "80vh",
+                aspectRatio: "9/16",
+                maxHeight: "75vh",
               }}
               onClick={(e) => e.stopPropagation()}
             >
