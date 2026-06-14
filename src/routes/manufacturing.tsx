@@ -18,18 +18,9 @@ export const Route = createFileRoute("/manufacturing")({
 
 // ── VIDEOS — Vimeo IDs ──
 const videos = [
-  { id: "1199824555" },
-  { id: "1199824554" },
-  { id: "1199824476" },
-  { id: "1199824479" },
-  { id: "1199824489" },
-  { id: "1199824507" },
-  { id: "1199824375" },
-  { id: "1199824461" },
-  { id: "1199824372" },
-  { id: "1199824373" },
-  { id: "1199824374" },
-  { id: "1199824422" },
+  { id: "1201155136" },
+  { id: "1201155135" },
+  { id: "1201155137" },
 ];
 
 // ── PHOTOS — real workspace images ──
@@ -39,6 +30,7 @@ const photos = [
   "/manufacturing/workspace-3.jpg",
   "/manufacturing/workspace-4.jpg",
   "/manufacturing/workspace-5.jpg",
+  "/manufacturing/workspace-6.jpg",
 ];
 
 type ActiveMedia =

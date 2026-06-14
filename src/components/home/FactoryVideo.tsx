@@ -3,19 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 const videos = [
-  { id: "1199824555" },
-  { id: "1199824554" },
-  { id: "1199824476" },
-  { id: "1199824479" },
-  { id: "1199824489" },
-  { id: "1199824507" },
-  { id: "1199824375" },
-  { id: "1199824461" },
-  { id: "1199824372" },
-  { id: "1199824373" },
-  { id: "1199824374" },
-  { id: "1199824422" },
+  { id: "1201155136" },
+  { id: "1201155135" },
+  { id: "1201155137" },
 ];
+
 
 type Video = typeof videos[number];
 
