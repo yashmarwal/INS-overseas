@@ -14,6 +14,7 @@ const filters = [
   { key: "handmade-paper-gift-bag", label: "Paper Gift Bag"        },
   { key: "handmade-seed-paper",     label: "Seed Paper"            },
   { key: "handmade-deckle-edge-paper", label: "Deckle Edge Paper"      },
+  { key: "handblock-print-fabric",     label: "Handblock Print Fabric" },
 ] as const;
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -23,6 +24,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   "handmade-paper-gift-bag": "Paper Gift Bag",
   "handmade-seed-paper":     "Seed Paper",
   "handmade-deckle-edge-paper": "Deckle Edge Paper",
+  "handblock-print-fabric":     "Handblock Print Fabric",
 };
 
 const CATEGORY_MOQ: Record<string, string> = {
@@ -32,6 +34,7 @@ const CATEGORY_MOQ: Record<string, string> = {
   "handmade-paper-gift-bag": "800 units minimum",
   "handmade-seed-paper":     "1500 units minimum",
   "handmade-deckle-edge-paper": "200 units minimum",
+  "handblock-print-fabric":     "200 units minimum",
 };
 
 // ── Static fallback products ──────────────────────────────────────────────────
@@ -48,6 +51,9 @@ const staticProducts = [
   { id: "s10", name: "Deckle Edge Notebook (Set of 6)",    category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?auto=format&fit=crop&w=900&q=80",  description: "Cotton rag · unlined · A5 · deckle edges" },
   { id: "s11", name: "Deckle Edge Writing Pad",             category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80",  description: "120 gsm · fountain-pen friendly · A4" },
   { id: "s12", name: "Deckle Edge Loose Sheets (Pack 50)",  category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80",  description: "Ivory cotton rag · A4 · deckle all four edges" },
+  { id: "s13", name: "Block-Printed Cotton Fabric",         category: "handblock-print-fabric",     image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=80",  description: "Hand-blocked · natural dye · 44 inch width" },
+  { id: "s14", name: "Indigo Block-Print Table Runner",     category: "handblock-print-fabric",     image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=900&q=80",  description: "100% cotton · Sanganer motifs · 72 inch" },
+  { id: "s15", name: "Floral Block-Print Fabric (Per Metre)",category: "handblock-print-fabric",    image: "https://images.unsplash.com/photo-1517164850305-99a3e65bb47e?auto=format&fit=crop&w=900&q=80",  description: "Rajasthani floral pattern · reactive dye · 45 inch" },
 ];
 
 type DynamicProduct = {
