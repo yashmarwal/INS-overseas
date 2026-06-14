@@ -179,7 +179,7 @@ function Manufacturing() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] bg-ink/95 flex items-center justify-center p-4 md:p-10"
+            className="fixed inset-0 z-[100] bg-ink/95 flex items-center justify-center p-0 md:p-8"
             onClick={close}
           >
             {/* Close */}
@@ -197,10 +197,12 @@ function Manufacturing() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3, ease: EASE }}
-              className="relative w-full max-w-5xl"
+              className="relative w-full"
               style={{
+                maxWidth: "min(900px, 100vw)",
+                width: "100%",
                 aspectRatio: active.type === "video" ? "16/9" : undefined,
-                maxHeight: "80vh",
+                maxHeight: active.type === "video" ? undefined : "80vh",
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -208,7 +210,8 @@ function Manufacturing() {
                 <iframe
                   key={active.id}
                   src={`https://player.vimeo.com/video/${active.id}?autoplay=1&color=C9973A&title=0&byline=0&portrait=0`}
-                  className="w-full h-full"
+                  className="absolute inset-0 w-full h-full"
+                  style={{ width: "100%", height: "100%" }}
                   frameBorder="0"
                   allow="autoplay; fullscreen; picture-in-picture"
                   allowFullScreen

@@ -18,7 +18,7 @@ export const PRODUCT_CATEGORIES = [
   { id: "handmade-paper-gift-box", label: "Handmade Paper Gift Box", icon: "🎁" },
   { id: "handmade-paper-gift-bag", label: "Handmade Paper Gift Bag", icon: "🛍️" },
   { id: "handmade-seed-paper",     label: "Handmade Seed Paper",     icon: "🌱" },
-  { id: "handmade-stationery",     label: "Handmade Stationery",     icon: "✉️"  },
+  { id: "handmade-deckle-edge-paper", label: "Handmade Deckle Edge Paper", icon: "📜" },
 ] as const;
 
 export type ProductCategory = typeof PRODUCT_CATEGORIES[number]["id"];

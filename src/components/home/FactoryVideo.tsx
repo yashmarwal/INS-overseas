@@ -155,7 +155,7 @@ export default function FactoryVideo() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] bg-ink/97 flex flex-col items-center justify-center p-4 md:p-8"
+            className="fixed inset-0 z-[100] bg-ink/97 flex flex-col items-center justify-center p-0 md:p-8"
             onClick={() => setActiveVideo(null)}
             onKeyDown={(e) => {
               if (e.key === "Escape") setActiveVideo(null);
@@ -179,14 +179,19 @@ export default function FactoryVideo() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.3, ease: EASE }}
-              className="relative w-full max-w-5xl shadow-2xl"
-              style={{ aspectRatio: "16/9" }}
+              className="relative w-full shadow-2xl"
+              style={{
+                maxWidth: "min(900px, 100vw)",
+                width: "100%",
+                aspectRatio: "16/9",
+              }}
               onClick={(e) => e.stopPropagation()}
             >
               <iframe
                 key={activeVideo.id}
                 src={`https://player.vimeo.com/video/${activeVideo.id}?autoplay=1&color=C9973A&title=0&byline=0&portrait=0&badge=0`}
-                className="w-full h-full"
+                className="absolute inset-0 w-full h-full"
+                style={{ width: "100%", height: "100%" }}
                 frameBorder="0"
                 allow="autoplay; fullscreen; picture-in-picture"
                 allowFullScreen
