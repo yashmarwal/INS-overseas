@@ -13,7 +13,7 @@ const filters = [
   { key: "handmade-paper-gift-box", label: "Paper Gift Box"        },
   { key: "handmade-paper-gift-bag", label: "Paper Gift Bag"        },
   { key: "handmade-seed-paper",     label: "Seed Paper"            },
-  { key: "handmade-stationery",     label: "Handmade Stationery"   },
+  { key: "handmade-deckle-edge-paper", label: "Deckle Edge Paper"      },
 ] as const;
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -22,7 +22,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   "handmade-paper-gift-box": "Paper Gift Box",
   "handmade-paper-gift-bag": "Paper Gift Bag",
   "handmade-seed-paper":     "Seed Paper",
-  "handmade-stationery":     "Handmade Stationery",
+  "handmade-deckle-edge-paper": "Deckle Edge Paper",
 };
 
 const CATEGORY_MOQ: Record<string, string> = {
@@ -31,7 +31,7 @@ const CATEGORY_MOQ: Record<string, string> = {
   "handmade-paper-gift-box": "200 units minimum",
   "handmade-paper-gift-bag": "800 units minimum",
   "handmade-seed-paper":     "1500 units minimum",
-  "handmade-stationery":     "200 units minimum",
+  "handmade-deckle-edge-paper": "200 units minimum",
 };
 
 // ── Static fallback products ──────────────────────────────────────────────────
@@ -45,9 +45,9 @@ const staticProducts = [
   { id: "s7",  name: "Handmade Paper Gift Box",         category: "handmade-paper-gift-box", image: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=80",  description: "Recycled cotton paper · gold foil accent" },
   { id: "s8",  name: "Paper Gift Bags Set (12pc)",      category: "handmade-paper-gift-bag", image: "https://images.unsplash.com/photo-1607344645866-009c320b63e0?auto=format&fit=crop&w=900&q=80",  description: "Recycled cotton · ribbon handles · assorted" },
   { id: "s9",  name: "Plantable Seed Paper Set",        category: "handmade-seed-paper",     image: "https://images.unsplash.com/photo-1599492816851-9cc4f3f06f88?auto=format&fit=crop&w=900&q=80",  description: "Wildflower mix · 20 sheets · biodegradable" },
-  { id: "s10", name: "Set of 6 Luxury Greeting Cards",  category: "handmade-stationery",     image: "https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?auto=format&fit=crop&w=900&q=80",  description: "Cotton paper · hand-stamped · envelopes included" },
-  { id: "s11", name: "Wax-Sealed Envelope Collection",  category: "handmade-stationery",     image: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80",  description: "10 envelopes · gold seal · A6" },
-  { id: "s12", name: "Hand-Stitched Gift Tags (Set 24)", category: "handmade-stationery",    image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80",  description: "Kraft cotton · jute string" },
+  { id: "s10", name: "Deckle Edge Notebook (Set of 6)",    category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?auto=format&fit=crop&w=900&q=80",  description: "Cotton rag · unlined · A5 · deckle edges" },
+  { id: "s11", name: "Deckle Edge Writing Pad",             category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80",  description: "120 gsm · fountain-pen friendly · A4" },
+  { id: "s12", name: "Deckle Edge Loose Sheets (Pack 50)",  category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80",  description: "Ivory cotton rag · A4 · deckle all four edges" },
 ];
 
 type DynamicProduct = {
@@ -111,7 +111,7 @@ function Products() {
             data.map((d) => ({
               id: d.id,
               name: d.product_name || d.label || "Handmade Product",
-              category: d.category || "handmade-stationery",
+              category: d.category || "handmade-deckle-edge-paper",
               image: d.url,
               description: d.alt_text || "",
               isDynamic: true,
