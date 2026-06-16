@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WholesaleRouteImport } from './routes/wholesale'
+import { Route as TermsOfUseRouteImport } from './routes/terms-of-use'
 import { Route as SustainabilityRouteImport } from './routes/sustainability'
 import { Route as ProductsRouteImport } from './routes/products'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as OurCraftRouteImport } from './routes/our-craft'
 import { Route as ManufacturingRouteImport } from './routes/manufacturing'
 import { Route as JournalRouteImport } from './routes/journal'
@@ -33,6 +35,11 @@ const WholesaleRoute = WholesaleRouteImport.update({
   path: '/wholesale',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsOfUseRoute = TermsOfUseRouteImport.update({
+  id: '/terms-of-use',
+  path: '/terms-of-use',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SustainabilityRoute = SustainabilityRouteImport.update({
   id: '/sustainability',
   path: '/sustainability',
@@ -41,6 +48,11 @@ const SustainabilityRoute = SustainabilityRouteImport.update({
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OurCraftRoute = OurCraftRouteImport.update({
@@ -130,8 +142,10 @@ export interface FileRoutesByFullPath {
   '/journal': typeof JournalRouteWithChildren
   '/manufacturing': typeof ManufacturingRoute
   '/our-craft': typeof OurCraftRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/products': typeof ProductsRouteWithChildren
   '/sustainability': typeof SustainabilityRoute
+  '/terms-of-use': typeof TermsOfUseRoute
   '/wholesale': typeof WholesaleRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/products/handmade-paper': typeof ProductsHandmadePaperRoute
@@ -149,8 +163,10 @@ export interface FileRoutesByTo {
   '/gallery': typeof GalleryRoute
   '/manufacturing': typeof ManufacturingRoute
   '/our-craft': typeof OurCraftRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/products': typeof ProductsRouteWithChildren
   '/sustainability': typeof SustainabilityRoute
+  '/terms-of-use': typeof TermsOfUseRoute
   '/wholesale': typeof WholesaleRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/products/handmade-paper': typeof ProductsHandmadePaperRoute
@@ -170,8 +186,10 @@ export interface FileRoutesById {
   '/journal': typeof JournalRouteWithChildren
   '/manufacturing': typeof ManufacturingRoute
   '/our-craft': typeof OurCraftRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/products': typeof ProductsRouteWithChildren
   '/sustainability': typeof SustainabilityRoute
+  '/terms-of-use': typeof TermsOfUseRoute
   '/wholesale': typeof WholesaleRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/products/handmade-paper': typeof ProductsHandmadePaperRoute
@@ -192,8 +210,10 @@ export interface FileRouteTypes {
     | '/journal'
     | '/manufacturing'
     | '/our-craft'
+    | '/privacy-policy'
     | '/products'
     | '/sustainability'
+    | '/terms-of-use'
     | '/wholesale'
     | '/journal/$slug'
     | '/products/handmade-paper'
@@ -211,8 +231,10 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/manufacturing'
     | '/our-craft'
+    | '/privacy-policy'
     | '/products'
     | '/sustainability'
+    | '/terms-of-use'
     | '/wholesale'
     | '/journal/$slug'
     | '/products/handmade-paper'
@@ -231,8 +253,10 @@ export interface FileRouteTypes {
     | '/journal'
     | '/manufacturing'
     | '/our-craft'
+    | '/privacy-policy'
     | '/products'
     | '/sustainability'
+    | '/terms-of-use'
     | '/wholesale'
     | '/journal/$slug'
     | '/products/handmade-paper'
@@ -252,8 +276,10 @@ export interface RootRouteChildren {
   JournalRoute: typeof JournalRouteWithChildren
   ManufacturingRoute: typeof ManufacturingRoute
   OurCraftRoute: typeof OurCraftRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ProductsRoute: typeof ProductsRouteWithChildren
   SustainabilityRoute: typeof SustainabilityRoute
+  TermsOfUseRoute: typeof TermsOfUseRoute
   WholesaleRoute: typeof WholesaleRoute
 }
 
@@ -264,6 +290,13 @@ declare module '@tanstack/react-router' {
       path: '/wholesale'
       fullPath: '/wholesale'
       preLoaderRoute: typeof WholesaleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms-of-use': {
+      id: '/terms-of-use'
+      path: '/terms-of-use'
+      fullPath: '/terms-of-use'
+      preLoaderRoute: typeof TermsOfUseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sustainability': {
@@ -278,6 +311,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/our-craft': {
@@ -429,8 +469,10 @@ const rootRouteChildren: RootRouteChildren = {
   JournalRoute: JournalRouteWithChildren,
   ManufacturingRoute: ManufacturingRoute,
   OurCraftRoute: OurCraftRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
   ProductsRoute: ProductsRouteWithChildren,
   SustainabilityRoute: SustainabilityRoute,
+  TermsOfUseRoute: TermsOfUseRoute,
   WholesaleRoute: WholesaleRoute,
 }
 export const routeTree = rootRouteImport
