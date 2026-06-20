@@ -4,9 +4,9 @@ import { Play, ArrowRight } from "lucide-react";
 
 // First 3 video IDs from the real Vimeo playlist
 const previewVideos = [
+  "1201685544",
   "1199824555",
   "1199824554",
-  "1199824476",
 ];
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
