@@ -3,6 +3,13 @@
   "installCommand": "npm install --legacy-peer-deps",
   "outputDirectory": "dist",
   "framework": null,
+  "redirects": [
+    {
+      "source": "https://www.ins-overseas.com/(.*)",
+      "destination": "https://ins-overseas.com/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

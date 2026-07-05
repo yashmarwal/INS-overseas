@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import PageHero from "@/components/shared/PageHero";
 import CraftProcess from "@/components/home/CraftProcess";
 import { motion } from "framer-motion";
@@ -10,6 +10,9 @@ export const Route = createFileRoute("/our-craft")({
       { name: "description", content: "From recycled cotton rags to finished leather journals — discover the traditional Sanganer papermaking process passed down through four generations at INS Overseas." },
       { property: "og:title", content: "Our Craft — Traditional Sanganer Papermaking" },
       { property: "og:url", content: "https://ins-overseas.com/our-craft" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://ins-overseas.com/our-craft" },
     ],
   }),
   component: OurCraft,

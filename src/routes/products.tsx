@@ -75,6 +75,9 @@ export const Route = createFileRoute("/products")({
       { property: "og:title", content: "Products — Leather Journals, Seed Paper & Artisan Gifts | INS Overseas" },
       { property: "og:url", content: "https://ins-overseas.com/products" },
     ],
+    links: [
+      { rel: "canonical", href: "https://ins-overseas.com/products" },
+    ],
   }),
   component: Products,
 });

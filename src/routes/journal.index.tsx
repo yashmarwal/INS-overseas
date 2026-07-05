@@ -14,6 +14,9 @@ export const Route = createFileRoute("/journal/")({
           "Essays on handmade paper, leather binding, Rajasthani craft, and care guides for your INS Overseas pieces.",
       },
     ],
+    links: [
+      { rel: "canonical", href: "https://ins-overseas.com/journal" },
+    ],
   }),
   component: JournalIndex,
 });

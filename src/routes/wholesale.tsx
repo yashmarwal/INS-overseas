@@ -15,6 +15,9 @@ export const Route = createFileRoute("/wholesale")({
       { property: "og:title", content: "Wholesale — Partner With INS Overseas" },
       { property: "og:url", content: "https://ins-overseas.com/wholesale" },
     ],
+    links: [
+      { rel: "canonical", href: "https://ins-overseas.com/wholesale" },
+    ],
   }),
   component: Wholesale,
 });

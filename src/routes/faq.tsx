@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
@@ -185,6 +185,9 @@ export const Route = createFileRoute("/faq")({
       { name: "description", content: "Answers to the most common wholesale questions about INS Overseas — MOQ, shipping, custom orders, payment, lead times, certifications and more." },
       { property: "og:title", content: "Frequently Asked Questions — INS Overseas" },
       { property: "og:url", content: "https://ins-overseas.com/faq" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://ins-overseas.com/faq" },
     ],
   }),
   component: FAQ,

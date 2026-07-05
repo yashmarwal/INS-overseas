@@ -12,6 +12,9 @@ export const Route = createFileRoute("/manufacturing")({
       { property: "og:title", content: "Manufacturing — INS Overseas | Sanganer Workspace" },
       { property: "og:url", content: "https://ins-overseas.com/manufacturing" },
     ],
+    links: [
+      { rel: "canonical", href: "https://ins-overseas.com/manufacturing" },
+    ],
   }),
   component: Manufacturing,
 });

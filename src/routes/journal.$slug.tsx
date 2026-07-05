@@ -14,6 +14,9 @@ export const Route = createFileRoute("/journal/$slug")({
         { property: "og:title", content: post.title },
         { property: "og:image", content: post.img },
       ],
+      links: [
+        { rel: "canonical", href: `https://ins-overseas.com/journal/${params.slug}` },
+      ],
     };
   },
   loader: ({ params }): Post => {
