@@ -3,6 +3,9 @@ import { Link } from "@tanstack/react-router";
 import PageHero from "@/components/shared/PageHero";
 import { motion } from "framer-motion";
 import { posts } from "@/data/blogPosts";
+import { SITE_URL } from "@/lib/seo";
+
+const CANONICAL = `${SITE_URL}/journal`;
 
 export const Route = createFileRoute("/journal/")({
   head: () => ({
@@ -13,11 +16,63 @@ export const Route = createFileRoute("/journal/")({
         content:
           "Essays on handmade paper, leather binding, Rajasthani craft, and care guides for your INS Overseas pieces.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: CANONICAL },
+      { property: "og:title", content: "The INS Overseas Journal — Craft Stories & Jaipur Heritage" },
+      {
+        property: "og:description",
+        content:
+          "Essays on handmade paper, leather binding, Rajasthani craft, and care guides for your INS Overseas pieces.",
+      },
+      { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "INS Overseas Journal — Craft Stories from Sanganer, Jaipur" },
+      { property: "og:site_name", content: "INS Overseas" },
+      { property: "og:locale", content: "en_IN" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@ins_overseas" },
+      { name: "twitter:title", content: "The INS Overseas Journal" },
+      { name: "twitter:description", content: "Essays on handmade paper, leather craft, and Rajasthani heritage." },
+      { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
+      { name: "twitter:image:alt", content: "INS Overseas Journal" },
     ],
-    links: [
-      { rel: "canonical", href: "https://ins-overseas.com/journal" },
+    links: [{ rel: "canonical", href: CANONICAL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "CollectionPage",
+              "@id": `${CANONICAL}#collection`,
+              "name": "The INS Overseas Journal",
+              "description": "Essays on handmade paper, leather binding, Rajasthani craft, and care guides.",
+              "url": CANONICAL,
+              "publisher": { "@id": `${SITE_URL}/#organization` },
+              "isPartOf": { "@id": `${SITE_URL}/#website` },
+              "hasPart": posts.map((p) => ({
+                "@type": "BlogPosting",
+                "headline": p.title,
+                "url": `${SITE_URL}/journal/${p.slug}`,
+                "datePublished": p.datePublished,
+                "image": `${SITE_URL}${p.img}`,
+              })),
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+                { "@type": "ListItem", "position": 2, "name": "Journal", "item": CANONICAL },
+              ],
+            },
+          ],
+        }),
+      },
     ],
   }),
+
   component: JournalIndex,
 });
 

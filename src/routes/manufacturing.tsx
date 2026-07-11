@@ -3,21 +3,105 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, X, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import PageHero from "@/components/shared/PageHero";
+import { SITE_URL } from "@/lib/seo";
+
+const CANONICAL = `${SITE_URL}/manufacturing`;
+const TITLE = "Manufacturing | INS Overseas — Watch Our Workspace in Jaipur";
+const DESCRIPTION =
+  "Watch how INS Overseas makes handmade leather journals and eco-friendly paper in Sanganer, Jaipur. Videos and photos from our workspace.";
 
 export const Route = createFileRoute("/manufacturing")({
   head: () => ({
     meta: [
-      { title: "Manufacturing | INS Overseas — Watch Our Workspace in Jaipur" },
-      { name: "description", content: "Watch how INS Overseas makes handmade leather journals and eco-friendly paper in Sanganer, Jaipur. Videos and photos from our workspace." },
+      { title: TITLE },
+      { name: "description", content: DESCRIPTION },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: CANONICAL },
       { property: "og:title", content: "Manufacturing — INS Overseas | Sanganer Workspace" },
-      { property: "og:url", content: "https://ins-overseas.com/manufacturing" },
+      { property: "og:description", content: DESCRIPTION },
+      { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "INS Overseas manufacturing workspace — handmade paper and leather journals in Sanganer, Jaipur" },
+      { property: "og:site_name", content: "INS Overseas" },
+      { property: "og:locale", content: "en_IN" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@ins_overseas" },
+      { name: "twitter:title", content: "Manufacturing — INS Overseas Workspace" },
+      { name: "twitter:description", content: DESCRIPTION },
+      { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
+      { name: "twitter:image:alt", content: "INS Overseas manufacturing workspace" },
     ],
-    links: [
-      { rel: "canonical", href: "https://ins-overseas.com/manufacturing" },
+    links: [{ rel: "canonical", href: CANONICAL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "VideoObject",
+              "@id": `${CANONICAL}#video-1201685544`,
+              "name": "INS Overseas — Handmade Paper Manufacturing Process, Sanganer Jaipur",
+              "description": "Watch how INS Overseas makes handmade cotton rag paper using traditional Sanganer techniques passed down through four generations.",
+              "thumbnailUrl": `https://vumbnail.com/1201685544.jpg`,
+              "uploadDate": "2024-12-01",
+              "contentUrl": "https://vimeo.com/1201685544",
+              "embedUrl": "https://player.vimeo.com/video/1201685544",
+              "publisher": { "@id": `${SITE_URL}/#organization` },
+              "inLanguage": "en-IN",
+            },
+            {
+              "@type": "VideoObject",
+              "@id": `${CANONICAL}#video-1201155136`,
+              "name": "INS Overseas — Leather Journal Binding Process",
+              "description": "A look at the hand-stitching and leather binding process at our Sanganer workshop.",
+              "thumbnailUrl": `https://vumbnail.com/1201155136.jpg`,
+              "uploadDate": "2024-12-01",
+              "contentUrl": "https://vimeo.com/1201155136",
+              "embedUrl": "https://player.vimeo.com/video/1201155136",
+              "publisher": { "@id": `${SITE_URL}/#organization` },
+              "inLanguage": "en-IN",
+            },
+            {
+              "@type": "VideoObject",
+              "@id": `${CANONICAL}#video-1201155135`,
+              "name": "INS Overseas — Cotton Rag Paper Production",
+              "description": "The full cotton rag paper production process at INS Overseas, from raw textile offcuts to finished handmade sheets.",
+              "thumbnailUrl": `https://vumbnail.com/1201155135.jpg`,
+              "uploadDate": "2024-12-01",
+              "contentUrl": "https://vimeo.com/1201155135",
+              "embedUrl": "https://player.vimeo.com/video/1201155135",
+              "publisher": { "@id": `${SITE_URL}/#organization` },
+              "inLanguage": "en-IN",
+            },
+            {
+              "@type": "VideoObject",
+              "@id": `${CANONICAL}#video-1201155137`,
+              "name": "INS Overseas — Artisan Workspace Tour, Sanganer",
+              "description": "Tour of the INS Overseas artisan workspace where handmade paper and leather products are crafted.",
+              "thumbnailUrl": `https://vumbnail.com/1201155137.jpg`,
+              "uploadDate": "2024-12-01",
+              "contentUrl": "https://vimeo.com/1201155137",
+              "embedUrl": "https://player.vimeo.com/video/1201155137",
+              "publisher": { "@id": `${SITE_URL}/#organization` },
+              "inLanguage": "en-IN",
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+                { "@type": "ListItem", "position": 2, "name": "Manufacturing", "item": CANONICAL },
+              ],
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: Manufacturing,
 });
+
 
 // ── VIDEOS — Vimeo IDs ──
 const videos = [

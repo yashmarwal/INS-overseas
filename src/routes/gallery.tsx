@@ -4,21 +4,66 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useGalleryImages } from "@/hooks/useGalleryImages";
 import PageHero from "@/components/shared/PageHero";
+import { SITE_URL } from "@/lib/seo";
+
+const CANONICAL = `${SITE_URL}/gallery`;
+const TITLE = "Gallery — Handmade Journals & Artisan Paper Products | INS Overseas";
+const DESCRIPTION =
+  "Browse our workspace and product gallery — handcrafted leather journals, seed paper, gift boxes and artisan stationery made in Sanganer, Jaipur.";
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
     meta: [
-      { title: "Gallery — Handmade Journals & Artisan Paper Products | INS Overseas" },
-      { name: "description", content: "Browse our workspace and product gallery — handcrafted leather journals, seed paper, gift boxes and artisan stationery made in Sanganer, Jaipur." },
+      { title: TITLE },
+      { name: "description", content: DESCRIPTION },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: CANONICAL },
       { property: "og:title", content: "Gallery — INS Overseas Workspace & Products" },
-      { property: "og:url", content: "https://ins-overseas.com/gallery" },
+      { property: "og:description", content: DESCRIPTION },
+      { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "INS Overseas gallery — handcrafted leather journals and artisan paper products from Sanganer, Jaipur" },
+      { property: "og:site_name", content: "INS Overseas" },
+      { property: "og:locale", content: "en_IN" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@ins_overseas" },
+      { name: "twitter:title", content: "Gallery — INS Overseas Workspace & Products" },
+      { name: "twitter:description", content: DESCRIPTION },
+      { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
+      { name: "twitter:image:alt", content: "INS Overseas gallery" },
     ],
-    links: [
-      { rel: "canonical", href: "https://ins-overseas.com/gallery" },
+    links: [{ rel: "canonical", href: CANONICAL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "CollectionPage",
+              "@id": `${CANONICAL}#collection`,
+              "name": TITLE,
+              "description": DESCRIPTION,
+              "url": CANONICAL,
+              "publisher": { "@id": `${SITE_URL}/#organization` },
+              "about": { "@id": `${SITE_URL}/#organization` },
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+                { "@type": "ListItem", "position": 2, "name": "Gallery", "item": CANONICAL },
+              ],
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: GalleryPage,
 });
+
 
 function GalleryPage() {
   const { images, loading } = useGalleryImages();

@@ -2,21 +2,66 @@ import { createFileRoute } from "@tanstack/react-router";
 import PageHero from "@/components/shared/PageHero";
 import CraftProcess from "@/components/home/CraftProcess";
 import { motion } from "framer-motion";
+import { SITE_URL } from "@/lib/seo";
+
+const CANONICAL = `${SITE_URL}/our-craft`;
+const TITLE = "Our Craft — How We Make Handmade Paper & Leather Journals | INS Overseas";
+const DESCRIPTION =
+  "From recycled cotton rags to finished leather journals — discover the traditional Sanganer papermaking process passed down through four generations at INS Overseas.";
 
 export const Route = createFileRoute("/our-craft")({
   head: () => ({
     meta: [
-      { title: "Our Craft — How We Make Handmade Paper & Leather Journals | INS Overseas" },
-      { name: "description", content: "From recycled cotton rags to finished leather journals — discover the traditional Sanganer papermaking process passed down through four generations at INS Overseas." },
+      { title: TITLE },
+      { name: "description", content: DESCRIPTION },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: CANONICAL },
       { property: "og:title", content: "Our Craft — Traditional Sanganer Papermaking" },
-      { property: "og:url", content: "https://ins-overseas.com/our-craft" },
+      { property: "og:description", content: DESCRIPTION },
+      { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "Traditional handmade paper craft at INS Overseas, Sanganer Jaipur" },
+      { property: "og:site_name", content: "INS Overseas" },
+      { property: "og:locale", content: "en_IN" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@ins_overseas" },
+      { name: "twitter:title", content: "Our Craft — Sanganer Handmade Paper & Leather" },
+      { name: "twitter:description", content: DESCRIPTION },
+      { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
+      { name: "twitter:image:alt", content: "Traditional handmade paper craft at INS Overseas" },
     ],
-    links: [
-      { rel: "canonical", href: "https://ins-overseas.com/our-craft" },
+    links: [{ rel: "canonical", href: CANONICAL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebPage",
+              "@id": `${CANONICAL}#webpage`,
+              "name": TITLE,
+              "description": DESCRIPTION,
+              "url": CANONICAL,
+              "about": { "@id": `${SITE_URL}/#organization` },
+              "publisher": { "@id": `${SITE_URL}/#organization` },
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+                { "@type": "ListItem", "position": 2, "name": "Our Craft", "item": CANONICAL },
+              ],
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: OurCraft,
 });
+
 
 const timeline = [
   ["1995", "Founded in a single workspace in Sanganer, Jaipur."],

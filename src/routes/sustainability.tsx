@@ -3,21 +3,70 @@ import PageHero from "@/components/shared/PageHero";
 import SustainabilitySection from "@/components/home/SustainabilitySection";
 import SectionHeading from "@/components/shared/SectionHeading";
 import { motion } from "framer-motion";
+import { SITE_URL } from "@/lib/seo";
+
+const CANONICAL = `${SITE_URL}/sustainability`;
+const TITLE = "Sustainability — Eco-Friendly Handmade Paper | INS Overseas";
+const DESCRIPTION =
+  "100% recycled cotton rag paper, no trees, no harsh chemicals. INS Overseas champions eco-friendly papermaking with zero-waste manufacturing in Sanganer, Jaipur.";
 
 export const Route = createFileRoute("/sustainability")({
   head: () => ({
     meta: [
-      { title: "Sustainability — Eco-Friendly Handmade Paper | INS Overseas" },
-      { name: "description", content: "100% recycled cotton rag paper, no trees, no harsh chemicals. INS Overseas champions eco-friendly papermaking with zero-waste manufacturing in Sanganer, Jaipur." },
+      { title: TITLE },
+      { name: "description", content: DESCRIPTION },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: CANONICAL },
       { property: "og:title", content: "Sustainability — Eco-Friendly Handmade Paper Manufacturing" },
-      { property: "og:url", content: "https://ins-overseas.com/sustainability" },
+      { property: "og:description", content: DESCRIPTION },
+      { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "Eco-friendly handmade paper manufacturing at INS Overseas — zero trees, 100% recycled cotton" },
+      { property: "og:site_name", content: "INS Overseas" },
+      { property: "og:locale", content: "en_IN" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@ins_overseas" },
+      { name: "twitter:title", content: "Sustainability — Eco-Friendly Paper Manufacturing" },
+      { name: "twitter:description", content: DESCRIPTION },
+      { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
+      { name: "twitter:image:alt", content: "Eco-friendly handmade paper at INS Overseas" },
     ],
-    links: [
-      { rel: "canonical", href: "https://ins-overseas.com/sustainability" },
+    links: [{ rel: "canonical", href: CANONICAL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebPage",
+              "@id": `${CANONICAL}#webpage`,
+              "name": TITLE,
+              "description": DESCRIPTION,
+              "url": CANONICAL,
+              "about": {
+                "@type": "Thing",
+                "name": "Sustainable handmade paper manufacturing",
+                "description": "100% recycled cotton rag paper production, zero trees, no harsh chemicals, water recycling — INS Overseas, Sanganer, Jaipur.",
+              },
+              "publisher": { "@id": `${SITE_URL}/#organization` },
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+                { "@type": "ListItem", "position": 2, "name": "Sustainability", "item": CANONICAL },
+              ],
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: Sust,
 });
+
 
 const stats = [
   { value: "0", label: "Trees Cut" },

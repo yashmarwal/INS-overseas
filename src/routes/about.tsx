@@ -4,21 +4,76 @@ import SectionHeading from "@/components/shared/SectionHeading";
 import TrustBar from "@/components/home/TrustBar";
 import { motion } from "framer-motion";
 import { Leaf, Globe, Star, Award } from "lucide-react";
+import { SITE_URL } from "@/lib/seo";
+
+const CANONICAL = `${SITE_URL}/about`;
+const TITLE = "About Us — Four-Generation Handmade Paper Legacy | INS Overseas Jaipur";
+const DESCRIPTION =
+  "INS Overseas is one of India's largest manufacturers of eco-friendly handmade paper and leather journals. A four-generation family legacy from Sanganer, Jaipur since 1995.";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About Us — Four-Generation Handmade Paper Legacy | INS Overseas Jaipur" },
-      { name: "description", content: "INS Overseas is one of India's largest manufacturers of eco-friendly handmade paper and leather journals. A four-generation family legacy from Sanganer, Jaipur since 1995." },
+      { title: TITLE },
+      { name: "description", content: DESCRIPTION },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: CANONICAL },
       { property: "og:title", content: "About INS Overseas — India's Leading Eco-Friendly Paper Manufacturer" },
-      { property: "og:url", content: "https://ins-overseas.com/about" },
+      { property: "og:description", content: DESCRIPTION },
+      { property: "og:image", content: `${SITE_URL}/about-hero.jpg` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "INS Overseas workshop in Sanganer, Jaipur — four generations of handmade paper craft" },
+      { property: "og:site_name", content: "INS Overseas" },
+      { property: "og:locale", content: "en_IN" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@ins_overseas" },
+      { name: "twitter:title", content: "About INS Overseas — Four-Generation Handmade Paper Legacy" },
+      { name: "twitter:description", content: DESCRIPTION },
+      { name: "twitter:image", content: `${SITE_URL}/about-hero.jpg` },
+      { name: "twitter:image:alt", content: "INS Overseas — four-generation handmade paper legacy from Sanganer, Jaipur" },
     ],
-    links: [
-      { rel: "canonical", href: "https://ins-overseas.com/about" },
+    links: [{ rel: "canonical", href: CANONICAL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "AboutPage",
+              "@id": `${CANONICAL}#aboutpage`,
+              "name": TITLE,
+              "description": DESCRIPTION,
+              "url": CANONICAL,
+              "about": { "@id": `${SITE_URL}/#organization` },
+              "publisher": { "@id": `${SITE_URL}/#organization` },
+            },
+            {
+              "@type": "Person",
+              "@id": `${SITE_URL}/#person-sezan`,
+              "name": "Sezan (INS Overseas Sales)",
+              "jobTitle": "Wholesale Manager",
+              "worksFor": { "@id": `${SITE_URL}/#organization` },
+              "email": "Sezan@ins-overseas.com",
+              "telephone": "+91-96804-78483",
+              "url": CANONICAL,
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+                { "@type": "ListItem", "position": 2, "name": "About", "item": CANONICAL },
+              ],
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: About,
 });
+
 
 const values = [
   {

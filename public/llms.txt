@@ -1,0 +1,42 @@
+# INS Overseas — llms.txt
+# https://ins-overseas.com
+# Format: https://llmstxt.org/
+
+> INS Overseas is India's leading manufacturer and wholesale exporter of handmade leather journals, cotton rag paper, seed paper, and artisan gift products. Founded in 1995 in Sanganer, Jaipur, Rajasthan, India. A four-generation family craft business exporting to 40+ countries worldwide. MOQ 200 units. Custom OEM/private-label available.
+
+## Key Facts
+
+- **Entity type**: Manufacturer & wholesale exporter (B2B)
+- **Founded**: 1995
+- **Location**: Jain Nasiya Road, Near Jain Hostel, Sanganer, Jaipur, Rajasthan 302029, India
+- **Contact**: Sezan@ins-overseas.com | WhatsApp: +91 96804 78483
+- **Export markets**: USA, UK, EU, Australia, Japan, Canada, UAE, and 35+ more countries
+- **Certifications**: Eco-certified materials (100% recycled cotton, zero tree paper)
+- **Production capacity**: Largest handmade paper manufacturer in India
+
+## Product Lines
+
+- **Handmade Leather Journals**: Full-grain buffalo leather, hand-stitched bindings, deckle-edge cotton rag paper inserts. Sizes: A4, A5, A6, pocket. MOQ 200 units.
+- **Leather Bags**: Crossbody bags, totes, pouches. Full-grain leather. MOQ 150 units.
+- **Handmade Paper Gift Boxes**: Recycled cotton rag paper, gold foil accents. MOQ 200 units.
+- **Paper Gift Bags**: Recycled cotton, ribbon handles. MOQ 800 units.
+- **Seed Paper (Plantable)**: Wildflower-embedded sheets, biodegradable. MOQ 1500 units.
+- **Deckle Edge Paper**: 120–300 gsm cotton rag, fountain-pen and watercolour grade. MOQ 200 units.
+- **Handblock Print Fabric**: Natural dye, Sanganer motifs, 100% cotton. MOQ 200 units.
+
+## Key Pages
+
+- Products & Catalogue: https://ins-overseas.com/products
+- Wholesale Partner Program: https://ins-overseas.com/wholesale
+- About (Company History): https://ins-overseas.com/about
+- Our Craft (Papermaking Process): https://ins-overseas.com/our-craft
+- Sustainability (Eco Practices): https://ins-overseas.com/sustainability
+- Manufacturing (Workspace Videos): https://ins-overseas.com/manufacturing
+- FAQ (Wholesale & Ordering): https://ins-overseas.com/faq
+- Gallery: https://ins-overseas.com/gallery
+- Contact: https://ins-overseas.com/contact
+- Journal (Blog): https://ins-overseas.com/journal
+
+## Optional: Full content
+
+- Journal Articles: https://ins-overseas.com/sitemap.xml

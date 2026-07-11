@@ -2,23 +2,104 @@ import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowLeft, Clock, Calendar } from "lucide-react";
 import { posts, type Post } from "@/data/blogPosts";
+import { SITE_URL, ORG_REF } from "@/lib/seo";
+
+const PUBLISHER = {
+  "@type": "Organization",
+  "@id": `${SITE_URL}/#organization`,
+  "name": "INS Overseas",
+  "logo": {
+    "@type": "ImageObject",
+    "url": `${SITE_URL}/logo.png`,
+  },
+};
 
 export const Route = createFileRoute("/journal/$slug")({
   head: ({ params }) => {
     const post = posts.find((p) => p.slug === params.slug);
     if (!post) return { meta: [{ title: "Post Not Found | INS Overseas" }] };
+
+    const canonical = `${SITE_URL}/journal/${params.slug}`;
+    const ogImage = post.img.startsWith("http")
+      ? post.img
+      : `${SITE_URL}${post.img}`;
+
+    const articleSchema = {
+      "@type": "BlogPosting",
+      "@id": `${canonical}#article`,
+      "headline": post.title,
+      "description": post.excerpt,
+      "image": {
+        "@type": "ImageObject",
+        "url": ogImage,
+      },
+      "datePublished": post.datePublished,
+      "dateModified": post.dateModified,
+      "author": {
+        "@type": "Person",
+        "name": "INS Overseas Team",
+        "url": `${SITE_URL}/about`,
+      },
+      "publisher": PUBLISHER,
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": canonical,
+      },
+      "articleSection": post.cat,
+      "url": canonical,
+      "inLanguage": "en-IN",
+      "isPartOf": { "@id": `${SITE_URL}/#website` },
+    };
+
+    const breadcrumb = {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+        { "@type": "ListItem", "position": 2, "name": "Journal", "item": `${SITE_URL}/journal` },
+        { "@type": "ListItem", "position": 3, "name": post.title, "item": canonical },
+      ],
+    };
+
     return {
       meta: [
         { title: `${post.title} | INS Overseas Journal` },
         { name: "description", content: post.excerpt },
+        // Open Graph
+        { property: "og:type", content: "article" },
+        { property: "og:url", content: canonical },
         { property: "og:title", content: post.title },
-        { property: "og:image", content: post.img },
+        { property: "og:description", content: post.excerpt },
+        { property: "og:image", content: ogImage },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: post.title },
+        { property: "og:site_name", content: "INS Overseas" },
+        { property: "og:locale", content: "en_IN" },
+        { property: "article:published_time", content: post.datePublished },
+        { property: "article:modified_time", content: post.dateModified },
+        { property: "article:author", content: "INS Overseas Team" },
+        { property: "article:section", content: post.cat },
+        // Twitter
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:site", content: "@ins_overseas" },
+        { name: "twitter:title", content: post.title },
+        { name: "twitter:description", content: post.excerpt },
+        { name: "twitter:image", content: ogImage },
+        { name: "twitter:image:alt", content: post.title },
       ],
-      links: [
-        { rel: "canonical", href: `https://ins-overseas.com/journal/${params.slug}` },
+      links: [{ rel: "canonical", href: canonical }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [articleSchema, breadcrumb],
+          }),
+        },
       ],
     };
   },
+
   loader: ({ params }): Post => {
     const post = posts.find((p) => p.slug === params.slug);
     if (!post) throw notFound();

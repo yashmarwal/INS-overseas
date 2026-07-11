@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
 import PageHero from "@/components/shared/PageHero";
+import { SITE_URL } from "@/lib/seo";
 
 const groups: { cat: string; items: [string, string][] }[] = [
   {
@@ -179,19 +180,73 @@ const groups: { cat: string; items: [string, string][] }[] = [
 ];
 
 export const Route = createFileRoute("/faq")({
-  head: () => ({
-    meta: [
-      { title: "FAQ — Wholesale Orders, Shipping & Custom Products | INS Overseas" },
-      { name: "description", content: "Answers to the most common wholesale questions about INS Overseas — MOQ, shipping, custom orders, payment, lead times, certifications and more." },
-      { property: "og:title", content: "Frequently Asked Questions — INS Overseas" },
-      { property: "og:url", content: "https://ins-overseas.com/faq" },
-    ],
-    links: [
-      { rel: "canonical", href: "https://ins-overseas.com/faq" },
-    ],
-  }),
+  head: () => {
+    const canonical = `${SITE_URL}/faq`;
+    const title = "FAQ — Wholesale Orders, Shipping & Custom Products | INS Overseas";
+    const description =
+      "Answers to the most common wholesale questions about INS Overseas — MOQ, shipping, custom orders, payment, lead times, certifications and more.";
+
+    const faqSchema = {
+      "@type": "FAQPage",
+      "@id": `${canonical}#faqpage`,
+      "name": title,
+      "url": canonical,
+      "mainEntity": groups.flatMap((g) =>
+        g.items.map(([q, a]) => ({
+          "@type": "Question",
+          "name": q,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": a,
+          },
+        })),
+      ),
+    };
+
+    const breadcrumb = {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+        { "@type": "ListItem", "position": 2, "name": "FAQ", "item": canonical },
+      ],
+    };
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { property: "og:title", content: "Frequently Asked Questions — INS Overseas" },
+        { property: "og:description", content: description },
+        { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: "INS Overseas FAQ — Wholesale ordering questions answered" },
+        { property: "og:site_name", content: "INS Overseas" },
+        { property: "og:locale", content: "en_IN" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:site", content: "@ins_overseas" },
+        { name: "twitter:title", content: "INS Overseas — Wholesale FAQ" },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
+        { name: "twitter:image:alt", content: "INS Overseas FAQ" },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [faqSchema, breadcrumb],
+          }),
+        },
+      ],
+    };
+  },
   component: FAQ,
 });
+
 
 function FAQ() {
   const [open, setOpen] = useState<string | null>(null);

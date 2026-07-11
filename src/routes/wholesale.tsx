@@ -5,22 +5,86 @@ import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import SectionHeading from "@/components/shared/SectionHeading";
 import { Globe, Award, Package, Layers, Leaf, Clock } from "lucide-react";
 import { useFormSubmit } from "@/hooks/useFormSubmit";
+import { SITE_URL } from "@/lib/seo";
+
+const CANONICAL = `${SITE_URL}/wholesale`;
+const TITLE = "Wholesale Partner Program — INS Overseas | B2B Handmade Paper & Journals";
+const DESCRIPTION =
+  "Partner with INS Overseas for wholesale handmade leather journals, cotton rag paper and artisan gift products. MOQ 200 units. Export to 40+ countries. Request our B2B catalogue.";
 
 export const Route = createFileRoute("/wholesale")({
   head: () => ({
     meta: [
-      { title: "Wholesale Partner Program — INS Overseas | B2B Handmade Paper & Journals" },
-      { name: "description", content: "Partner with INS Overseas for wholesale handmade leather journals, cotton rag paper and artisan gift products. MOQ 200 units. Export to 40+ countries. Request our B2B catalogue." },
+      { title: TITLE },
+      { name: "description", content: DESCRIPTION },
       { name: "keywords", content: "handmade paper wholesale India, leather journal wholesale MOQ, B2B handmade journal exporter, artisan paper wholesale Jaipur, handmade gift product wholesale India" },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: CANONICAL },
       { property: "og:title", content: "Wholesale — Partner With INS Overseas" },
-      { property: "og:url", content: "https://ins-overseas.com/wholesale" },
+      { property: "og:description", content: DESCRIPTION },
+      { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "INS Overseas wholesale partner programme — handmade paper and leather journals" },
+      { property: "og:site_name", content: "INS Overseas" },
+      { property: "og:locale", content: "en_IN" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@ins_overseas" },
+      { name: "twitter:title", content: "Wholesale Partner Program — INS Overseas" },
+      { name: "twitter:description", content: DESCRIPTION },
+      { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
+      { name: "twitter:image:alt", content: "INS Overseas wholesale partner programme" },
     ],
-    links: [
-      { rel: "canonical", href: "https://ins-overseas.com/wholesale" },
+    links: [{ rel: "canonical", href: CANONICAL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Service",
+              "@id": `${CANONICAL}#service`,
+              "name": "INS Overseas Wholesale Export Programme",
+              "description": DESCRIPTION,
+              "url": CANONICAL,
+              "provider": { "@id": `${SITE_URL}/#organization` },
+              "serviceType": "Wholesale Manufacturing & Export",
+              "areaServed": "Worldwide",
+              "audience": {
+                "@type": "Audience",
+                "audienceType": "Wholesale buyers, retailers, importers, brand owners",
+              },
+              "hasOfferCatalog": {
+                "@type": "OfferCatalog",
+                "name": "Wholesale Product Catalogue",
+                "url": `${SITE_URL}/products`,
+              },
+              "offers": {
+                "@type": "Offer",
+                "priceCurrency": "USD",
+                "eligibleQuantity": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 200,
+                  "unitText": "units",
+                },
+              },
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+                { "@type": "ListItem", "position": 2, "name": "Wholesale", "item": CANONICAL },
+              ],
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: Wholesale,
 });
+
 
 const usps = [
   { icon: Award, title: "30 Years Experience" },

@@ -1,4 +1,118 @@
-﻿User-agent: *
+# ─────────────────────────────────────────────────────────────────────────────
+# INS Overseas — robots.txt
+# https://ins-overseas.com
+# Last updated: 2026-07-12
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Core search engines — always allow ───────────────────────────────────────
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: facebot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# ── OpenAI: search/citation bot (needed for ChatGPT citations) ────────────────
+User-agent: OAI-SearchBot
+Allow: /
+
+# ── OpenAI: user-triggered fetch (needed for ChatGPT real-time answers) ──────
+User-agent: ChatGPT-User
+Allow: /
+
+# ── OpenAI: training crawler (allow = eligible for training data) ─────────────
+User-agent: GPTBot
+Allow: /
+
+# ── Anthropic / Claude: citation + user fetch ─────────────────────────────────
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# ── Anthropic: training crawler ───────────────────────────────────────────────
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# ── Perplexity: index + user-triggered ────────────────────────────────────────
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# ── Google: Gemini training (blocking does NOT affect Google Search rank) ─────
+User-agent: Google-Extended
+Allow: /
+
+# ── Google: other crawlers ────────────────────────────────────────────────────
+User-agent: GoogleOther
+Allow: /
+
+# ── Meta / Facebook ───────────────────────────────────────────────────────────
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+
+# ── Apple: training opt-in ────────────────────────────────────────────────────
+User-agent: Applebot-Extended
+Allow: /
+
+# ── Microsoft / Bing Copilot ─────────────────────────────────────────────────
+User-agent: msnbot
+Allow: /
+
+# ── Common Crawl (feeds many open-source LLMs) ────────────────────────────────
+User-agent: CCBot
+Allow: /
+
+# ── Other AI crawlers ─────────────────────────────────────────────────────────
+User-agent: Amazonbot
+Allow: /
+
+User-agent: DuckAssistBot
+Allow: /
+
+User-agent: MistralAI-User
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Omgilibot
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+# ── BLOCK: Bytespider (ByteDance — frequently ignores robots.txt; heavy load) ─
+User-agent: Bytespider
+Disallow: /
+
+# ── Admin paths — block from all crawlers ─────────────────────────────────────
+User-agent: *
+Disallow: /admin
+Disallow: /admin/
 Allow: /
 
 Sitemap: https://ins-overseas.com/sitemap.xml

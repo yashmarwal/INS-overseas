@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import PageHero from "@/components/shared/PageHero";
 import { supabase } from "@/lib/supabase";
 import { X, Mail, ChevronLeft, ChevronRight } from "lucide-react";
+import { SITE_URL } from "@/lib/seo";
 
 // ── Filter definitions ────────────────────────────────────────────────────────
 const filters = [
@@ -67,20 +68,85 @@ type DynamicProduct = {
 
 // ── Route ─────────────────────────────────────────────────────────────────────
 export const Route = createFileRoute("/products")({
-  head: () => ({
-    meta: [
-      { title: "Products — Leather Journals, Seed Paper, Gift Boxes | INS Overseas" },
-      { name: "description", content: "Browse our full range of handmade leather journals, seed paper, paper gift boxes, paper gift bags, leather bags and artisan stationery. Wholesale from Jaipur, India." },
-      { name: "keywords", content: "handmade leather journal wholesale, seed paper manufacturer, paper gift box wholesale India, leather bag manufacturer Jaipur, handmade stationery wholesale" },
-      { property: "og:title", content: "Products — Leather Journals, Seed Paper & Artisan Gifts | INS Overseas" },
-      { property: "og:url", content: "https://ins-overseas.com/products" },
-    ],
-    links: [
-      { rel: "canonical", href: "https://ins-overseas.com/products" },
-    ],
-  }),
+  head: () => {
+    const canonical = `${SITE_URL}/products`;
+    const title = "Products — Leather Journals, Seed Paper, Gift Boxes | INS Overseas";
+    const description =
+      "Browse our full range of handmade leather journals, seed paper, paper gift boxes, paper gift bags, leather bags and artisan stationery. Wholesale from Jaipur, India.";
+
+    const itemList = {
+      "@type": "ItemList",
+      "@id": `${canonical}#catalogue`,
+      "name": "INS Overseas Wholesale Product Catalogue",
+      "description": description,
+      "url": canonical,
+      "numberOfItems": 7,
+      "itemListElement": filters
+        .filter((f) => f.key !== "all")
+        .map((f, i) => ({
+          "@type": "ListItem",
+          "position": i + 1,
+          "name": f.label,
+          "item": {
+            "@type": "Product",
+            "name": f.label,
+            "brand": { "@type": "Brand", "name": "INS Overseas" },
+            "manufacturer": { "@id": `${SITE_URL}/#organization` },
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "USD",
+              "availability": "https://schema.org/InStock",
+              "seller": { "@id": `${SITE_URL}/#organization` },
+            },
+          },
+        })),
+    };
+
+    const breadcrumb = {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
+        { "@type": "ListItem", "position": 2, "name": "Products", "item": canonical },
+      ],
+    };
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { name: "keywords", content: "handmade leather journal wholesale, seed paper manufacturer, paper gift box wholesale India, leather bag manufacturer Jaipur, handmade stationery wholesale" },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { property: "og:title", content: "Products — Leather Journals, Seed Paper & Artisan Gifts | INS Overseas" },
+        { property: "og:description", content: description },
+        { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: "INS Overseas product catalogue — handmade leather journals and eco-friendly paper" },
+        { property: "og:site_name", content: "INS Overseas" },
+        { property: "og:locale", content: "en_IN" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:site", content: "@ins_overseas" },
+        { name: "twitter:title", content: "Products — INS Overseas Wholesale Catalogue" },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
+        { name: "twitter:image:alt", content: "INS Overseas wholesale product catalogue" },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [itemList, breadcrumb],
+          }),
+        },
+      ],
+    };
+  },
   component: Products,
 });
+
 
 // ── Products page ─────────────────────────────────────────────────────────────
 function Products() {
