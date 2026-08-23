@@ -1,5 +1,8 @@
 import { Link } from "@tanstack/react-router";
 
+const DEVELOPER_WHATSAPP_URL = `https://wa.me/918595475007?text=${encodeURIComponent(
+  "Hello, I’m interested in developing a website."
+)}`;
 
 export default function Footer() {
   return (
@@ -165,6 +168,22 @@ export default function Footer() {
             </Link>
           </div>
         </div>
+      </div>
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 pb-6">
+        <p
+          className="text-center text-warm-grey/40"
+          style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 11 }}
+        >
+          Developed by{" "}
+          <a
+            href={DEVELOPER_WHATSAPP_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-gold transition-colors underline decoration-warm-grey/30"
+          >
+            Yash Marwal
+          </a>
+        </p>
       </div>
     </footer>
   );
