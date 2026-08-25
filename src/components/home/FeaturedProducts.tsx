@@ -29,7 +29,7 @@ function ProductCard({ p }: { p: (typeof products)[0] }) {
       </h3>
       <p className="mt-1 text-warm-grey text-sm font-light">{p.desc}</p>
       <a
-        href={`mailto:Sezan@ins-overseas.com?subject=Enquiry: ${p.name}&body=Hi INS Overseas team,%0D%0A%0D%0AI am interested in ${p.name}. Please share more details including pricing and MOQ.%0D%0A%0D%0AThank you`}
+        href={`mailto:Sezan@ins-overseas.com?subject=Enquiry: ${p.name}&body=Hi INS Overseas team,%0D%0A%0D%0AI am interested in ${p.name}.%0D%0AProduct photo: ${encodeURIComponent(img)}%0D%0A%0D%0APlease share more details including pricing and MOQ.%0D%0A%0D%0AThank you`}
         className="inline-flex items-center gap-2 mt-3 text-umber uppercase hover:gap-3 transition-all duration-200 group"
         style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11, letterSpacing: "0.15em" }}
       >

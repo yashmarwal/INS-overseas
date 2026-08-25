@@ -481,7 +481,7 @@ function EnquireButton({ product, large = false }: { product: DynamicProduct; la
   const categoryLabel = CATEGORY_LABELS[product.category] || product.category;
   const subject = encodeURIComponent(`Product Enquiry: ${product.name} — INS Overseas`);
   const body = encodeURIComponent(
-    `Hi INS Overseas Team,\n\nI am interested in the following product:\n\nProduct: ${product.name}\nCategory: ${categoryLabel}\n\nPlease share:\n- Wholesale pricing\n- Available sizes and variants\n- MOQ details\n- Lead time for bulk order\n- Custom branding options (if any)\n\nCompany: \nCountry: \nEstimated Quantity: \n\nThank you,`
+    `Hi INS Overseas Team,\n\nI am interested in the following product:\n\nProduct: ${product.name}\nCategory: ${categoryLabel}\nProduct photo: ${product.image}\n\nPlease share:\n- Wholesale pricing\n- Available sizes and variants\n- MOQ details\n- Lead time for bulk order\n- Custom branding options (if any)\n\nCompany: \nCountry: \nEstimated Quantity: \n\nThank you,`
   );
 
   return (

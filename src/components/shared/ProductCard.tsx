@@ -5,7 +5,7 @@ import type { Product } from "@/data/products";
 export default function ProductCard({ product, i = 0 }: { product: Product; i?: number }) {
   const subject = encodeURIComponent(`Product Enquiry: ${product.name} — INS Overseas`);
   const body = encodeURIComponent(
-    `Hi INS Overseas Team,\n\nI am interested in: ${product.name}\n\nPlease share pricing, MOQ, and availability.\n\nCompany: \nCountry: \nQuantity needed: `
+    `Hi INS Overseas Team,\n\nI am interested in: ${product.name}\nProduct photo: ${product.image}\n\nPlease share pricing, MOQ, and availability.\n\nCompany: \nCountry: \nQuantity needed: `
   );
 
   return (
