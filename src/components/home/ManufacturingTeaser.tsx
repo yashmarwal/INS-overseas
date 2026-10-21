@@ -108,6 +108,8 @@ export default function ManufacturingTeaser() {
               >
                 <div className="aspect-[4/3] bg-parchment-dark">
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={`https://vumbnail.com/${previewVideos[2]}.jpg`}
                     alt="Workspace preview"
                     className="w-full h-full object-cover"
@@ -123,6 +125,8 @@ export default function ManufacturingTeaser() {
               >
                 <div className="aspect-[4/3] bg-parchment-dark">
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={`https://vumbnail.com/${previewVideos[1]}.jpg`}
                     alt="Workspace preview"
                     className="w-full h-full object-cover"
@@ -138,6 +142,8 @@ export default function ManufacturingTeaser() {
               >
                 <div className="aspect-[4/3] bg-parchment-dark relative">
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={`https://vumbnail.com/${previewVideos[0]}.jpg`}
                     alt="Watch the manufacturing process"
                     className="w-full h-full object-cover transition-transform duration-[2500ms] group-hover:scale-105"

@@ -1,11 +1,18 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
+// Brand splash on every full page load, one second. (In-site navigation never remounts it.)
+const PRELOAD_MS = typeof window !== "undefined" ? 1000 : 0;
+
+// Read by HeroSection / Navigation / FloatingDock so their entrances wait for the splash only while it is up.
+export const preloader = { active: PRELOAD_MS > 0 };
+
 export default function Preloader() {
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(PRELOAD_MS === 0);
 
   useEffect(() => {
-    const t = setTimeout(() => setDone(true), 1500);
+    if (PRELOAD_MS === 0) return;
+    const t = setTimeout(() => { preloader.active = false; setDone(true); }, PRELOAD_MS);
     return () => clearTimeout(t);
   }, []);
 
@@ -30,7 +37,7 @@ export default function Preloader() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35, duration: 0.5 }}
+            transition={{ delay: 0.25, duration: 0.45 }}
             className="text-center"
           >
             <h1
@@ -61,7 +68,7 @@ export default function Preloader() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.12 }}
-            transition={{ delay: 0.8, duration: 0.4 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
             className="absolute inset-0 pointer-events-none"
             style={{
               background: "radial-gradient(circle at center, rgba(201,151,58,0.4) 0%, transparent 60%)",

@@ -168,7 +168,7 @@ function Manufacturing() {
       />
 
       {/* Tab filter */}
-      <section className="sticky top-[72px] z-20 bg-cream/95 backdrop-blur border-b border-warm-grey-light/40">
+      <section className="sticky top-[72px] z-20 bg-cream border-b border-warm-grey-light/40">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 py-4 flex gap-3">
           {(["all", "videos", "photos"] as const).map((t) => (
             <button
@@ -205,6 +205,8 @@ function Manufacturing() {
                 onClick={() => openVideo(v.id, i)}
               >
                 <img
+                  loading="lazy"
+                  decoding="async"
                   src={`https://vumbnail.com/${v.id}.jpg`}
                   alt="Workspace video"
                   className="w-full h-full object-cover transition-transform duration-[2500ms] group-hover:scale-110"
@@ -236,6 +238,8 @@ function Manufacturing() {
                 onClick={() => openPhoto(url, i)}
               >
                 <img
+                  loading="lazy"
+                  decoding="async"
                   src={url}
                   alt="Workspace photo"
                   className="w-full object-cover transition-transform duration-[2500ms] group-hover:scale-105"
@@ -299,6 +303,8 @@ function Manufacturing() {
                 />
               ) : (
                 <img
+                  loading="lazy"
+                  decoding="async"
                   src={active.url}
                   alt="Workspace"
                   className="w-full h-full object-contain rounded-sm"

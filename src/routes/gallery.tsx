@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useGalleryImages } from "@/hooks/useGalleryImages";
 import PageHero from "@/components/shared/PageHero";
 import { SITE_URL } from "@/lib/seo";
+import { isVideoUrl } from "@/lib/utils";
 
 const CANONICAL = `${SITE_URL}/gallery`;
 const TITLE = "Gallery — Handmade Journals & Artisan Paper Products | INS Overseas";
@@ -65,6 +66,10 @@ export const Route = createFileRoute("/gallery")({
 });
 
 
+// Tiles have a fixed shape (photos are cropped to it, the lightbox shows the full photo) so the grid
+// never reflows while images load. Varying the shape by position keeps the masonry look.
+const TILE_RATIOS = ["1 / 1", "4 / 5", "3 / 4", "1 / 1", "4 / 5", "5 / 4"];
+
 function GalleryPage() {
   const { images, loading } = useGalleryImages();
   const [lightbox, setLightbox] = useState<string | null>(null);
@@ -78,15 +83,18 @@ function GalleryPage() {
       />
 
       <section className="bg-parchment py-14 md:py-20">
-        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
+        {/* min-h: the skeleton, the empty state and the real grid all differ in height; this keeps the footer
+            below the fold in each, so it never visibly jumps when the data arrives */}
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 min-h-[70vh]">
 
           {/* Loading skeleton */}
           {loading && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
               {[...Array(8)].map((_, i) => (
                 <div
                   key={i}
-                  className="aspect-square bg-parchment-dark rounded-sm animate-pulse"
+                  className="break-inside-avoid bg-parchment-dark rounded-sm animate-pulse"
+                  style={{ aspectRatio: TILE_RATIOS[i % TILE_RATIOS.length] }}
                 />
               ))}
             </div>
@@ -117,13 +125,24 @@ function GalleryPage() {
                   className="break-inside-avoid cursor-pointer group overflow-hidden rounded-sm"
                   onClick={() => setLightbox(img.url)}
                 >
-                  <div className="relative overflow-hidden">
-                    <img
-                      src={img.url}
-                      alt={img.alt_text || "INS Overseas product"}
-                      className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      style={{ filter: "sepia(0.1) saturate(1.1) brightness(0.97)" }}
-                    />
+                  <div className="relative overflow-hidden bg-parchment-dark" style={{ aspectRatio: TILE_RATIOS[i % TILE_RATIOS.length] }}>
+                    {isVideoUrl(img.url) ? (
+                      <video
+                        src={img.url}
+                        muted loop autoPlay playsInline preload="metadata"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        style={{ filter: "sepia(0.1) saturate(1.1) brightness(0.97)" }}
+                      />
+                    ) : (
+                      <img
+                        loading="lazy"
+                        decoding="async"
+                        src={img.url}
+                        alt={img.alt_text || "INS Overseas product"}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        style={{ filter: "sepia(0.1) saturate(1.1) brightness(0.97)" }}
+                      />
+                    )}
                     <div className="absolute inset-0 bg-ink/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <span
                         className="text-cream uppercase"
@@ -156,16 +175,21 @@ function GalleryPage() {
             >
               <X size={24} />
             </button>
-            <motion.img
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              src={lightbox}
-              alt="Gallery"
-              className="max-w-full max-h-[90vh] object-contain rounded-sm"
-              onClick={(e) => e.stopPropagation()}
-            />
+            {(() => {
+              const Media = isVideoUrl(lightbox) ? motion.video : motion.img;
+              return (
+                <Media
+                  initial={{ scale: 0.92, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.92, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  src={lightbox}
+                  {...(isVideoUrl(lightbox) ? { controls: true, autoPlay: true, playsInline: true } : { alt: "Gallery" })}
+                  className="max-w-full max-h-[90vh] object-contain rounded-sm"
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                />
+              );
+            })()}
           </motion.div>
         )}
       </AnimatePresence>

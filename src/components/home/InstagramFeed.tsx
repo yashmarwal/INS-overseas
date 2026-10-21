@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import LazyMount from "@/components/shared/LazyMount";
 
-export default function InstagramFeed() {
+// Loads the third-party widget script only when this mounts (see LazyMount in InstagramFeed).
+function BeholdFeed() {
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://w.behold.so/widget.js";
@@ -15,7 +17,10 @@ export default function InstagramFeed() {
 
   // Use a ref-based container so TS doesn't need to know the custom element type
   const BeholdWidget = "behold-widget" as unknown as React.ElementType;
+  return <BeholdWidget feed-id="WuYOWmn4Z0whV9Uh8FpV" />;
+}
 
+export default function InstagramFeed() {
   return (
     <section className="bg-cream py-20 md:py-24">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
@@ -53,7 +58,10 @@ export default function InstagramFeed() {
         </div>
 
         {/* Live Behold.so Instagram feed widget */}
-        <BeholdWidget feed-id="WuYOWmn4Z0whV9Uh8FpV" />
+        {/* the widget is ~0.655x its container width tall at every breakpoint */}
+        <LazyMount aspectRatio={1.53}>
+          <BeholdFeed />
+        </LazyMount>
 
       </div>
     </section>

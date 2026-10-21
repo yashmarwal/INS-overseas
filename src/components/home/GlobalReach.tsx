@@ -140,8 +140,8 @@ function Stat({ value, suffix = "", label }: { value: number; suffix?: string; l
     <div className="flex flex-col items-center text-center">
       <span
         ref={ref}
-        className="text-gold"
-        style={{ fontFamily: "var(--font-display)", fontWeight: 400, fontSize: 28 }}
+        className="text-gold lining-nums tabular-nums"
+        style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 28 }}
       >
         {v.toLocaleString()}{suffix}
       </span>

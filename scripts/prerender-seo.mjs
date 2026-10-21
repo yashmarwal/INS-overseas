@@ -23,7 +23,7 @@ const posts = [
     title: "The Art of Deckle Edges — Why Handmade Paper Feels Different",
     excerpt:
       "That soft, irregular fringe at the edge of a handmade sheet is not a flaw. It is the most honest thing about the paper. We explain how deckle edges form and why every serious paper collector prizes them.",
-    img: "/blog/deckle-edges.png",
+    img: "/blog/deckle-edges.jpg",
     datePublished: "2025-05-01",
     dateModified: "2025-05-01",
     cat: "Craft Stories",
@@ -33,7 +33,7 @@ const posts = [
     title: "Sanganer: The Ancient Village That Papers the World",
     excerpt:
       "Fifteen kilometres from Jaipur's old city, on the banks of the Sâmbhar river, a community has been making paper by hand for over 400 years. This is their story — and ours.",
-    img: "/blog/sanganer-village.png",
+    img: "/blog/sanganer-village.jpg",
     datePublished: "2025-04-01",
     dateModified: "2025-04-01",
     cat: "Jaipur Heritage",
@@ -43,7 +43,7 @@ const posts = [
     title: "How to Care for Your Leather Journal — A Complete Guide",
     excerpt:
       "Buffalo leather improves with age — but only if you treat it right. Here is everything your customers need to know about conditioning, storing, and using their INS Overseas journal.",
-    img: "/blog/leather-care.png",
+    img: "/blog/leather-care.jpg",
     datePublished: "2025-03-01",
     dateModified: "2025-03-01",
     cat: "Product Care",
@@ -53,7 +53,7 @@ const posts = [
     title: "Choosing Paper for Fountain Pens vs Watercolour — What Actually Matters",
     excerpt:
       "Not all handmade paper is the same. The weight, surface texture, and sizing treatment all determine whether your pen glides or catches, whether your colours bleed or bloom. A practical guide.",
-    img: "/blog/fountain-pen-paper.png",
+    img: "/blog/fountain-pen-paper.jpg",
     datePublished: "2025-02-01",
     dateModified: "2025-02-01",
     cat: "How-To Guides",
@@ -63,7 +63,7 @@ const posts = [
     title: "Hand-Stitched Bindings: An Ancient Skill That Holds Everything Together",
     excerpt:
       "The binding is the most technically demanding part of making a journal. We use three traditional stitch methods — Coptic, long stitch, and saddle stitch. Here is what each one does and why it matters.",
-    img: "/blog/hand-stitched-binding.png",
+    img: "/blog/hand-stitched-binding.jpg",
     datePublished: "2025-01-01",
     dateModified: "2025-01-01",
     cat: "Craft Stories",
@@ -73,7 +73,7 @@ const posts = [
     title: "The Complete Guide to Sourcing Handmade Paper Products from India",
     excerpt:
       "For boutique retailers, gift shops and stationery brands considering India as a source market — what to look for, what to avoid, and how to build a reliable supply relationship.",
-    img: "/blog/wholesale-sourcing.png",
+    img: "/blog/wholesale-sourcing.jpg",
     datePublished: "2024-12-01",
     dateModified: "2024-12-01",
     cat: "Wholesale Guide",

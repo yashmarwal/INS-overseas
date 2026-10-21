@@ -19,6 +19,8 @@ export default function ProductCard({ product, i = 0 }: { product: Product; i?: 
     >
       <div className="aspect-[3/4] overflow-hidden bg-parchment-dark">
         <img
+          loading="lazy"
+          decoding="async"
           src={product.image}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110"

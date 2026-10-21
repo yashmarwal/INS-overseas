@@ -248,9 +248,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <!-- Fonts preload for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts are self-hosted (@font-face in src/styles.css). Preload only what the first screen uses
+         (headings, body, hero italic) so text is in its final font at first paint — no swap, no layout shift. -->
+    <link rel="preload" href="/fonts/cormorant-garamond-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/cormorant-garamond-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/jost-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Start the TLS handshake to the image/data host before any request needs it -->
+    <link rel="preconnect" href="https://ebmhkylrkcrhxyzclevz.supabase.co" crossorigin />
   </head>
   <body>
     <div id="root"></div>

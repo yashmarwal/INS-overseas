@@ -5,16 +5,14 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect } from "react";
 
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import Navigation from "@/components/ui/Navigation";
 import Footer from "@/components/ui/Footer";
 import Preloader from "@/components/ui/Preloader";
 import CustomCursor from "@/components/ui/CustomCursor";
-import WhatsAppButton from "@/components/ui/WhatsAppButton";
-import StickyCtaBar from "@/components/ui/StickyCtaBar";
-import AiHelpAgent from "@/components/ui/AiHelpAgent";
+import FloatingDock from "@/components/ui/FloatingDock";
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 
 function NotFoundComponent() {
@@ -71,9 +69,7 @@ function RootComponent() {
         <Outlet />
       </main>
       <Footer />
-      <WhatsAppButton />
-      <StickyCtaBar />
-      <AiHelpAgent />
+      <FloatingDock />
     </QueryClientProvider>
   );
 }

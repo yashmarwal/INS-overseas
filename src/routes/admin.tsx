@@ -4,9 +4,14 @@ import { supabase } from "@/lib/supabase";
 import { IMAGE_SLOTS, type ImageSlot } from "@/data/imageSections";
 import { useGalleryImages, type GalleryImage } from "@/hooks/useGalleryImages";
 import { useProductImages, PRODUCT_CATEGORIES, type ProductCategory } from "@/hooks/useProductImages";
+import { isVideoUrl } from "@/lib/utils";
+import { compressImage } from "@/lib/compressImage";
 import { Upload, Trash2, CheckCircle, AlertCircle, Eye, LogOut, ExternalLink, Plus } from "lucide-react";
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "insadmin2025";
+// Every upload gets a unique timestamped name, so browsers/CDN may cache it for a year.
+const IMMUTABLE_CACHE = "31536000";
+
+const ADMIN_PASSWORD =import.meta.env.VITE_ADMIN_PASSWORD || "insadmin2025";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -80,32 +85,39 @@ function AdminPage() {
     images.find((img) => img.section === section);
 
   // ── Fixed slot upload ─────────────────────────────────────────────────────────
-  const handleUpload = async (slot: ImageSlot, file: File) => {
+  const handleUpload = async (slot: ImageSlot, rawFile: File) => {
     setUploading(slot.section);
     try {
+      // Upload the new file first; only remove the old one once the new one is saved,
+      // so a failed upload never leaves the live site without its image.
       const existing = getImageForSection(slot.section);
-      if (existing?.storage_path) {
-        await supabase.storage.from("website-images").remove([existing.storage_path]);
-        await supabase.from("site_images").delete().eq("section", slot.section);
-      }
-
+      const file = await compressImage(rawFile, slot.allowGif ? 2400 : 1400);
       const ext = file.name.split(".").pop();
       const path = `${slot.section}_${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("website-images")
-        .upload(path, file, { upsert: true });
+        .upload(path, file, { upsert: true, cacheControl: IMMUTABLE_CACHE, contentType: file.type });
 
       if (uploadError) { console.error("Storage error:", uploadError); throw uploadError; }
 
       const { data: urlData } = supabase.storage.from("website-images").getPublicUrl(path);
 
-      await supabase.from("site_images").insert({
+      const { error: insertError } = await supabase.from("site_images").insert({
         section: slot.section,
         label: slot.label,
         url: urlData.publicUrl,
         storage_path: path,
       });
+      if (insertError) {
+        await supabase.storage.from("website-images").remove([path]);
+        throw insertError;
+      }
+
+      if (existing) {
+        await supabase.from("site_images").delete().eq("id", existing.id);
+        if (existing.storage_path) await supabase.storage.from("website-images").remove([existing.storage_path]);
+      }
 
       await fetchImages();
       showToast("success", `✓ ${slot.label} updated`);
@@ -131,23 +143,34 @@ function AdminPage() {
   // ── Gallery upload ────────────────────────────────────────────────────────────
   const handleGalleryUpload = async (files: FileList) => {
     setGalleryUploading(true);
+    let added = 0;
+    const skipped: string[] = [];
     try {
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (file.size > 5 * 1024 * 1024) continue;
+        const rawFile = files[i];
+        const isVideo = rawFile.type.startsWith("video/");
+        const okType = isVideo ? ["video/mp4", "video/webm"].includes(rawFile.type) : ["image/jpeg", "image/png", "image/webp"].includes(rawFile.type);
+        if (!okType || rawFile.size > (isVideo ? 10 : 5) * 1024 * 1024) { skipped.push(rawFile.name); continue; }
+        const file = await compressImage(rawFile); // no-op for videos
         const ext = file.name.split(".").pop();
         const path = `gallery_${Date.now()}_${i}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from("website-images").upload(path, file, { upsert: true });
+        const { error: uploadError } = await supabase.storage.from("website-images").upload(path, file, { upsert: true, cacheControl: IMMUTABLE_CACHE, contentType: file.type });
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("website-images").getPublicUrl(path);
-        await supabase.from("site_images").insert({
+        const { error: insertError } = await supabase.from("site_images").insert({
           section: "gallery", label: "Gallery Image",
           url: urlData.publicUrl, storage_path: path,
           sort_order: galleryImages.length + i, alt_text: "INS Overseas product",
         });
+        if (insertError) {
+          await supabase.storage.from("website-images").remove([path]);
+          throw insertError;
+        }
+        added++;
       }
       await refetchGallery();
-      showToast("success", `✓ ${files.length} image${files.length > 1 ? "s" : ""} added to gallery`);
+      if (skipped.length) showToast("error", `Skipped (wrong type or too big — images 5MB, videos 10MB): ${skipped.join(", ")}`);
+      else showToast("success", `✓ ${added} file${added > 1 ? "s" : ""} added to gallery`);
     } catch (e: any) {
       showToast("error", `Gallery upload failed: ${e?.message || "Unknown error"}`);
     } finally {
@@ -168,11 +191,12 @@ function AdminPage() {
     setProductUploading(true);
     try {
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (file.size > 5 * 1024 * 1024) continue;
+        const rawFile = files[i];
+        if (rawFile.size > 5 * 1024 * 1024) continue;
+        const file = await compressImage(rawFile);
         const ext = file.name.split(".").pop();
         const path = `product_${selectedCategory}_${Date.now()}_${i}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from("website-images").upload(path, file, { upsert: true });
+        const { error: uploadError } = await supabase.storage.from("website-images").upload(path, file, { upsert: true, cacheControl: IMMUTABLE_CACHE, contentType: file.type });
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("website-images").getPublicUrl(path);
         const catLabel = PRODUCT_CATEGORIES.find((c) => c.id === selectedCategory)?.label || "";
@@ -203,6 +227,22 @@ function AdminPage() {
     await supabase.from("site_images").delete().eq("id", img.id);
     await refetchProducts();
     showToast("success", "Product removed");
+  };
+
+  const renderSlot = (slot: ImageSlot) => {
+    const existing = getImageForSection(slot.section);
+    return (
+      <ImageCard
+        key={slot.section}
+        slot={slot}
+        currentUrl={existing?.url ?? slot.defaultUrl}
+        hasCustom={!!existing}
+        isUploading={uploading === slot.section}
+        onUpload={(file) => handleUpload(slot, file)}
+        onDelete={() => handleDelete(slot)}
+        onPreview={() => setPreviewSlot(slot)}
+      />
+    );
   };
 
   // ── Login screen ──────────────────────────────────────────────────────────────
@@ -265,34 +305,28 @@ function AdminPage() {
       <div className="mx-4 sm:mx-6 mt-5 mb-1 px-4 py-3 rounded-sm flex items-start gap-3" style={{ background: "rgba(201,151,58,0.1)", border: "1px solid rgba(201,151,58,0.2)" }}>
         <span style={{ fontSize: 16, marginTop: 2 }}>📸</span>
         <div>
-          <p className="text-sm font-medium" style={{ fontFamily: "var(--font-body)", fontWeight: 500, color: "#FAF7F0" }}>How to update an image</p>
-          <p className="text-xs mt-0.5 leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "rgba(250,247,240,0.55)" }}>
-            Find the section → click <strong style={{ color: "#C9973A" }}>Upload</strong> → select a photo → done. Changes appear on the website immediately.
+          <p className="text-sm font-medium" style={{ fontFamily: "var(--font-body)", fontWeight: 500, color: "#4A3219" }}>How to update an image</p>
+          <p className="text-xs mt-0.5 leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "#6B4C2A" }}>
+            Find the section → click <strong style={{ color: "#8A5F14" }}>Upload</strong> → select a photo → done. Changes appear on the website immediately.
           </p>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-16">
 
+        {/* ── SECTION 0: Hero (desktop + mobile) ── */}
+        <div>
+          <SectionHeader title="🎬 Homepage Hero — Desktop & Mobile" subtitle="Top-of-page background. Upload a GIF or a photo (max 10MB each). Desktop shows on screens 768px and wider, Mobile on phones." />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6 max-w-3xl">
+            {IMAGE_SLOTS.filter((s) => s.allowGif).map(renderSlot)}
+          </div>
+        </div>
+
         {/* ── SECTION 1: Fixed Homepage Images ── */}
         <div>
           <SectionHeader title="🏠 Homepage — Background Images" subtitle="These images appear as backgrounds across the homepage" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
-            {IMAGE_SLOTS.map((slot) => {
-              const existing = getImageForSection(slot.section);
-              return (
-                <ImageCard
-                  key={slot.section}
-                  slot={slot}
-                  currentUrl={existing?.url ?? slot.defaultUrl}
-                  hasCustom={!!existing}
-                  isUploading={uploading === slot.section}
-                  onUpload={(file) => handleUpload(slot, file)}
-                  onDelete={() => handleDelete(slot)}
-                  onPreview={() => setPreviewSlot(slot)}
-                />
-              );
-            })}
+            {IMAGE_SLOTS.filter((s) => !s.allowGif).map(renderSlot)}
           </div>
         </div>
 
@@ -468,14 +502,14 @@ function AdminPage() {
                   <Plus size={28} style={{ color: "rgba(107,76,42,0.5)" }} />
                 </div>
                 <div>
-                  <p style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 15, color: "#4A3219" }}>Add photos to gallery</p>
+                  <p style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 15, color: "#4A3219" }}>Add photos or videos to gallery</p>
                   <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#8B7D6B", marginTop: 4 }}>
-                    Click to select or drag and drop · Multiple at once · JPG, PNG, WebP · Max 5MB each
+                    Click to select or drag and drop · Multiple at once · Photos: JPG, PNG, WebP (max 5MB) · Videos: MP4, WebM (max 10MB)
                   </p>
                 </div>
               </div>
             )}
-            <input ref={galleryInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden"
+            <input ref={galleryInputRef} type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple className="hidden"
               onChange={(e) => { if (e.target.files?.length) handleGalleryUpload(e.target.files); e.target.value = ""; }}
             />
           </div>
@@ -493,7 +527,9 @@ function AdminPage() {
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
               {galleryImages.map((img) => (
                 <div key={img.id} className="relative group aspect-square">
-                  <img src={img.url} alt="Gallery" className="w-full h-full object-cover rounded-sm" />
+                  {isVideoUrl(img.url)
+                    ? <video src={img.url} muted playsInline preload="metadata" className="w-full h-full object-cover rounded-sm" />
+                    : <img src={img.url} alt="Gallery" className="w-full h-full object-cover rounded-sm" />}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-sm flex items-center justify-center" style={{ background: "rgba(15,11,8,0.6)" }}>
                     <button onClick={() => handleGalleryDelete(img)} className="w-9 h-9 rounded-full flex items-center justify-center transition-colors" style={{ background: "#dc2626" }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = "#b91c1c"; }}
@@ -548,8 +584,10 @@ function ImageCard({ slot, currentUrl, hasCustom, isUploading, onUpload, onDelet
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { alert("Only JPG, PNG, and WebP images are supported."); return; }
-    if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB."); return; }
+    const types = slot.allowGif ? ["image/jpeg", "image/png", "image/webp", "image/gif"] : ["image/jpeg", "image/png", "image/webp"];
+    const maxMB = slot.allowGif ? 10 : 5;
+    if (!types.includes(file.type)) { alert(`Only ${slot.allowGif ? "GIF, " : ""}JPG, PNG, and WebP images are supported.`); return; }
+    if (file.size > maxMB * 1024 * 1024) { alert(`File must be under ${maxMB}MB.`); return; }
     onUpload(file);
     e.target.value = "";
   };
@@ -585,7 +623,7 @@ function ImageCard({ slot, currentUrl, hasCustom, isUploading, onUpload, onDelet
             ><Trash2 size={14} /></button>
           )}
         </div>
-        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
+        <input ref={inputRef} type="file" accept={slot.allowGif ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"} className="hidden" onChange={handleFile} />
         <a href={slot.pageUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 mt-3 transition-colors"
           style={{ fontFamily: "var(--font-body)", fontSize: 11, letterSpacing: "0.08em", color: "rgba(139,125,107,0.6)", textDecoration: "none" }}
           onMouseEnter={(e) => { e.currentTarget.style.color = "#8B7D6B"; }}

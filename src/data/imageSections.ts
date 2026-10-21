@@ -7,19 +7,32 @@ export type ImageSlot = {
   pageUrl: string;
   defaultUrl: string;
   aspectRatio: string;
+  allowGif?: boolean; // accepts GIF, raises the size limit to 10MB
 };
 
 export const IMAGE_SLOTS: ImageSlot[] = [
   // Hero
   {
-    section: "hero_main",
-    label: "Homepage Hero",
-    description: "Main full-screen background image on homepage",
-    location: "Homepage → Full screen background",
-    tip: "Landscape photo. Min 2000px wide. Dark or moody works best.",
+    section: "hero_desktop",
+    label: "Homepage Hero — Desktop",
+    description: "Full-screen hero background on desktop (GIF or image)",
+    location: "Homepage → Hero background (screens ≥ 768px)",
+    tip: "Animated WebP loads fastest, GIF also works. Landscape. Max 10MB — smaller = faster site.",
     pageUrl: "/",
-    defaultUrl: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2400&q=80",
+    defaultUrl: "/hero-desktop.webp",
     aspectRatio: "16/7",
+    allowGif: true,
+  },
+  {
+    section: "hero_mobile",
+    label: "Homepage Hero — Mobile",
+    description: "Full-screen hero background on phones (GIF or image)",
+    location: "Homepage → Hero background (screens < 768px)",
+    tip: "Animated WebP loads fastest, GIF also works. Portrait (9:16). Max 10MB — smaller = faster site.",
+    pageUrl: "/",
+    defaultUrl: "/hero-mobile.webp",
+    aspectRatio: "3/4",
+    allowGif: true,
   },
   // Product Categories
   {
@@ -70,7 +83,7 @@ export const IMAGE_SLOTS: ImageSlot[] = [
     location: "Homepage → Our Story section (large photo)",
     tip: "Photo of artisan at work. Portrait orientation preferred.",
     pageUrl: "/",
-    defaultUrl: "https://images.unsplash.com/photo-1597149959983-9ac80c4a9e64?auto=format&fit=crop&w=1200&q=80",
+    defaultUrl: "/manufacturing/workspace-1.jpg",
     aspectRatio: "4/3",
   },
   {

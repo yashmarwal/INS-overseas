@@ -90,6 +90,8 @@ export default function FactoryVideo() {
               onClick={() => openVideo(video, i)}
             >
               <img
+                loading="lazy"
+                decoding="async"
                 src={`https://vumbnail.com/${video.id}.jpg`}
                 alt="INS Overseas workspace"
                 className="w-full h-full object-cover transition-transform duration-[2500ms] group-hover:scale-110"

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import SectionHeading from "@/components/shared/SectionHeading";
-import { useSiteImage } from "@/hooks/useSiteImage";
+import SiteImage from "@/components/shared/SiteImage";
 
 const products = [
   { name: "Vintage Buffalo Leather Journal",  cat: "Leather Journals",        desc: "A5, wrap-around strap, 240 deckle pages",  sectionKey: "featured_1" },
@@ -13,12 +13,11 @@ const products = [
 ];
 
 function ProductCard({ p }: { p: (typeof products)[0] }) {
-  const img = useSiteImage(p.sectionKey);
   return (
     <div className="flex flex-col">
       <div className="aspect-[3/4] overflow-hidden bg-parchment-dark">
-        <img
-          src={img}
+        <SiteImage
+          section={p.sectionKey}
           alt={p.name}
           className="w-full h-full object-cover transition-transform duration-[2000ms] hover:scale-110"
         />

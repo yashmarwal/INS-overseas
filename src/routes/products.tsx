@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PageHero from "@/components/shared/PageHero";
-import { supabase } from "@/lib/supabase";
+import { useProductImages } from "@/hooks/useProductImages";
 import { X, Mail, ChevronLeft, ChevronRight } from "lucide-react";
 import { SITE_URL } from "@/lib/seo";
 
@@ -48,7 +48,7 @@ const staticProducts = [
   { id: "s6",  name: "Buffalo Leather Tote",            category: "leather-bags",            image: "https://images.unsplash.com/photo-1606522754091-a3bbf9ad4cb3?auto=format&fit=crop&w=900&q=80",  description: "Oversized · interior pocket · burnished handles" },
   { id: "s7",  name: "Handmade Paper Gift Box",         category: "handmade-paper-gift-box", image: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=80",  description: "Recycled cotton paper · gold foil accent" },
   { id: "s8",  name: "Paper Gift Bags Set (12pc)",      category: "handmade-paper-gift-bag", image: "https://images.unsplash.com/photo-1607344645866-009c320b63e0?auto=format&fit=crop&w=900&q=80",  description: "Recycled cotton · ribbon handles · assorted" },
-  { id: "s9",  name: "Plantable Seed Paper Set",        category: "handmade-seed-paper",     image: "https://images.unsplash.com/photo-1599492816851-9cc4f3f06f88?auto=format&fit=crop&w=900&q=80",  description: "Wildflower mix · 20 sheets · biodegradable" },
+  { id: "s9",  name: "Plantable Seed Paper Set",        category: "handmade-seed-paper",     image: "https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?auto=format&fit=crop&w=900&q=80",  description: "Wildflower mix · 20 sheets · biodegradable" },
   { id: "s10", name: "Deckle Edge Notebook (Set of 6)",    category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?auto=format&fit=crop&w=900&q=80",  description: "Cotton rag · unlined · A5 · deckle edges" },
   { id: "s11", name: "Deckle Edge Writing Pad",             category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80",  description: "120 gsm · fountain-pen friendly · A4" },
   { id: "s12", name: "Deckle Edge Loose Sheets (Pack 50)",  category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80",  description: "Ivory cotton rag · A4 · deckle all four edges" },
@@ -148,11 +148,12 @@ export const Route = createFileRoute("/products")({
 });
 
 
+const BATCH = 12;
+
 // ── Products page ─────────────────────────────────────────────────────────────
 function Products() {
   const [filter, setFilter] = useState("all");
-  const [dynamicProducts, setDynamicProducts] = useState<DynamicProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { images: productRows, loading } = useProductImages();
   const [preview, setPreview] = useState<DynamicProduct | null>(null);
 
   // Back gesture closes lightbox instead of navigating away
@@ -173,29 +174,15 @@ function Products() {
     }
   };
 
-  // Fetch from Supabase
-  useEffect(() => {
-    supabase
-      .from("site_images")
-      .select("*")
-      .eq("section", "product")
-      .order("sort_order", { ascending: true })
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setDynamicProducts(
-            data.map((d) => ({
-              id: d.id,
-              name: d.product_name || d.label || "Handmade Product",
-              category: d.category || "handmade-deckle-edge-paper",
-              image: d.url,
-              description: d.alt_text || "",
-              isDynamic: true,
-            }))
-          );
-        }
-        setLoading(false);
-      });
-  }, []);
+  // Shared, cached query — instant on revisit, refreshed in the background
+  const dynamicProducts: DynamicProduct[] = productRows.map((d) => ({
+    id: d.id,
+    name: d.product_name || "Handmade Product",
+    category: d.category || "handmade-deckle-edge-paper",
+    image: d.url,
+    description: d.alt_text || "",
+    isDynamic: true,
+  }));
 
   // Merge: dynamic first, static as fallback
   const allProducts: DynamicProduct[] =
@@ -205,6 +192,17 @@ function Products() {
 
   const visible =
     filter === "all" ? allProducts : allProducts.filter((p) => p.category === filter);
+
+  // Render the catalogue in batches as the visitor scrolls, instead of 100+ cards at once.
+  const [count, setCount] = useState(BATCH);
+  const [sentinel, setSentinel] = useState<HTMLDivElement | null>(null);
+  const shown = visible.slice(0, count);
+  useEffect(() => {
+    if (!sentinel) return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setCount((c) => c + BATCH); }, { rootMargin: "800px" });
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, [sentinel, count]);
 
   // Lightbox navigation
   const currentIndex = preview ? visible.findIndex((p) => p.id === preview.id) : -1;
@@ -232,12 +230,12 @@ function Products() {
       />
 
       {/* Filter tabs */}
-      <section className="sticky top-[72px] z-30 bg-cream/95 backdrop-blur border-b border-warm-grey-light/40">
+      <section className="sticky top-[72px] z-30 bg-cream border-b border-warm-grey-light/40">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 py-4 flex gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
           {filters.map((f) => (
             <button
               key={f.key}
-              onClick={() => setFilter(f.key)}
+              onClick={() => { setFilter(f.key); setCount(BATCH); }}
               className={`shrink-0 uppercase text-[11px] px-4 py-2 border transition-all duration-200 ${
                 filter === f.key
                   ? "bg-umber text-cream border-umber"
@@ -280,16 +278,15 @@ function Products() {
 
           {/* Product grid */}
           {!loading && visible.length > 0 && (
-            <motion.div layout className="grid grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-              <AnimatePresence mode="popLayout">
-                {visible.map((p, i) => (
+            // key={filter}: switching category remounts the grid, so the new cards simply fade in
+            // (no per-card layout tracking — that is what made 100+ products janky)
+            <div key={filter} className="grid grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+              {shown.map((p, i) => (
                   <motion.article
                     key={p.id}
-                    layout
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.5, delay: (i % 6) * 0.05 }}
+                    transition={{ duration: 0.45, delay: (i % 6) * 0.05 }}
                     className="group cursor-pointer"
                   >
                     {/* Image — click to open lightbox */}
@@ -298,6 +295,8 @@ function Products() {
                       onClick={() => setPreview(p)}
                     >
                       <img
+                        loading="lazy"
+                        decoding="async"
                         src={p.image}
                         alt={p.name}
                         className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110"
@@ -336,9 +335,11 @@ function Products() {
                     <EnquireButton product={p} />
                   </motion.article>
                 ))}
-              </AnimatePresence>
-            </motion.div>
+            </div>
           )}
+
+          {/* Sentinel: when it nears the viewport, the next batch is rendered */}
+          {!loading && shown.length < visible.length && <div ref={setSentinel} className="h-px" aria-hidden />}
         </div>
       </section>
 
@@ -375,6 +376,8 @@ function Products() {
                 {/* Image */}
                 <div className="aspect-[3/4] md:aspect-auto overflow-hidden bg-parchment-dark">
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={preview.image}
                     alt={preview.name}
                     className="w-full h-full object-cover"

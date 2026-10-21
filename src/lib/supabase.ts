@@ -19,9 +19,6 @@
 */
 
 import { createClient } from "@supabase/supabase-js";
-
-// These are injected by Vite at build/serve time from .env
-const SUPABASE_URL = "https://ebmhkylrkcrhxyzclevz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVibWhreWxya2NyaHh5emNsZXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTYwNDQsImV4cCI6MjA5NjMzMjA0NH0.x7VXmmMYmUCRrlGpTDqvy2aWiFLVhgD1FkzaVN8fyAQ";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseConfig";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

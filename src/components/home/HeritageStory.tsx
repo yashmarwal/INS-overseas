@@ -1,11 +1,9 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useSiteImage } from "@/hooks/useSiteImage";
+import SiteImage from "@/components/shared/SiteImage";
 
 export default function HeritageStory() {
-  const artisanImg = useSiteImage("heritage_artisan");
-  const paperImg   = useSiteImage("heritage_paper");
   return (
     <section className="bg-cream py-12 md:py-24 lg:py-32">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 grid grid-cols-1 lg:grid-cols-12 gap-14 items-center">
@@ -59,9 +57,9 @@ export default function HeritageStory() {
         </motion.div>
 
         {/* Mobile: simple full-width image */}
-        <div className="lg:hidden w-full h-56 overflow-hidden">
-          <img
-            src={artisanImg}
+        <div className="lg:hidden w-full h-56 overflow-hidden bg-parchment-dark">
+          <SiteImage
+            section="heritage_artisan"
             alt="Indian artisan at work"
             className="w-full h-full object-cover"
           />
@@ -75,16 +73,16 @@ export default function HeritageStory() {
           transition={{ duration: 1.1 }}
           className="hidden lg:block lg:col-span-5 relative h-[520px]"
         >
-          <div className="absolute top-0 right-0 w-[78%] h-[70%] overflow-hidden">
-            <img
-              src={artisanImg}
+          <div className="absolute top-0 right-0 w-[78%] h-[70%] overflow-hidden bg-parchment-dark">
+            <SiteImage
+              section="heritage_artisan"
               alt="Indian artisan at work"
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="absolute bottom-0 left-0 w-[60%] h-[48%] overflow-hidden border-[6px] border-cream shadow-2xl">
-            <img
-              src={paperImg}
+          <div className="absolute bottom-0 left-0 w-[60%] h-[48%] overflow-hidden border-[6px] border-cream shadow-2xl bg-parchment-dark">
+            <SiteImage
+              section="heritage_paper"
               alt="Deckle edge paper close up"
               className="w-full h-full object-cover"
             />

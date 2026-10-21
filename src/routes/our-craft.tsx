@@ -80,7 +80,7 @@ function OurCraft() {
         eyebrow="The Atelier"
         title={<>The Craft, <em className="italic font-light text-gold-light">Step by Step</em></>}
         subtitle="Walk through our Sanganer workspace — from cotton-rag pulping to leather binding to global export."
-        image="https://images.unsplash.com/photo-1597149959983-9ac80c4a9e64?auto=format&fit=crop&w=2200&q=80"
+        image="/manufacturing/workspace-3.jpg"
       />
       <CraftProcess />
 

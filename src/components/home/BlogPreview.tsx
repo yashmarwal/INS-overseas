@@ -25,6 +25,8 @@ export default function BlogPreview() {
               <Link to="/journal/$slug" params={{ slug: p.slug }} className="block">
                 <div className="aspect-[4/3] overflow-hidden">
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={p.img}
                     alt={p.title}
                     className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110"

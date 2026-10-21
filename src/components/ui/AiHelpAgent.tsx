@@ -2,101 +2,6 @@ import { useState, useEffect } from "react";
 import { X, Send } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
-// ── Morphing trigger button ───────────────────────────────────────────────────
-function MorphButton({ open, onClick }: { open: boolean; onClick: () => void }) {
-  const [showLeaf, setShowLeaf] = useState(true);
-
-  useEffect(() => {
-    if (open) return;
-    const interval = setInterval(() => setShowLeaf(prev => !prev), 2000);
-    return () => clearInterval(interval);
-  }, [open]);
-
-  return (
-    <motion.button
-      onClick={onClick}
-      whileHover={{ scale: 1.08 }}
-      whileTap={{ scale: 0.94 }}
-      className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-40 w-[56px] h-[56px] rounded-full shadow-2xl flex items-center justify-center overflow-hidden"
-      style={{ background: "#6B4C2A" }}
-      aria-label="Ask INS Overseas"
-    >
-      {/* Pulsing ring — only when closed */}
-      {!open && (
-        <motion.span
-          className="absolute inset-0 rounded-full"
-          style={{ background: "rgba(107,76,42,0.4)" }}
-          animate={{ scale: [1, 1.5, 1.5], opacity: [0.5, 0, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-        />
-      )}
-
-      <AnimatePresence mode="wait">
-        {open ? (
-          <motion.div
-            key="close"
-            initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
-            animate={{ rotate: 0, opacity: 1, scale: 1 }}
-            exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <X size={20} color="#FAF7F0" />
-          </motion.div>
-        ) : showLeaf ? (
-          <motion.div
-            key="leaf"
-            initial={{ opacity: 0, scale: 0.6, rotate: -20 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            exit={{ opacity: 0, scale: 0.6, rotate: 20 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-              <motion.path
-                d="M12 2C6 2 3 7 3 12C3 17 7 21 12 21C17 21 21 17 21 12C21 7 16 2 12 2Z"
-                fill="#C9973A"
-                opacity={0.25}
-                animate={{ scale: [1, 1.08, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <path
-                d="M12 3C12 3 5 6 5 13C5 17.4 8.1 20.5 12 21C12 21 7 14 12 9C12 9 17 14 12 21C15.9 20.5 19 17.4 19 13C19 6 12 3 12 3Z"
-                fill="#FAF7F0"
-              />
-              <motion.line
-                x1="12" y1="21" x2="12" y2="23"
-                stroke="#C9973A"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ delay: 0.3, duration: 0.4 }}
-              />
-            </svg>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="ask"
-            initial={{ opacity: 0, y: 10, scale: 0.8 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.8 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center leading-none"
-          >
-            <span style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 15, color: "#FAF7F0", letterSpacing: "0.05em" }}>
-              Ask
-            </span>
-            <motion.span
-              style={{ display: "block", height: 1, background: "#C9973A", width: 0 }}
-              animate={{ width: 20 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.button>
-  );
-}
-
 type Msg = { role: "user" | "agent"; text: string };
 
 const suggestedQuestions = [
@@ -265,8 +170,8 @@ const getResponse = (input: string): string => {
   return match ? match.response : fallbackResponse;
 };
 
-export default function AiHelpAgent() {
-  const [open, setOpen] = useState(false);
+// The chat panel only. It is opened/closed by FloatingDock (which owns the launcher button).
+export default function AiHelpAgent({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([
     {
       role: "agent",
@@ -280,14 +185,14 @@ export default function AiHelpAgent() {
   useEffect(() => {
     if (open) {
       window.history.pushState({ chatOpen: true }, "");
-      const handlePopState = () => setOpen(false);
+      const handlePopState = () => onClose();
       window.addEventListener("popstate", handlePopState);
       return () => window.removeEventListener("popstate", handlePopState);
     }
-  }, [open]);
+  }, [open, onClose]);
 
   const handleClose = () => {
-    setOpen(false);
+    onClose();
     if (window.history.state?.chatOpen) window.history.back();
   };
 
@@ -299,7 +204,6 @@ export default function AiHelpAgent() {
 
   return (
     <>
-      <MorphButton open={open} onClick={() => setOpen(o => !o)} />
       <AnimatePresence>
         {open && (
           <motion.div
@@ -307,27 +211,39 @@ export default function AiHelpAgent() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.98 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed z-40 bg-cream border border-warm-grey-light shadow-2xl flex flex-col
-              inset-x-0 bottom-0 rounded-t-2xl
-              md:inset-x-auto md:bottom-24 md:left-6 md:w-[320px] md:h-[440px] md:rounded-none"
+            role="dialog"
+            aria-label="Ask INS Overseas"
+            className="fixed z-40 bg-cream shadow-2xl flex flex-col
+              inset-x-0 bottom-0 h-[72vh] rounded-t-2xl
+              md:inset-x-auto md:mx-0 md:right-6 md:bottom-28 md:w-[380px] md:h-[480px] md:rounded-none"
             style={{
-              height: "72vh",
               paddingBottom: "env(safe-area-inset-bottom)",
+              border: "1px solid rgba(201,151,58,0.35)",
+              boxShadow: "0 24px 60px rgba(26,20,16,0.28)",
             }}
           >
             <div className="md:hidden flex justify-center pt-2 pb-1">
               <span className="block h-1 w-8 rounded-full bg-warm-grey/50" />
             </div>
-            <div className="p-4 border-b border-warm-grey-light/40 bg-parchment">
-              <h3
-                className="text-ink text-lg"
-                style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}
+            <div className="p-4 border-b border-gold/25 bg-parchment flex items-start justify-between gap-3">
+              <div>
+                <h3
+                  className="text-ink text-lg"
+                  style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}
+                >
+                  Ask INS Overseas
+                </h3>
+                <p className="text-[10px] tracking-[0.15em] uppercase text-warm-grey mt-1">
+                  Powered by AI
+                </p>
+              </div>
+              <button
+                onClick={handleClose}
+                aria-label="Close chat"
+                className="shrink-0 w-8 h-8 -mr-1 -mt-1 flex items-center justify-center rounded-full text-umber hover:bg-umber/10 transition-colors"
               >
-                Ask INS Overseas
-              </h3>
-              <p className="text-[10px] tracking-[0.15em] uppercase text-warm-grey mt-1">
-                Powered by AI
-              </p>
+                <X size={18} />
+              </button>
             </div>
             <div
               className="flex-1 overflow-y-auto p-4 space-y-3"

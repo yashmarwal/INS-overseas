@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-
-// Preloader exits at ~2.0s. Hero starts animating at 2.1s.
-const BASE = 2.1;
+import { useState } from "react";
+import { useSiteImage, refreshSiteImages } from "@/hooks/useSiteImage";
+import { preloader } from "@/components/ui/Preloader";
 
 // Stamp-reveal: clips up from below with hard mechanical ease
 const stampUp = (delay: number) => ({
@@ -17,28 +17,38 @@ const stampUp = (delay: number) => ({
 });
 
 export default function HeroSection() {
+  const desktopSrc = useSiteImage("hero_desktop");
+  const mobileSrc = useSiteImage("hero_mobile");
+  // Fade the media in once decoded instead of painting it in strips. Keyed by the URLs so that if
+  // they change (admin replaced the hero, see refreshSiteImages) the new file fades in too.
+  const mediaKey = `${desktopSrc}|${mobileSrc}`;
+  const [readyKey, setReadyKey] = useState("");
+  const ready = readyKey === mediaKey;
+  // Text enters as the splash starts sliding away (it shows 900ms, slides out over 500ms), or almost immediately when there is none.
+  const [BASE] = useState(() => (preloader.active ? 1.0 : 0.15));
   return (
     <section
-      className="relative h-[100svh] md:h-screen w-full overflow-hidden bg-ink"
+      className="relative min-h-[74svh] md:min-h-0 md:h-screen w-full overflow-hidden bg-ink"
     >
-      {/* GIF background — desktop and mobile variants */}
+      {/* Hero media (GIF or image) — <picture> so only the matching variant downloads */}
       <div className="absolute inset-0">
-        {/* Desktop GIF — hidden on mobile */}
-        <img
-          src="/hero-desktop.gif"
-          alt=""
-          className="hidden md:block w-full h-full object-cover"
-          style={{ filter: "brightness(0.85)" }}
-          data-no-round
-        />
-        {/* Mobile GIF — hidden on desktop */}
-        <img
-          src="/hero-mobile.gif"
-          alt=""
-          className="block md:hidden w-full h-full object-cover"
-          style={{ filter: "brightness(0.85)" }}
-          data-no-round
-        />
+        {desktopSrc && mobileSrc && (
+          <picture key={mediaKey} className="block w-full h-full">
+            <source media="(min-width: 768px)" srcSet={desktopSrc} />
+            <img
+              src={mobileSrc}
+              alt=""
+              fetchPriority="high"
+              decoding="async"
+              ref={(el) => { if (el?.complete && !ready) setReadyKey(mediaKey); }}
+              onLoad={() => setReadyKey(mediaKey)}
+              onError={() => { refreshSiteImages().finally(() => setReadyKey(mediaKey)); }}
+              className="w-full h-full object-cover transition-opacity duration-700"
+              style={{ filter: "brightness(0.85)", opacity: ready ? 1 : 0 }}
+              data-no-round
+            />
+          </picture>
+        )}
         {/* Dark overlay — unchanged */}
         <div
           className="absolute inset-0"
@@ -49,9 +59,10 @@ export default function HeroSection() {
         />
       </div>
 
-      {/* Content — eyebrow top, main content bottom */}
+      {/* Content — phones: eyebrow sits right above the headline, all at the bottom of a compact hero.
+          desktop: eyebrow top, main content bottom */}
       <div
-        className="relative z-10 h-full max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 flex flex-col justify-between pt-20 pb-16 sm:pb-20"
+        className="relative z-10 min-h-[inherit] md:min-h-0 md:h-full max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 flex flex-col justify-end gap-6 md:justify-between md:gap-0 pt-28 md:pt-20 pb-16 sm:pb-20"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 64px)" }}
       >
         {/* ── Eyebrow — always just below the nav ── */}

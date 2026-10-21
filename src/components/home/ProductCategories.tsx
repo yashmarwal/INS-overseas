@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import SectionHeading from "@/components/shared/SectionHeading";
 import { ArrowRight } from "lucide-react";
-import { useSiteImage } from "@/hooks/useSiteImage";
+import SiteImage from "@/components/shared/SiteImage";
 
 const cats = [
   {
@@ -32,7 +32,6 @@ const cats = [
 ];
 
 function CategoryCard({ cat, i }: { cat: (typeof cats)[0]; i: number }) {
-  const img = useSiteImage(cat.section);
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -42,8 +41,8 @@ function CategoryCard({ cat, i }: { cat: (typeof cats)[0]; i: number }) {
     >
       <Link to={cat.to} data-cursor-view className="group block relative overflow-hidden bg-ink">
         <div className="aspect-[5/4] overflow-hidden">
-          <img
-            src={img}
+          <SiteImage
+            section={cat.section}
             alt={cat.title}
             className="w-full h-full object-cover transition-transform duration-[2500ms] ease-out group-hover:scale-110"
           />

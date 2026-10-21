@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 export type ProductImage = {
@@ -24,29 +24,30 @@ export const PRODUCT_CATEGORIES = [
 
 export type ProductCategory = typeof PRODUCT_CATEGORIES[number]["id"];
 
+// Cached for 5 min: revisiting the page is instant, and a background refetch picks up admin changes.
+export const productsQuery = (category?: string) =>
+  queryOptions({
+    queryKey: ["site_images", "product", category ?? "all"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      let query = supabase
+        .from("site_images")
+        .select("*")
+        .eq("section", "product")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+
+      if (category && category !== "all") {
+        query = query.eq("category", category);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data as ProductImage[]) || [];
+    },
+  });
+
 export function useProductImages(category?: string) {
-  const [images, setImages] = useState<ProductImage[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchImages = async () => {
-    setLoading(true);
-    let query = supabase
-      .from("site_images")
-      .select("*")
-      .eq("section", "product")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
-
-    if (category && category !== "all") {
-      query = query.eq("category", category);
-    }
-
-    const { data } = await query;
-    setImages((data as ProductImage[]) || []);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchImages(); }, [category]);
-
-  return { images, loading, refetch: fetchImages };
+  const q = useQuery(productsQuery(category));
+  return { images: q.data ?? [], loading: q.isPending, refetch: q.refetch };
 }

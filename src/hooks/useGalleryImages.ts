@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 export type GalleryImage = {
@@ -10,23 +10,23 @@ export type GalleryImage = {
   created_at: string;
 };
 
-export function useGalleryImages() {
-  const [images, setImages] = useState<GalleryImage[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchImages = async () => {
-    setLoading(true);
-    const { data } = await supabase
+// Cached for 5 min: revisiting the page is instant, and a background refetch picks up admin changes.
+export const galleryQuery = queryOptions({
+  queryKey: ["site_images", "gallery"],
+  staleTime: 5 * 60_000,
+  queryFn: async () => {
+    const { data, error } = await supabase
       .from("site_images")
       .select("*")
       .eq("section", "gallery")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
-    setImages((data as GalleryImage[]) || []);
-    setLoading(false);
-  };
+    if (error) throw error;
+    return (data as GalleryImage[]) || [];
+  },
+});
 
-  useEffect(() => { fetchImages(); }, []);
-
-  return { images, loading, refetch: fetchImages };
+export function useGalleryImages() {
+  const q = useQuery(galleryQuery);
+  return { images: q.data ?? [], loading: q.isPending, refetch: q.refetch };
 }
