@@ -60,7 +60,7 @@ function DockIcon({ mouseX, label, short, icon, active = false, children }: { mo
   );
 }
 
-const slot = "group relative flex flex-col items-center justify-center min-w-[44px] md:min-w-0 min-h-[48px] md:min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-xl";
+const slot = "group relative flex flex-col items-center justify-center min-w-[44px] md:min-w-0 min-h-[48px] md:min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-xl [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform duration-150";
 const iconCls = "text-cream";
 
 // Page shortcuts (left) and direct-contact actions (right), split by a hairline
@@ -102,8 +102,9 @@ export default function FloatingDock() {
         initial={{ opacity: 0, y: 24 }}
         animate={shown ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
         transition={{ duration: 0.6, ease: EASE }}
-        onMouseMove={(e) => mouseX.set(e.clientX)}
-        onMouseLeave={() => mouseX.set(Infinity)}
+        onPointerMove={(e) => { if (e.pointerType === "mouse") mouseX.set(e.clientX); }}
+        onPointerLeave={() => mouseX.set(Infinity)}
+        onPointerDown={(e) => { if (e.pointerType !== "mouse") mouseX.set(Infinity); }}
         // on phones the chat is a bottom sheet that would sit under the dock, so the dock steps aside while it is open
         // (the trailing ! makes the class beat the inline opacity / pointer-events that framer sets)
         className={`fixed z-40 inset-x-3 mx-auto max-w-[420px] md:inset-x-auto md:mx-0 md:right-6 md:w-max md:max-w-none bottom-[calc(env(safe-area-inset-bottom)+14px)] md:bottom-6 flex items-end justify-evenly md:justify-start md:gap-3 px-2 md:px-4 py-2 md:py-2.5 rounded-full ${chat ? "max-md:opacity-0! max-md:pointer-events-none!" : ""}`}
