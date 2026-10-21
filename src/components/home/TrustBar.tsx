@@ -13,13 +13,13 @@ function Stat({ value, suffix, prefix, label, plain }: { value: number; suffix?:
     <div className="flex flex-col items-center text-center px-4">
       <span
         ref={ref}
-        className="text-gold lining-nums tabular-nums"
+        className="text-gold-light lining-nums tabular-nums"
         style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: "clamp(28px, 3.2vw, 36px)" }}
       >
         {prefix}{plain ? v : v.toLocaleString()}{suffix}
       </span>
       <span
-        className="mt-2 text-warm-grey-light uppercase"
+        className="mt-2 text-cream/85 uppercase"
         style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 11, letterSpacing: "0.2em" }}
       >
         {label}

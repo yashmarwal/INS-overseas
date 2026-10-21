@@ -1,8 +1,6 @@
-import { useState, useEffect } from "react";
-import { X, Send } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-
-type Msg = { role: "user" | "agent"; text: string };
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowUp, ArrowUpRight, RotateCcw, X } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 const suggestedQuestions = [
   "What's your minimum order quantity?",
@@ -170,15 +168,134 @@ const getResponse = (input: string): string => {
   return match ? match.response : fallbackResponse;
 };
 
+// ───────────────────────────────────────────────────────────────────────────────
+// "INS Assistant": the assistant as a sheet of paper on a desk, not a chat widget stuck to a corner.
+// Desktop: a centred sheet that unrolls from its top edge. Phone: a full page that slides in from the side.
+// While it works, a pen draws a looping handwritten stroke (3 seconds), then the reply is written in
+// sentence by sentence with an ink-dry wipe. Everything animates transform / opacity / clip-path only, and the
+// reply keeps its final size from the first frame, so nothing reflows or jitters.
+// ───────────────────────────────────────────────────────────────────────────────
+
+const THINK_MS = 3000;
+const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
+const WRITING_LINES = ["Looking through the ledger…", "Asking around the atelier…", "Writing your reply…"];
+const WHATSAPP = "https://wa.me/919680478483";
+const GOLD_INK = "#7A5710"; // gold that passes contrast on paper
+
+type Msg = { id: number; role: "user" | "agent"; text: string; pending?: boolean };
+
+/** The circular gold orb: a slowly turning gold ring around a dark core. */
+function Orb({ size = 36, mode = "idle" }: { size?: number; mode?: "idle" | "thinking" }) {
+  const reduce = useReducedMotion();
+  const spin = mode === "thinking" ? 1.3 : 9;
+  return (
+    <span className="relative inline-block shrink-0" style={{ width: size, height: size }} aria-hidden>
+      <motion.span
+        className="absolute rounded-full"
+        style={{ inset: "-28%", background: "radial-gradient(circle, rgba(241,202,133,0.5) 0%, rgba(201,151,58,0.16) 45%, transparent 70%)" }}
+        animate={reduce ? undefined : { scale: mode === "thinking" ? [1, 1.2, 1] : [1, 1.08, 1], opacity: [0.75, 1, 0.75] }}
+        transition={{ duration: mode === "thinking" ? 0.9 : 3.4, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.span
+        className="absolute inset-0 rounded-full"
+        style={{ background: "conic-gradient(from 0deg, #F8DDA8, #C9973A, #6B4C2A, #E8B96A, #F8DDA8)" }}
+        animate={reduce ? undefined : { rotate: 360 }}
+        transition={{ duration: spin, repeat: Infinity, ease: "linear" }}
+      />
+      <span className="absolute rounded-full" style={{ inset: size * 0.13, background: "radial-gradient(circle at 35% 28%, #3B2D1F 0%, #130F0B 72%)" }} />
+      <span
+        className="absolute rounded-full"
+        style={{ left: size * 0.3, top: size * 0.26, width: size * 0.17, height: size * 0.17, background: "rgba(255,244,214,0.95)", boxShadow: "0 0 8px rgba(255,236,190,0.85)" }}
+      />
+    </span>
+  );
+}
+
+/** What shows during the 3-second pause: the orb spins faster while a status line changes. */
+function Writing() {
+  const reduce = useReducedMotion();
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => setI((n) => Math.min(n + 1, WRITING_LINES.length - 1)), THINK_MS / WRITING_LINES.length);
+    return () => window.clearInterval(t);
+  }, []);
+  return (
+    <div role="status" aria-label="Writing your reply" className="flex items-center gap-4 border-l-2 pl-4 py-1" style={{ borderColor: "rgba(201,151,58,0.6)" }}>
+      <span className="px-2"><Orb size={30} mode="thinking" /></span>
+      <span className="relative h-6 min-w-[200px] overflow-hidden" style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 500, fontSize: 18, color: "var(--grey-ink)" }}>
+        <AnimatePresence initial={false}>
+          <motion.span
+            key={i}
+            className="absolute left-0 top-0 whitespace-nowrap"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.28, ease: EASE }}
+          >
+            {WRITING_LINES[i]}
+          </motion.span>
+        </AnimatePresence>
+      </span>
+    </div>
+  );
+}
+
+const toSentences = (text: string) =>
+  text.split("\n").flatMap((line) => {
+    if (!line.trim()) return [];
+    const out: string[] = [];
+    let cur = "";
+    for (const w of line.split(" ")) {
+      cur += (cur ? " " : "") + w;
+      if (/[.!?]$/.test(w) && !/^\d+\.$/.test(w)) { out.push(cur); cur = ""; }
+    }
+    if (cur) out.push(cur);
+    return out;
+  });
+
+/** The reply, written in one sentence at a time with an ink-dry wipe. Each sentence is already in the DOM at
+    full size (just clipped), so the bubble never grows while it plays. */
+function Written({ text }: { text: string }) {
+  const reduce = useReducedMotion();
+  const parts = toSentences(text);
+  if (reduce) return <>{parts.map((p, i) => <span key={i} className="block mb-2 last:mb-0">{p}</span>)}</>;
+  let t = 0.05;
+  return (
+    <>
+      {parts.map((p, i) => {
+        const dur = Math.min(1, 0.35 + p.length * 0.0055);
+        const delay = t;
+        t += dur * 0.6;
+        return (
+          <motion.span
+            key={i}
+            className="block mb-2 last:mb-0"
+            initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0.25 }}
+            animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
+            transition={{ duration: dur, delay, ease: "easeOut" }}
+          >
+            {p}
+          </motion.span>
+        );
+      })}
+    </>
+  );
+}
+
 // The chat panel only. It is opened/closed by FloatingDock (which owns the launcher button).
 export default function AiHelpAgent({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [msgs, setMsgs] = useState<Msg[]>([
-    {
-      role: "agent",
-      text: "Hello — I'm here to help with anything about INS Overseas. Pick a question below or type your own.",
-    },
-  ]);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const scroller = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const nextId = useRef(1);
+  const timers = useRef<number[]>([]);
+  const reduce = useReducedMotion();
+  // phone = full page that slides in; desktop = centred sheet that unrolls (decided at the moment it opens)
+  const mobile = useMemo(() => open && window.matchMedia("(max-width: 767px)").matches, [open]);
+
+  useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
   // Android back button: push history state when chat opens,
   // intercept popstate to close chat instead of navigating away
@@ -191,113 +308,241 @@ export default function AiHelpAgent({ open, onClose }: { open: boolean; onClose:
     }
   }, [open, onClose]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     onClose();
     if (window.history.state?.chatOpen) window.history.back();
-  };
+  }, [onClose]);
+
+  // While the desk is open: page behind is locked, Escape closes, and on desktop the box is ready to type in
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const prev = html.style.overflow;
+    html.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") handleClose(); };
+    window.addEventListener("keydown", onKey);
+    if (window.matchMedia("(pointer: fine)").matches) window.setTimeout(() => inputRef.current?.focus(), 500);
+    return () => { html.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [open, handleClose]);
+
+  useEffect(() => {
+    scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: reduce ? "auto" : "smooth" });
+  }, [msgs, reduce]);
 
   const send = (text: string) => {
-    if (!text.trim()) return;
-    setMsgs((m) => [...m, { role: "user", text }, { role: "agent", text: getResponse(text) }]);
+    const q = text.trim();
+    if (!q || busy) return;
+    const uid = nextId.current++;
+    const aid = nextId.current++;
+    setMsgs((m) => [...m, { id: uid, role: "user", text: q }, { id: aid, role: "agent", text: "", pending: true }]);
     setInput("");
+    setBusy(true);
+    timers.current.push(
+      window.setTimeout(() => {
+        setMsgs((m) => m.map((x) => (x.id === aid ? { ...x, text: getResponse(q), pending: false } : x)));
+        setBusy(false);
+      }, THINK_MS),
+    );
   };
 
+  const reset = () => { if (!busy) setMsgs([]); };
+
+  const asked = new Set(msgs.filter((m) => m.role === "user").map((m) => m.text));
+  const followUps = suggestedQuestions.filter((q) => !asked.has(q)).slice(0, 3);
+  const last = msgs[msgs.length - 1];
+
+  const enter = mobile
+    ? { initial: { x: "100%" }, animate: { x: 0 }, exit: { x: "100%" }, transition: { type: "spring" as const, stiffness: 300, damping: 34 } }
+    : {
+        initial: { opacity: 0, y: -12, clipPath: "inset(0 0 100% 0 round 28px)" },
+        animate: { opacity: 1, y: 0, clipPath: "inset(0 0 0% 0 round 28px)" },
+        exit: { opacity: 0, y: 14, clipPath: "inset(0 0 0% 0 round 28px)" },
+        transition: { duration: 0.75, ease: EASE },
+      };
+
   return (
-    <>
-      <AnimatePresence>
-        {open && (
+    <AnimatePresence>
+      {open && (
+        <>
           <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.98 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            role="dialog"
-            aria-label="Ask INS Overseas"
-            className="fixed z-40 bg-cream shadow-2xl flex flex-col
-              inset-x-0 bottom-0 h-[72vh] rounded-t-2xl
-              md:inset-x-auto md:mx-0 md:right-6 md:bottom-28 md:w-[380px] md:h-[480px] md:rounded-none"
-            style={{
-              paddingBottom: "env(safe-area-inset-bottom)",
-              border: "1px solid rgba(201,151,58,0.35)",
-              boxShadow: "0 24px 60px rgba(26,20,16,0.28)",
-            }}
-          >
-            <div className="md:hidden flex justify-center pt-2 pb-1">
-              <span className="block h-1 w-8 rounded-full bg-warm-grey/50" />
-            </div>
-            <div className="p-4 border-b border-gold/25 bg-parchment flex items-start justify-between gap-3">
-              <div>
-                <h3
-                  className="text-ink text-lg"
-                  style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}
-                >
-                  Ask INS Overseas
-                </h3>
-                <p className="text-[10px] tracking-[0.15em] uppercase text-warm-grey mt-1">
-                  Powered by AI
-                </p>
-              </div>
-              <button
-                onClick={handleClose}
-                aria-label="Close chat"
-                className="shrink-0 w-8 h-8 -mr-1 -mt-1 flex items-center justify-center rounded-full text-umber hover:bg-umber/10 transition-colors"
+            key="scrim"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={handleClose}
+            className="fixed inset-0 z-[60]"
+            style={{ background: "rgba(14,10,7,0.62)" }}
+            aria-hidden
+          />
+          <div className="fixed inset-0 z-[61] flex items-center justify-center md:p-8 pointer-events-none">
+            <motion.div
+              key="desk"
+              role="dialog"
+              aria-modal="true"
+              aria-label="INS Assistant — ask INS Overseas"
+              {...enter}
+              className="pointer-events-auto relative flex flex-col overflow-hidden bg-cream text-ink w-full h-full md:h-[min(720px,calc(100vh-64px))] md:max-w-[640px] md:rounded-[28px]"
+              style={{ boxShadow: "0 50px 120px -30px rgba(0,0,0,0.75)" }}
+            >
+              {/* header: ink band with a torn paper edge */}
+              <div
+                className="relative shrink-0 bg-ink text-cream px-5 sm:px-7 pb-10"
+                style={{ paddingTop: "max(20px, env(safe-area-inset-top))", backgroundImage: "radial-gradient(90% 140% at 100% 0%, rgba(201,151,58,0.2) 0%, transparent 60%)" }}
               >
-                <X size={18} />
-              </button>
-            </div>
-            <div
-              className="flex-1 overflow-y-auto p-4 space-y-3"
-              onWheel={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
-              style={{ overscrollBehavior: "contain" }}
-            >
-              {msgs.map((m, i) => (
-                <div
-                  key={i}
-                  className={`text-sm leading-relaxed whitespace-pre-line ${
-                    m.role === "agent"
-                      ? "text-umber-dark"
-                      : "text-cream bg-umber px-3 py-2 ml-8 self-end"
-                  }`}
-                >
-                  {m.text}
-                </div>
-              ))}
-              {msgs.length === 1 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {suggestedQuestions.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => send(s)}
-                      className="text-[11px] uppercase tracking-[0.08em] border border-umber/30 text-umber px-3 py-1.5 hover:bg-umber hover:text-cream transition-colors"
-                    >
-                      {s}
+                <div className="flex items-center gap-4">
+                  <Orb size={42} />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="leading-none text-cream" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 25, letterSpacing: "0.01em" }}>INS Assistant</h3>
+                    <p className="mt-1.5" style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 12.5, color: "rgba(250,247,240,0.72)" }}>Ask us about orders, samples and shipping</p>
+                  </div>
+                  {msgs.length > 0 && (
+                    <button onClick={reset} disabled={busy} aria-label="Start a new chat" className="w-10 h-10 rounded-full flex items-center justify-center text-cream/85 hover:bg-white/10 disabled:opacity-40 transition-colors">
+                      <RotateCcw size={17} />
                     </button>
-                  ))}
+                  )}
+                  <button onClick={handleClose} aria-label="Close chat" className="w-10 h-10 rounded-full flex items-center justify-center text-cream hover:bg-white/10 transition-colors" style={{ boxShadow: "inset 0 0 0 1px rgba(250,247,240,0.28)" }}>
+                    <X size={18} />
+                  </button>
                 </div>
-              )}
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                send(input);
-              }}
-              className="border-t border-warm-grey-light/40 p-3 flex gap-2 shrink-0"
-              style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
-            >
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type a question…"
-                className="flex-1 bg-transparent border-b border-warm-grey/40 px-1 py-2 text-sm focus:outline-none focus:border-gold"
-              />
-              <button type="submit" className="text-umber hover:text-gold" aria-label="Send">
-                <Send size={18} />
-              </button>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+                <div className="absolute bottom-0 left-0 right-0 h-6 bg-cream torn-edge-bottom" aria-hidden />
+              </div>
+
+              {/* the page */}
+              <div ref={scroller} data-lenis-prevent className="flex-1 overflow-y-auto overscroll-contain px-5 sm:px-7 pb-4" aria-live="polite">
+                {msgs.length === 0 ? (
+                  <div className="pt-2 pb-2">
+                    <motion.h4
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.7, ease: EASE, delay: 0.35 }}
+                      className="text-ink"
+                      style={{ fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(32px, 6vw, 40px)", lineHeight: 1.05, letterSpacing: "-0.01em" }}
+                    >
+                      How may we <em className="italic font-light" style={{ color: "#6B4C2A" }}>help?</em>
+                    </motion.h4>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.7, delay: 0.5 }}
+                      className="mt-3 max-w-md"
+                      style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 15, lineHeight: 1.6, color: "var(--grey-ink)" }}
+                    >
+                      Pick a question below, or write your own at the bottom of the page.
+                    </motion.p>
+                    <div className="mt-6 border-t border-ink/12" style={{ borderColor: "rgba(26,20,16,0.12)" }}>
+                      {suggestedQuestions.slice(0, 4).map((q, i) => (
+                        <motion.button
+                          key={q}
+                          type="button"
+                          onClick={() => send(q)}
+                          initial={{ opacity: 0, x: -12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.55, ease: EASE, delay: 0.6 + i * 0.08 }}
+                          className="group w-full flex items-center gap-4 py-4 text-left border-b active:bg-black/[0.03] transition-colors"
+                          style={{ borderColor: "rgba(26,20,16,0.12)" }}
+                        >
+                          <span className="w-6 shrink-0 tabular-nums" style={{ fontFamily: "var(--font-body)", fontSize: 11, letterSpacing: "0.2em", color: GOLD_INK }}>{String(i + 1).padStart(2, "0")}</span>
+                          <span className="flex-1 text-ink" style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 21, lineHeight: 1.2 }}>{q}</span>
+                          <ArrowUpRight size={18} className="shrink-0 text-umber transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-6 pt-3">
+                    {msgs.map((m) =>
+                      m.role === "user" ? (
+                        <motion.div
+                          key={m.id}
+                          initial={{ opacity: 0, x: 24, scale: 0.97 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          transition={{ type: "spring", stiffness: 340, damping: 30 }}
+                          className="self-end max-w-[84%] rounded-2xl rounded-br-sm px-4 py-2.5 bg-umber text-cream"
+                          style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 15, lineHeight: 1.45 }}
+                        >
+                          {m.text}
+                        </motion.div>
+                      ) : (
+                        <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: EASE }}>
+                          <p className="mb-2 uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10, letterSpacing: "0.22em", color: GOLD_INK }}>INS Assistant</p>
+                          {m.pending ? (
+                            <Writing />
+                          ) : (
+                            <div data-answer className="border-l-2 pl-4" style={{ borderColor: "#C9973A", fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 15.5, lineHeight: 1.7, color: "var(--ink)" }}>
+                              <Written text={m.text} />
+                            </div>
+                          )}
+                        </motion.div>
+                      ),
+                    )}
+
+                    {!busy && last?.role === "agent" && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.6 }} className="pl-4">
+                        <p className="mb-1 uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10, letterSpacing: "0.22em", color: "var(--grey-ink)" }}>You might also ask</p>
+                        {followUps.map((q) => (
+                          <button
+                            key={q}
+                            data-followup
+                            type="button"
+                            onClick={() => send(q)}
+                            className="group w-full flex items-center gap-3 py-3 text-left border-t active:bg-black/[0.03]"
+                            style={{ borderColor: "rgba(26,20,16,0.12)", fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 14.5, color: "#4A3219" }}
+                          >
+                            <span className="flex-1">{q}</span>
+                            <ArrowUpRight size={16} className="shrink-0 text-umber transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                          </button>
+                        ))}
+                        <a
+                          href={WHATSAPP}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="group w-full flex items-center gap-3 py-3 border-t"
+                          style={{ borderColor: "rgba(26,20,16,0.12)", fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 14.5, color: "#4A3219" }}
+                        >
+                          <span className="flex-1">Talk to a person on WhatsApp</span>
+                          <ArrowUpRight size={16} className="shrink-0 text-umber transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        </a>
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* write here */}
+              <form
+                onSubmit={(e) => { e.preventDefault(); send(input); }}
+                className="shrink-0 px-5 sm:px-7 pt-3 border-t bg-cream"
+                style={{ borderColor: "rgba(26,20,16,0.12)", paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
+              >
+                <div className="flex items-end gap-3">
+                  <input
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    disabled={busy}
+                    placeholder={busy ? "One moment…" : "Write your question…"}
+                    aria-label="Type your question"
+                    className="flex-1 min-w-0 bg-transparent py-3 border-b-2 text-ink placeholder:text-[#7A6F62] focus:outline-none focus:border-[#6B4C2A] transition-colors disabled:opacity-60"
+                    style={{ borderColor: "rgba(26,20,16,0.28)", fontFamily: "var(--font-body)", fontSize: 16 }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy || !input.trim()}
+                    aria-label="Send"
+                    className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 bg-umber text-cream hover:bg-umber-dark transition-all active:scale-90 disabled:opacity-35"
+                  >
+                    <ArrowUp size={19} strokeWidth={2.2} />
+                  </button>
+                </div>
+                <p className="mt-2.5" style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--grey-ink)" }}>
+                  Replies are automated. For anything specific, WhatsApp us.
+                </p>
+              </form>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

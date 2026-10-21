@@ -6,6 +6,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { MotionConfig } from "framer-motion";
 
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import Navigation from "@/components/ui/Navigation";
@@ -61,15 +62,17 @@ function RootComponent() {
   useSmoothScroll();
   return (
     <QueryClientProvider client={queryClient}>
-      <Preloader />
-      <CustomCursor />
-      <ScrollToTop />
-      <Navigation />
-      <main>
-        <Outlet />
-      </main>
-      <Footer />
-      <FloatingDock />
+      <MotionConfig reducedMotion="user">
+        <Preloader />
+        <CustomCursor />
+        <ScrollToTop />
+        <Navigation />
+        <main>
+          <Outlet />
+        </main>
+        <Footer />
+        <FloatingDock />
+      </MotionConfig>
     </QueryClientProvider>
   );
 }

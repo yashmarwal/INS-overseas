@@ -13,7 +13,7 @@ export default function PageHero({
   image?: string;
 }) {
   return (
-    <section className="relative pt-40 pb-24 lg:pt-56 lg:pb-32 bg-ink text-cream overflow-hidden">
+    <section className="relative pt-24 pb-14 sm:pt-32 sm:pb-20 lg:pt-56 lg:pb-32 bg-ink text-cream overflow-hidden">
       {image && (
         <div className="absolute inset-0 opacity-40">
           <img src={image} alt="" className="w-full h-full object-cover" />

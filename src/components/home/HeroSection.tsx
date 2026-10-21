@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
@@ -26,12 +26,22 @@ export default function HeroSection() {
   const ready = readyKey === mediaKey;
   // Text enters as the splash starts sliding away (it shows 900ms, slides out over 500ms), or almost immediately when there is none.
   const [BASE] = useState(() => (preloader.active ? 1.0 : 0.15));
+
+  // Parallax: transform-only, desktop only (phones scroll native and stay calm), off for reduced motion.
+  const reduce = useReducedMotion();
+  const [wide] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
+  const parallax = wide && !reduce;
+  const { scrollY } = useScroll();
+  const mediaY = useTransform(scrollY, [0, 900], [0, parallax ? 150 : 0]);
+  const mediaScale = parallax ? 1.12 : 1; // overscan, so the shifted photo never shows an edge
+  const textY = useTransform(scrollY, [0, 700], [0, parallax ? -60 : 0]);
+  const textOpacity = useTransform(scrollY, [0, 520], [1, parallax ? 0.15 : 1]);
   return (
     <section
       className="relative min-h-[74svh] md:min-h-0 md:h-screen w-full overflow-hidden bg-ink"
     >
       {/* Hero media (GIF or image) — <picture> so only the matching variant downloads */}
-      <div className="absolute inset-0">
+      <motion.div className="absolute inset-0" style={{ y: mediaY, scale: mediaScale }}>
         {desktopSrc && mobileSrc && (
           <picture key={mediaKey} className="block w-full h-full">
             <source media="(min-width: 768px)" srcSet={desktopSrc} />
@@ -57,13 +67,13 @@ export default function HeroSection() {
               "linear-gradient(to bottom, rgba(26,20,16,0.2) 0%, rgba(26,20,16,0.75) 60%, rgba(26,20,16,0.95) 100%)",
           }}
         />
-      </div>
+      </motion.div>
 
       {/* Content — phones: eyebrow sits right above the headline, all at the bottom of a compact hero.
           desktop: eyebrow top, main content bottom */}
-      <div
+      <motion.div
         className="relative z-10 min-h-[inherit] md:min-h-0 md:h-full max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 flex flex-col justify-end gap-6 md:justify-between md:gap-0 pt-28 md:pt-20 pb-16 sm:pb-20"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 64px)" }}
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 64px)", y: textY, opacity: textOpacity }}
       >
         {/* ── Eyebrow — always just below the nav ── */}
         <div className="flex items-center gap-3 pt-2 overflow-hidden">
@@ -105,14 +115,14 @@ export default function HeroSection() {
             }}
           >
             {/* Line 1 */}
-            <div className="overflow-hidden">
+            <div className="overflow-hidden pb-[0.2em] -mb-[0.2em]">
               <motion.div {...stampUp(BASE + 0.1)}>
                 Where Every Page
               </motion.div>
             </div>
 
             {/* Line 2 */}
-            <div className="overflow-hidden mt-1">
+            <div className="overflow-hidden mt-1 pb-[0.2em] -mb-[0.2em]">
               <motion.div {...stampUp(BASE + 0.3)}>
                 Tells a{" "}
                 <span
@@ -169,7 +179,7 @@ export default function HeroSection() {
             </motion.div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Scroll indicator */}
       <motion.div

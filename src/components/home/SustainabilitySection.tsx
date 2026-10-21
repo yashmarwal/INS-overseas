@@ -20,7 +20,7 @@ export default function SustainabilitySection() {
         >
           <div className="flex items-center gap-3">
             <span className="h-px w-10 bg-gold-light" />
-            <span className="text-gold-light uppercase text-[11px]" style={{ letterSpacing: "0.25em" }}>Sustainability</span>
+            <span className="text-cream uppercase text-[11px]" style={{ letterSpacing: "0.25em" }}>Sustainability</span>
           </div>
           <p
             className="mt-8 italic text-cream"

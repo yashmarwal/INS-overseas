@@ -2,8 +2,9 @@ import { Link } from "@tanstack/react-router";
 
 
 export default function Footer() {
+  // bottom padding = the floating dock's height + its offset, so the last line always rests above it
   return (
-    <footer className="bg-ink text-warm-grey-light relative">
+    <footer className="bg-ink text-warm-grey-light relative pb-[calc(env(safe-area-inset-bottom)+92px)] md:pb-[96px]">
       <div className="h-6 -mt-6 bg-parchment torn-edge-bottom" aria-hidden />
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 pt-20 pb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
         <div>
@@ -165,6 +166,20 @@ export default function Footer() {
             </Link>
           </div>
         </div>
+        <p
+          className="mt-5 text-center text-warm-grey/50"
+          style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 12 }}
+        >
+          Developed by{" "}
+          <a
+            href="https://wa.me/918595475007?text=Hello%2C%20I%E2%80%99m%20interested%20in%20developing%20a%20website."
+            target="_blank"
+            rel="noreferrer"
+            className="text-warm-grey/70 hover:text-gold transition-colors underline-offset-4 hover:underline"
+          >
+            Yash Marwal
+          </a>
+        </p>
       </div>
     </footer>
   );

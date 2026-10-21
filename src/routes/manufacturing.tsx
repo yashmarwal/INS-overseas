@@ -168,7 +168,7 @@ function Manufacturing() {
       />
 
       {/* Tab filter */}
-      <section className="sticky top-[72px] z-20 bg-cream border-b border-warm-grey-light/40">
+      <section className="sticky top-[var(--nav-h,72px)] z-20 bg-cream border-b border-warm-grey-light/40">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 py-4 flex gap-3">
           {(["all", "videos", "photos"] as const).map((t) => (
             <button

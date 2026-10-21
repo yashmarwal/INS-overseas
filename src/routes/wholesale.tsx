@@ -203,7 +203,7 @@ function Wholesale() {
   return (
     <>
       {/* Dark text-only hero — no image */}
-      <section className="bg-ink pt-32 pb-20 md:pt-40 md:pb-28">
+      <section className="bg-ink pt-24 pb-14 sm:pt-32 sm:pb-20 lg:pt-40 lg:pb-28">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -274,7 +274,7 @@ function Wholesale() {
             {usps.map((u, i) => (
               <motion.div key={u.title}
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.06 }}
-                className="border border-warm-grey-light/60 p-8 text-center bg-cream"
+                className="border border-ink/10 shadow-[0_1px_2px_rgba(26,20,16,0.05),0_12px_28px_-18px_rgba(26,20,16,0.3)] p-8 text-center bg-white"
               >
                 <u.icon className="text-gold mx-auto" size={28} />
                 <p className="mt-5 text-ink" style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 18 }}>{u.title}</p>

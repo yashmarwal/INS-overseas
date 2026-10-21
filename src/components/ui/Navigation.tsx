@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ArrowUpRight, Mail, Menu, Phone, X } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { preloader } from "@/components/ui/Preloader";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 
@@ -17,10 +17,26 @@ const links = [
   { to: "/contact", label: "Contact" },
 ] as const;
 
+// The phone menu has room for one more entry than the desktop pill: the Journal sits right after the Gallery.
+const mobileLinks = [...links.slice(0, 6), { to: "/journal", label: "Journal" }, ...links.slice(6)] as const;
+
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const headerRef = useRef<HTMLElement>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  // Publish the real header height as --nav-h so sticky bars (product filters etc.) sit flush under it at every breakpoint
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const publish = () => document.documentElement.style.setProperty("--nav-h", `${Math.round(el.getBoundingClientRect().height)}px`);
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // The header slides in with the hero text: after the splash on a first visit, almost at once otherwise.
   const [enterDelay] = useState(() => (preloader.active ? 1.0 : 0.05));
@@ -52,6 +68,7 @@ export default function Navigation() {
   return (
     <>
       <motion.header
+        ref={headerRef}
         initial={{ y: -60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: enterDelay, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -63,49 +80,101 @@ export default function Navigation() {
           borderBottom: scrolled ? "1px solid rgba(107,76,42,0.12)" : "1px solid transparent",
         }}
       >
-        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-8 xl:px-12 2xl:px-20 flex items-center justify-between gap-6 py-4">
-          <Link to="/" className="block leading-none shrink-0">
-            <div
-              style={{ fontFamily: "var(--font-display)", fontWeight: 500, letterSpacing: "0.15em" }}
-              className={`text-[15px] sm:text-lg whitespace-nowrap ${scrolled ? "text-ink" : "text-cream"}`}
-            >
-              INS OVERSEAS
-            </div>
-            {scrolled && (
+        <div className={`max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-8 xl:px-12 2xl:px-20 flex items-center justify-between gap-6 transition-[padding] duration-300 ${scrolled ? "py-4 lg:py-2.5" : "py-4 lg:py-3.5"}`}>
+          <Link to="/" className="flex items-center gap-2.5 leading-none shrink-0">
+            {/* a small paper-corner ornament: gives the wordmark a brand mark on desktop */}
+            <svg className="hidden xl:block shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M12 1.8 22.2 12 12 22.2 1.8 12Z" stroke="#C9973A" strokeWidth="1.4" />
+              <path d="M12 7.2 16.8 12 12 16.8 7.2 12Z" fill="#C9973A" />
+            </svg>
+            <div>
               <div
-                style={{ fontFamily: "var(--font-body)", fontWeight: 300, letterSpacing: "0.2em" }}
-                className="hidden sm:block text-[9px] mt-1 text-warm-grey"
+                style={{ fontFamily: "var(--font-display)", fontWeight: 500, letterSpacing: "0.15em" }}
+                className={`text-[15px] sm:text-lg whitespace-nowrap ${scrolled ? "text-ink" : "text-cream"}`}
               >
-                EST. 1995 · JAIPUR, INDIA
+                INS OVERSEAS
               </div>
-            )}
+              {scrolled && (
+                <div
+                  style={{ fontFamily: "var(--font-body)", fontWeight: 300, letterSpacing: "0.2em", color: "var(--grey-ink)" }}
+                  className="hidden sm:block text-[9px] mt-1"
+                >
+                  EST. 1995 · JAIPUR, INDIA
+                </div>
+              )}
+            </div>
           </Link>
 
-          <nav className="hidden lg:flex flex-1 items-center justify-center gap-4 xl:gap-6 2xl:gap-8">
-            {links.map((l) => (
-              <Link
-                key={l.to}
-                to={l.to}
-                className={`relative uppercase whitespace-nowrap text-[11px] xl:text-[12px] group ${scrolled ? "text-ink" : "text-cream"}`}
-                style={{ fontFamily: "var(--font-body)", fontWeight: 400, letterSpacing: "0.1em" }}
-                activeProps={{ className: "text-gold" }}
+          {/* Desktop: links live in a floating pill. A highlight glides to whatever you hover; a gold marker shows the page you are on
+              and slides across when you navigate. Settles into a calm tinted pill once the page is scrolled. */}
+          <nav aria-label="Main" className="hidden lg:flex flex-1 justify-center">
+            <LayoutGroup id="desktop-nav">
+              <ul
+                onPointerLeave={() => setHovered(null)}
+                className="flex items-center gap-0.5 rounded-full p-1.5 transition-[background,box-shadow] duration-300"
+                style={
+                  scrolled
+                    ? { background: "rgba(26,20,16,0.045)", boxShadow: "inset 0 0 0 1px rgba(26,20,16,0.09)" }
+                    : { background: "rgba(26,20,16,0.5)", boxShadow: "inset 0 0 0 1px rgba(250,247,240,0.17), 0 14px 34px -16px rgba(0,0,0,0.65)" }
+                }
               >
-                {l.label}
-                <span className="absolute left-0 -bottom-1 h-px bg-gold transition-all duration-300 w-0 group-hover:w-full" />
-              </Link>
-            ))}
+                {links.map((l) => {
+                  const active = l.to === "/" ? pathname === "/" : pathname === l.to || pathname.startsWith(l.to + "/");
+                  const hot = hovered === l.to && !active;
+                  return (
+                    <li key={l.to} className="relative">
+                      {active && (
+                        <motion.span
+                          layoutId="nav-active"
+                          transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                          className="absolute inset-0 rounded-full"
+                          style={{ background: scrolled ? "#6B4C2A" : "#C9973A" }}
+                        />
+                      )}
+                      {hot && (
+                        <motion.span
+                          layoutId="nav-hover"
+                          transition={{ type: "spring", stiffness: 520, damping: 38 }}
+                          className="absolute inset-0 rounded-full"
+                          style={{ background: scrolled ? "rgba(26,20,16,0.075)" : "rgba(250,247,240,0.17)" }}
+                        />
+                      )}
+                      <Link
+                        to={l.to}
+                        aria-current={active ? "page" : undefined}
+                        onPointerEnter={(e) => { if (e.pointerType === "mouse") setHovered(l.to); }}
+                        className="relative z-10 block px-2 xl:px-3 2xl:px-3.5 py-2 rounded-full whitespace-nowrap uppercase text-[11px] xl:text-[12px] transition-colors duration-200"
+                        style={{
+                          fontFamily: "var(--font-body)",
+                          fontWeight: active ? 500 : 400,
+                          letterSpacing: "0.1em",
+                          color: active ? (scrolled ? "#FAF7F0" : "#1A1410") : scrolled ? "#1A1410" : "rgba(250,247,240,0.94)",
+                        }}
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </LayoutGroup>
           </nav>
 
           <Link
             to="/wholesale"
-            className={`hidden xl:inline-block shrink-0 whitespace-nowrap px-5 py-3 uppercase text-[12px] border transition-all duration-300 ${
-              scrolled
-                ? "border-umber text-umber hover:bg-umber hover:text-cream"
-                : "border-cream text-cream hover:bg-cream hover:text-ink"
-            }`}
+            className="group relative overflow-hidden hidden min-[1440px]:inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap h-11 pl-5 pr-1.5 rounded-full uppercase text-[12px] bg-gold text-ink hover:bg-gold-light transition-[background-color,box-shadow] duration-300 hover:shadow-[0_6px_18px_rgba(201,151,58,0.38)]"
             style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.1em" }}
           >
-            Request Catalogue
+            {/* light sweep: one slow pass across the pill on hover (transform only) */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-[20deg] -translate-x-full group-hover:translate-x-[420%] motion-reduce:hidden transition-transform duration-[900ms] ease-out"
+              style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent)" }}
+            />
+            <span className="relative">Request Catalogue</span>
+            <span className="relative w-8 h-8 rounded-full flex items-center justify-center bg-ink text-gold">
+              <ArrowUpRight size={15} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </span>
           </Link>
 
           <button
@@ -154,7 +223,7 @@ export default function Navigation() {
 
             {/* Links: index · label · state */}
             <nav className="px-6 pt-1 shrink-0" aria-label="Main">
-              {links.map((l, i) => {
+              {mobileLinks.map((l, i) => {
                 const active = l.to === "/" ? pathname === "/" : pathname === l.to || pathname.startsWith(l.to + "/");
                 return (
                   <motion.div

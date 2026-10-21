@@ -1,70 +1,76 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { IMAGE_SLOTS, type ImageSlot } from "@/data/imageSections";
 import { useGalleryImages, type GalleryImage } from "@/hooks/useGalleryImages";
 import { useProductImages, PRODUCT_CATEGORIES, type ProductCategory } from "@/hooks/useProductImages";
 import { isVideoUrl } from "@/lib/utils";
 import { compressImage } from "@/lib/compressImage";
-import { Upload, Trash2, CheckCircle, AlertCircle, Eye, LogOut, ExternalLink, Plus } from "lucide-react";
+import {
+  ConfirmDialog, DropZone, EmptyState, GhostButton, MediaCard, MUTED, Panel, PrimaryButton, SectionHeader, Tip, Toast,
+  type Confirm, type ToastState,
+} from "@/components/admin/AdminUI";
+import { ExternalLink, Eye, EyeOff, Image as ImageIcon, Images, LayoutGrid, LogOut, Monitor, Package, Play, Search, ShieldCheck, Trash2, X } from "lucide-react";
 
 // Every upload gets a unique timestamped name, so browsers/CDN may cache it for a year.
 const IMMUTABLE_CACHE = "31536000";
+const MB = 1024 * 1024;
 
-const ADMIN_PASSWORD =import.meta.env.VITE_ADMIN_PASSWORD || "insadmin2025";
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "insadmin2025";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type SiteImage = {
-  id: string;
-  section: string;
-  url: string;
-  storage_path: string;
-};
+type SiteImage = { id: string; section: string; url: string; storage_path: string };
+type Tab = "overview" | "banner" | "photos" | "products" | "gallery";
+
+const BANNER_SLOTS = IMAGE_SLOTS.filter((s) => s.allowGif);
+const PHOTO_SLOTS = IMAGE_SLOTS.filter((s) => !s.allowGif);
+const PHOTO_GROUPS: { title: string; hint: string; match: (s: ImageSlot) => boolean }[] = [
+  { title: "Collection cards", hint: "The four big category tiles on the homepage.", match: (s) => s.section.startsWith("category_") },
+  { title: "Our Story", hint: "The two photos next to your story text.", match: (s) => s.section.startsWith("heritage_") },
+  { title: "Bestsellers", hint: "The six cards under “Most Loved This Season”.", match: (s) => s.section.startsWith("featured_") },
+  { title: "Wholesale banner", hint: "The wide picture behind the wholesale call-to-action.", match: (s) => s.section === "wholesale_bg" },
+];
+
+const IMG_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 function AdminPage() {
   const [authed, setAuthed] = useState(
-    () => typeof sessionStorage !== "undefined" && sessionStorage.getItem("ins_admin") === "true"
+    () => typeof sessionStorage !== "undefined" && sessionStorage.getItem("ins_admin") === "true",
   );
-  const [pw, setPw] = useState("");
-  const [pwError, setPwError] = useState(false);
+  const [tab, setTab] = useState<Tab>(() => (typeof sessionStorage !== "undefined" && (sessionStorage.getItem("ins_admin_tab") as Tab)) || "overview");
+  const selectTab = (t: Tab) => {
+    setTab(t);
+    try { sessionStorage.setItem("ins_admin_tab", t); } catch { /* ignore */ }
+    document.getElementById("admin-scroll")?.scrollTo({ top: 0 });
+  };
 
-  // Fixed slots
+  // Fixed slots (banner + homepage photos)
   const [images, setImages] = useState<SiteImage[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
 
   // Gallery
   const { images: galleryImages, loading: galleryLoading, refetch: refetchGallery } = useGalleryImages();
-  const [galleryUploading, setGalleryUploading] = useState(false);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [galleryProgress, setGalleryProgress] = useState<string | null>(null);
 
   // Products
   const { images: productImages, loading: productLoading, refetch: refetchProducts } = useProductImages();
-  const [productUploading, setProductUploading] = useState(false);
+  const [productProgress, setProductProgress] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory>("leather-journals");
   const [productName, setProductName] = useState("");
-  const [adminProductTab, setAdminProductTab] = useState<string>("leather-journals");
-  const productInputRef = useRef<HTMLInputElement>(null);
+  const [listFilter, setListFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
 
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [toast, setToast] = useState<ToastState>(null);
+  const [confirm, setConfirm] = useState<Confirm>(null);
   const [previewSlot, setPreviewSlot] = useState<ImageSlot | null>(null);
 
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
-    setTimeout(() => setToast(null), 3500);
-  };
-
-  const login = () => {
-    if (pw === ADMIN_PASSWORD) {
-      sessionStorage.setItem("ins_admin", "true");
-      setAuthed(true);
-    } else {
-      setPwError(true);
-      setTimeout(() => setPwError(false), 2000);
-    }
+    window.setTimeout(() => setToast((t) => (t && t.msg === msg ? null : t)), type === "error" ? 7000 : 4000);
   };
 
   const logout = () => {
@@ -81,11 +87,20 @@ function AdminPage() {
     if (authed) fetchImages();
   }, [authed]);
 
-  const getImageForSection = (section: string) =>
-    images.find((img) => img.section === section);
+  const getImageForSection = (section: string) => images.find((img) => img.section === section);
 
-  // ── Fixed slot upload ─────────────────────────────────────────────────────────
+  // ── Fixed slot upload (banner + homepage photos) ─────────────────────────────
+  const slotCheck = (slot: ImageSlot, file: File): string | null => {
+    const types = slot.allowGif ? [...IMG_TYPES, "image/gif"] : IMG_TYPES;
+    const maxMB = slot.allowGif ? 10 : 5;
+    if (!types.includes(file.type)) return `That file type isn't supported. Please choose a ${slot.allowGif ? "GIF, " : ""}JPG, PNG or WebP image.`;
+    if (file.size > maxMB * MB) return `That file is too large (${(file.size / MB).toFixed(1)} MB). The limit is ${maxMB} MB.`;
+    return null;
+  };
+
   const handleUpload = async (slot: ImageSlot, rawFile: File) => {
+    const problem = slotCheck(slot, rawFile);
+    if (problem) { showToast("error", problem); return; }
     setUploading(slot.section);
     try {
       // Upload the new file first; only remove the old one once the new one is saved,
@@ -98,7 +113,6 @@ function AdminPage() {
       const { error: uploadError } = await supabase.storage
         .from("website-images")
         .upload(path, file, { upsert: true, cacheControl: IMMUTABLE_CACHE, contentType: file.type });
-
       if (uploadError) { console.error("Storage error:", uploadError); throw uploadError; }
 
       const { data: urlData } = supabase.storage.from("website-images").getPublicUrl(path);
@@ -120,37 +134,43 @@ function AdminPage() {
       }
 
       await fetchImages();
-      showToast("success", `✓ ${slot.label} updated`);
+      showToast("success", `“${slot.label}” is updated and live on your website.`);
     } catch (e: any) {
       const msg = e?.message || e?.error_description || JSON.stringify(e);
       console.error("Upload error:", msg);
-      showToast("error", `Upload failed: ${msg}`);
+      showToast("error", `That photo couldn't be uploaded: ${msg}`);
     } finally {
       setUploading(null);
     }
   };
 
-  const handleDelete = async (slot: ImageSlot) => {
+  const doResetSlot = async (slot: ImageSlot) => {
     const existing = getImageForSection(slot.section);
     if (!existing) return;
-    if (!confirm(`Remove custom image for "${slot.label}"?\n\nThe default image will be shown instead.`)) return;
     await supabase.storage.from("website-images").remove([existing.storage_path]);
     await supabase.from("site_images").delete().eq("section", slot.section);
     await fetchImages();
-    showToast("success", `Removed — default image restored for ${slot.label}`);
+    showToast("success", `“${slot.label}” is back to the default photo.`);
   };
+  const askResetSlot = (slot: ImageSlot) =>
+    setConfirm({
+      title: "Use the default photo?",
+      message: `Your uploaded photo for “${slot.label}” will be removed and the original default will show on the website instead.`,
+      confirmLabel: "Use default",
+      onConfirm: () => void doResetSlot(slot),
+    });
 
   // ── Gallery upload ────────────────────────────────────────────────────────────
-  const handleGalleryUpload = async (files: FileList) => {
-    setGalleryUploading(true);
+  const handleGalleryUpload = async (files: File[]) => {
     let added = 0;
     const skipped: string[] = [];
     try {
       for (let i = 0; i < files.length; i++) {
         const rawFile = files[i];
+        setGalleryProgress(`Uploading ${i + 1} of ${files.length}…`);
         const isVideo = rawFile.type.startsWith("video/");
-        const okType = isVideo ? ["video/mp4", "video/webm"].includes(rawFile.type) : ["image/jpeg", "image/png", "image/webp"].includes(rawFile.type);
-        if (!okType || rawFile.size > (isVideo ? 10 : 5) * 1024 * 1024) { skipped.push(rawFile.name); continue; }
+        const okType = isVideo ? ["video/mp4", "video/webm"].includes(rawFile.type) : IMG_TYPES.includes(rawFile.type);
+        if (!okType || rawFile.size > (isVideo ? 10 : 5) * MB) { skipped.push(rawFile.name); continue; }
         const file = await compressImage(rawFile); // no-op for videos
         const ext = file.name.split(".").pop();
         const path = `gallery_${Date.now()}_${i}.${ext}`;
@@ -169,38 +189,51 @@ function AdminPage() {
         added++;
       }
       await refetchGallery();
-      if (skipped.length) showToast("error", `Skipped (wrong type or too big — images 5MB, videos 10MB): ${skipped.join(", ")}`);
-      else showToast("success", `✓ ${added} file${added > 1 ? "s" : ""} added to gallery`);
+      if (skipped.length) {
+        showToast("error", `${added ? `${added} added. ` : ""}Skipped ${skipped.length} file${skipped.length > 1 ? "s" : ""} (${skipped.join(", ")}) — photos must be JPG/PNG/WebP under 5 MB, videos MP4/WebM under 10 MB.`);
+      } else {
+        showToast("success", `${added} file${added > 1 ? "s" : ""} added to the gallery.`);
+      }
     } catch (e: any) {
-      showToast("error", `Gallery upload failed: ${e?.message || "Unknown error"}`);
+      showToast("error", `The gallery upload stopped: ${e?.message || "unknown error"}`);
     } finally {
-      setGalleryUploading(false);
+      setGalleryProgress(null);
     }
   };
 
-  const handleGalleryDelete = async (img: GalleryImage) => {
-    if (!confirm("Remove this image from the gallery?")) return;
+  const doDeleteGallery = async (img: GalleryImage) => {
     await supabase.storage.from("website-images").remove([img.storage_path]);
     await supabase.from("site_images").delete().eq("id", img.id);
     await refetchGallery();
-    showToast("success", "Image removed from gallery");
+    showToast("success", "Removed from the gallery.");
   };
+  const askDeleteGallery = (img: GalleryImage) =>
+    setConfirm({
+      title: isVideoUrl(img.url) ? "Remove this video?" : "Remove this photo?",
+      message: "It will disappear from the Gallery page. This can't be undone.",
+      confirmLabel: "Remove",
+      onConfirm: () => void doDeleteGallery(img),
+    });
 
   // ── Product upload ────────────────────────────────────────────────────────────
-  const handleProductUpload = async (files: FileList) => {
-    setProductUploading(true);
+  const catLabelOf = (id: string) => PRODUCT_CATEGORIES.find((c) => c.id === id)?.label || id;
+
+  const handleProductUpload = async (files: File[]) => {
+    let added = 0;
+    const skipped: string[] = [];
     try {
       for (let i = 0; i < files.length; i++) {
         const rawFile = files[i];
-        if (rawFile.size > 5 * 1024 * 1024) continue;
+        setProductProgress(`Uploading ${i + 1} of ${files.length}…`);
+        if (!IMG_TYPES.includes(rawFile.type) || rawFile.size > 5 * MB) { skipped.push(rawFile.name); continue; }
         const file = await compressImage(rawFile);
         const ext = file.name.split(".").pop();
         const path = `product_${selectedCategory}_${Date.now()}_${i}.${ext}`;
         const { error: uploadError } = await supabase.storage.from("website-images").upload(path, file, { upsert: true, cacheControl: IMMUTABLE_CACHE, contentType: file.type });
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("website-images").getPublicUrl(path);
-        const catLabel = PRODUCT_CATEGORIES.find((c) => c.id === selectedCategory)?.label || "";
-        await supabase.from("site_images").insert({
+        const catLabel = catLabelOf(selectedCategory);
+        const { error: insertError } = await supabase.from("site_images").insert({
           section: "product",
           label: productName || catLabel,
           url: urlData.publicUrl,
@@ -210,350 +243,415 @@ function AdminPage() {
           alt_text: productName.trim() || catLabel,
           sort_order: productImages.filter((p) => p.category === selectedCategory).length + i,
         });
+        if (insertError) {
+          await supabase.storage.from("website-images").remove([path]);
+          throw insertError;
+        }
+        added++;
       }
       await refetchProducts();
       setProductName("");
-      showToast("success", `✓ Product added to ${PRODUCT_CATEGORIES.find((c) => c.id === selectedCategory)?.label}`);
+      if (skipped.length) {
+        showToast("error", `${added ? `${added} added. ` : ""}Skipped ${skipped.length} file${skipped.length > 1 ? "s" : ""} (${skipped.join(", ")}) — photos must be JPG, PNG or WebP under 5 MB.`);
+      } else {
+        showToast("success", `${added > 1 ? `${added} products` : "Product"} added to ${catLabelOf(selectedCategory)}.`);
+      }
     } catch (e: any) {
-      showToast("error", `Upload failed: ${e?.message}`);
+      showToast("error", `The upload stopped: ${e?.message || "unknown error"}`);
     } finally {
-      setProductUploading(false);
+      setProductProgress(null);
     }
   };
 
-  const handleProductDelete = async (img: any) => {
-    if (!confirm(`Remove "${img.product_name || "this product"}" from the website?`)) return;
+  const doDeleteProduct = async (img: { id: string; storage_path: string }) => {
     await supabase.storage.from("website-images").remove([img.storage_path]);
     await supabase.from("site_images").delete().eq("id", img.id);
     await refetchProducts();
-    showToast("success", "Product removed");
+    showToast("success", "Product removed.");
   };
+  const askDeleteProduct = (img: { id: string; storage_path: string; product_name?: string }) =>
+    setConfirm({
+      title: "Remove this product?",
+      message: `“${img.product_name || "This product"}” will disappear from the Products page. This can't be undone.`,
+      confirmLabel: "Remove",
+      onConfirm: () => void doDeleteProduct(img),
+    });
 
-  const renderSlot = (slot: ImageSlot) => {
+  // ── Derived numbers ───────────────────────────────────────────────────────────
+  const bannerCustom = BANNER_SLOTS.filter((s) => getImageForSection(s.section)).length;
+  const photosCustom = PHOTO_SLOTS.filter((s) => getImageForSection(s.section)).length;
+  const videoCount = galleryImages.filter((g) => isVideoUrl(g.url)).length;
+
+  const filteredProducts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return productImages.filter((p) => (listFilter === "all" || p.category === listFilter) && (!q || (p.product_name || "").toLowerCase().includes(q)));
+  }, [productImages, listFilter, search]);
+
+  if (!authed) return <LoginScreen onSuccess={() => setAuthed(true)} />;
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode; badge?: string }[] = [
+    { id: "overview", label: "Overview", icon: <LayoutGrid size={18} /> },
+    { id: "banner", label: "Homepage banner", icon: <Monitor size={18} /> },
+    { id: "photos", label: "Homepage photos", icon: <Images size={18} /> },
+    { id: "products", label: "Products", icon: <Package size={18} />, badge: String(productImages.length) },
+    { id: "gallery", label: "Gallery", icon: <ImageIcon size={18} />, badge: String(galleryImages.length) },
+  ];
+
+  const renderSlot = (slot: ImageSlot, aspectOverride?: string) => {
     const existing = getImageForSection(slot.section);
     return (
-      <ImageCard
+      <MediaCard
         key={slot.section}
-        slot={slot}
-        currentUrl={existing?.url ?? slot.defaultUrl}
-        hasCustom={!!existing}
-        isUploading={uploading === slot.section}
-        onUpload={(file) => handleUpload(slot, file)}
-        onDelete={() => handleDelete(slot)}
+        title={slot.label.replace("Homepage Hero — ", "")}
+        where={slot.location}
+        tip={slot.tip}
+        url={existing?.url ?? slot.defaultUrl}
+        isCustom={!!existing}
+        busy={uploading === slot.section}
+        accept={slot.allowGif ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"}
+        aspect={aspectOverride ?? slot.aspectRatio.replace("/", " / ")}
+        limitText={slot.allowGif ? "GIF, JPG, PNG or WebP · up to 10 MB" : "JPG, PNG or WebP · up to 5 MB"}
+        viewHref={slot.pageUrl}
+        onFile={(f) => void handleUpload(slot, f)}
+        onReset={() => askResetSlot(slot)}
         onPreview={() => setPreviewSlot(slot)}
       />
     );
   };
 
-  // ── Login screen ──────────────────────────────────────────────────────────────
-  if (!authed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4" data-admin style={{ background: "#0F0B08" }}>
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-10">
-            <p className="text-gold uppercase tracking-[0.3em] text-[11px] mb-3" style={{ fontFamily: "var(--font-body)" }}>INS Overseas</p>
-            <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 300, fontSize: 32, color: "#FAF7F0" }}>Image Manager</h1>
+  return (
+    <div id="admin-scroll" data-admin data-lenis-prevent className="fixed inset-0 z-[90] overflow-y-auto bg-[#F6F4EF] text-[#1A1410]" style={{ fontFamily: "var(--font-body)" }}>
+      <Toast toast={toast} onClose={() => setToast(null)} />
+      <ConfirmDialog confirm={confirm} onClose={() => setConfirm(null)} />
+
+      {/* Top bar */}
+      <header className="sticky top-0 z-30 bg-white border-b border-black/10">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[#1A1410] leading-none truncate" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 21, letterSpacing: "0.02em" }}>INS Overseas</p>
+            <p className="mt-1 text-[11px] uppercase leading-none" style={{ color: MUTED, letterSpacing: "0.16em" }}>Website manager</p>
           </div>
-          <div style={{ background: "#EDE3CC", borderRadius: 2, padding: "2rem" }}>
-            <label className="block mb-1 uppercase" style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 500, letterSpacing: "0.15em", color: "#6B4C2A" }}>Password</label>
-            <input
-              type="password" value={pw}
-              onChange={(e) => setPw(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && login()}
-              className="w-full bg-transparent py-2 text-ink focus:outline-none"
-              style={{ borderBottom: `2px solid ${pwError ? "#ef4444" : "rgba(107,76,42,0.35)"}`, transition: "border-color 0.2s", fontFamily: "var(--font-body)", fontSize: 15 }}
-              placeholder="Enter admin password" autoFocus
-            />
-            {pwError && <p style={{ color: "#ef4444", fontSize: 12, marginTop: 6 }}>Incorrect password</p>}
-            <button onClick={login} className="w-full mt-6 py-3 uppercase transition-colors" style={{ background: "#6B4C2A", color: "#FAF7F0", fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12, letterSpacing: "0.18em" }}>
-              Enter
+          <div className="flex items-center gap-2">
+            <a href="/" target="_blank" rel="noreferrer" className="hidden sm:inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-[13px] font-medium border border-black/15 hover:bg-black/[0.04]">
+              <ExternalLink size={15} /> View website
+            </a>
+            <button onClick={logout} className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-[13px] font-medium border border-black/15 hover:bg-black/[0.04]">
+              <LogOut size={15} /> Log out
             </button>
           </div>
         </div>
-      </div>
-    );
-  }
+      </header>
 
-  // ── Dashboard ─────────────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-screen" data-admin style={{ background: "#F5EDD8" }}>
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 shadow-xl text-sm" style={{ borderRadius: 4, background: toast.type === "success" ? "#4A7C59" : "#dc2626", color: "#FAF7F0", fontFamily: "var(--font-body)" }}>
-          {toast.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
-          {toast.msg}
-        </div>
-      )}
-
-      {/* Sticky header */}
-      <div className="sticky top-0 z-40" style={{ background: "#0F0B08", borderBottom: "1px solid rgba(201,151,58,0.2)" }}>
-        <div className="flex items-center justify-between px-5 sm:px-8 py-4">
-          <div>
-            <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 300, fontSize: 20, color: "#FAF7F0" }}>INS Overseas — Image Manager</h1>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "rgba(250,247,240,0.45)", letterSpacing: "0.15em", textTransform: "uppercase", marginTop: 2 }}>Upload, replace, or remove website images</p>
-          </div>
-          <button onClick={logout} className="flex items-center gap-2 transition-colors" style={{ color: "rgba(250,247,240,0.45)", fontSize: 13, fontFamily: "var(--font-body)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#FAF7F0")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(250,247,240,0.45)")}
-          >
-            <LogOut size={15} /> Logout
-          </button>
-        </div>
-      </div>
-
-      {/* Helper banner */}
-      <div className="mx-4 sm:mx-6 mt-5 mb-1 px-4 py-3 rounded-sm flex items-start gap-3" style={{ background: "rgba(201,151,58,0.1)", border: "1px solid rgba(201,151,58,0.2)" }}>
-        <span style={{ fontSize: 16, marginTop: 2 }}>📸</span>
-        <div>
-          <p className="text-sm font-medium" style={{ fontFamily: "var(--font-body)", fontWeight: 500, color: "#4A3219" }}>How to update an image</p>
-          <p className="text-xs mt-0.5 leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "#6B4C2A" }}>
-            Find the section → click <strong style={{ color: "#8A5F14" }}>Upload</strong> → select a photo → done. Changes appear on the website immediately.
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-16">
-
-        {/* ── SECTION 0: Hero (desktop + mobile) ── */}
-        <div>
-          <SectionHeader title="🎬 Homepage Hero — Desktop & Mobile" subtitle="Top-of-page background. Upload a GIF or a photo (max 10MB each). Desktop shows on screens 768px and wider, Mobile on phones." />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6 max-w-3xl">
-            {IMAGE_SLOTS.filter((s) => s.allowGif).map(renderSlot)}
-          </div>
-        </div>
-
-        {/* ── SECTION 1: Fixed Homepage Images ── */}
-        <div>
-          <SectionHeader title="🏠 Homepage — Background Images" subtitle="These images appear as backgrounds across the homepage" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
-            {IMAGE_SLOTS.filter((s) => !s.allowGif).map(renderSlot)}
-          </div>
-        </div>
-
-        {/* ── SECTION 2: Product Manager ── */}
-        <div>
-          <SectionHeader
-            title="📦 Products — Add / Remove"
-            subtitle="Add product photos by category. They appear instantly on the Products page."
-            count={`${productImages.length} product${productImages.length !== 1 ? "s" : ""}`}
-          />
-
-          {/* Upload form */}
-          <div className="mt-6 rounded-sm p-5 mb-6" style={{ background: "#FAF7F0", border: "1px solid rgba(139,125,107,0.2)" }}>
-            <p style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 14, color: "#4A3219", marginBottom: 16 }}>Add a new product photo</p>
-
-            {/* Step 1 — Category */}
-            <div className="mb-4">
-              <label className="block mb-2 uppercase" style={{ fontFamily: "var(--font-body)", fontSize: 11, letterSpacing: "0.15em", color: "#8B7D6B" }}>Step 1 — Select category</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {PRODUCT_CATEGORIES.map((cat) => (
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-5 lg:py-8 lg:flex lg:gap-10">
+        {/* Navigation: sidebar on desktop, scrollable pills on phones */}
+        <nav aria-label="Sections" className="lg:w-60 lg:shrink-0 lg:sticky lg:top-[88px] lg:self-start">
+          <ul className="flex lg:flex-col gap-2 overflow-x-auto no-scrollbar pb-3 lg:pb-0 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 sticky top-16 z-20 lg:static bg-[#F6F4EF] pt-1 lg:pt-0">
+            {tabs.map((t) => {
+              const active = tab === t.id;
+              return (
+                <li key={t.id} className="shrink-0">
                   <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id as ProductCategory)}
-                    className="flex items-center gap-2 px-3 py-2.5 text-left transition-all"
-                    style={{
-                      borderRadius: 2,
-                      border: `1px solid ${selectedCategory === cat.id ? "#6B4C2A" : "rgba(139,125,107,0.3)"}`,
-                      background: selectedCategory === cat.id ? "#6B4C2A" : "transparent",
-                      color: selectedCategory === cat.id ? "#FAF7F0" : "#6B4C2A",
-                      fontFamily: "var(--font-body)",
-                      fontSize: 12,
-                      fontWeight: 500,
-                    }}
+                    onClick={() => selectTab(t.id)}
+                    aria-current={active ? "page" : undefined}
+                    className={`w-full flex items-center gap-2.5 h-11 px-4 rounded-xl text-[14px] font-medium whitespace-nowrap transition-colors ${
+                      active ? "bg-[#6B4C2A] text-white shadow-sm" : "bg-white text-[#1A1410] border border-black/10 hover:bg-[#FBF9F4] lg:border-transparent lg:bg-transparent lg:hover:bg-white"
+                    }`}
                   >
-                    <span>{cat.icon}</span>
-                    <span className="leading-tight">{cat.label}</span>
+                    {t.icon}
+                    <span className="flex-1 text-left">{t.label}</span>
+                    {t.badge && (
+                      <span className={`min-w-[24px] h-6 px-1.5 rounded-full text-[12px] inline-flex items-center justify-center tabular-nums ${active ? "bg-white/20 text-white" : "bg-black/[0.06] text-[#4A3219]"}`}>{t.badge}</span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        <div className="flex-1 min-w-0 mt-2 lg:mt-0 pb-24">
+          {/* ── Overview ─────────────────────────────────────────────── */}
+          {tab === "overview" && (
+            <>
+              <SectionHeader title="Welcome back" description="Update your photos and products here. Everything you change goes live on your website straight away — no need to do anything else." />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { id: "banner" as Tab, icon: <Monitor size={20} />, title: "Homepage banner", big: `${bannerCustom} of ${BANNER_SLOTS.length}`, sub: "banners are your own photos", cta: "Change banner" },
+                  { id: "photos" as Tab, icon: <Images size={20} />, title: "Homepage photos", big: `${photosCustom} of ${PHOTO_SLOTS.length}`, sub: "photos are your own", cta: "Change photos" },
+                  { id: "products" as Tab, icon: <Package size={20} />, title: "Products", big: String(productImages.length), sub: `products in ${PRODUCT_CATEGORIES.length} categories`, cta: "Add or remove products" },
+                  { id: "gallery" as Tab, icon: <ImageIcon size={20} />, title: "Gallery", big: String(galleryImages.length), sub: videoCount ? `items (${videoCount} video${videoCount > 1 ? "s" : ""})` : "photos and videos", cta: "Manage gallery" },
+                ].map((c) => (
+                  <button key={c.id} onClick={() => selectTab(c.id)} className="group text-left">
+                    <Panel className="p-5 h-full transition-shadow group-hover:shadow-[0_10px_30px_-14px_rgba(26,20,16,0.35)] group-focus-visible:ring-2 group-focus-visible:ring-[#6B4C2A]">
+                      <div className="flex items-center gap-3">
+                        <span className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "#F3EEE2", color: "#6B4C2A" }}>{c.icon}</span>
+                        <h2 className="text-[16px] font-semibold">{c.title}</h2>
+                      </div>
+                      <p className="mt-4 text-[#1A1410] tabular-nums" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 38, lineHeight: 1 }}>{c.big}</p>
+                      <p className="mt-1 text-[14px]" style={{ color: MUTED }}>{c.sub}</p>
+                      <p className="mt-4 text-[14px] font-medium" style={{ color: "#4A3219" }}>{c.cta} →</p>
+                    </Panel>
                   </button>
                 ))}
               </div>
-            </div>
 
-            {/* Step 2 — Product name */}
-            <div className="mb-4">
-              <label className="block mb-2 uppercase" style={{ fontFamily: "var(--font-body)", fontSize: 11, letterSpacing: "0.15em", color: "#8B7D6B" }}>
-                Step 2 — Product name <span className="normal-case opacity-60">(optional)</span>
-              </label>
-              <input
-                type="text"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g. Vintage Buffalo Leather Journal A5 — be specific, this shows on the website"
-                className="w-full bg-transparent py-2 text-ink focus:outline-none text-sm"
-                style={{ borderBottom: "1px solid rgba(107,76,42,0.3)", fontFamily: "var(--font-body)" }}
-              />
-              <p className="text-warm-grey/60 text-[11px] mt-1" style={{ fontFamily: "var(--font-body)", color: "rgba(139,125,107,0.6)" }}>
-                This name appears on the product card and in enquiry emails sent to you.
-              </p>
-            </div>
-
-            {/* Step 3 — Upload */}
-            <div>
-              <label className="block mb-2 uppercase" style={{ fontFamily: "var(--font-body)", fontSize: 11, letterSpacing: "0.15em", color: "#8B7D6B" }}>Step 3 — Upload photo</label>
-              <button
-                onClick={() => productInputRef.current?.click()}
-                disabled={productUploading}
-                className="flex items-center gap-3 px-5 py-3 uppercase text-xs transition-colors disabled:opacity-50"
-                style={{ background: "#6B4C2A", color: "#FAF7F0", fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.15em", borderRadius: 2 }}
-              >
-                {productUploading ? (
-                  <><div className="w-3 h-3 rounded-full animate-spin" style={{ border: "1.5px solid rgba(250,247,240,0.3)", borderTopColor: "#FAF7F0" }} />Uploading…</>
-                ) : (
-                  <><Upload size={14} />Select photo → adds to {PRODUCT_CATEGORIES.find((c) => c.id === selectedCategory)?.label}</>
-                )}
-              </button>
-              <input
-                ref={productInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden"
-                onChange={(e) => { if (e.target.files?.length) handleProductUpload(e.target.files); e.target.value = ""; }}
-              />
-            </div>
-          </div>
-
-          {/* Category tabs for managing existing */}
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-            {PRODUCT_CATEGORIES.map((cat) => {
-              const count = productImages.filter((p) => p.category === cat.id).length;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setAdminProductTab(cat.id)}
-                  className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all"
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    fontWeight: 500,
-                    letterSpacing: "0.1em",
-                    border: `1px solid ${adminProductTab === cat.id ? "#6B4C2A" : "rgba(139,125,107,0.3)"}`,
-                    background: adminProductTab === cat.id ? "#6B4C2A" : "transparent",
-                    color: adminProductTab === cat.id ? "#FAF7F0" : "#6B4C2A",
-                  }}
-                >
-                  {cat.icon} {cat.label}
-                  {count > 0 && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                      style={{ background: adminProductTab === cat.id ? "rgba(255,255,255,0.2)" : "rgba(107,76,42,0.1)", color: adminProductTab === cat.id ? "#FAF7F0" : "#6B4C2A" }}
-                    >{count}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Products grid */}
-          {productLoading ? (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-              {[...Array(6)].map((_, i) => <div key={i} className="aspect-[3/4] rounded-sm animate-pulse" style={{ background: "#EDE3CC" }} />)}
-            </div>
-          ) : (() => {
-            const filtered = productImages.filter((p) => p.category === adminProductTab);
-            if (filtered.length === 0) return (
-              <div className="text-center py-10 rounded-sm" style={{ border: "2px dashed rgba(139,125,107,0.25)", fontFamily: "var(--font-body)", fontSize: 13, color: "#8B7D6B" }}>
-                No products in {PRODUCT_CATEGORIES.find((c) => c.id === adminProductTab)?.label} yet.
-                <br /><span style={{ fontSize: 11, opacity: 0.6 }}>Select this category above and upload a photo.</span>
-              </div>
-            );
-            return (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                {filtered.map((img) => (
-                  <div key={img.id} className="relative group">
-                    <div className="aspect-[3/4] overflow-hidden rounded-sm" style={{ background: "#EDE3CC" }}>
-                      <img src={img.url} alt={img.product_name} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-sm flex items-center justify-center" style={{ background: "rgba(15,11,8,0.6)" }}>
-                        <button onClick={() => handleProductDelete(img)} className="w-9 h-9 rounded-full flex items-center justify-center transition-colors" style={{ background: "#dc2626" }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = "#b91c1c"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "#dc2626"; }}
-                        ><Trash2 size={15} color="#fff" /></button>
+              <Panel className="mt-6 p-5 sm:p-6">
+                <h2 className="text-[16px] font-semibold">How it works</h2>
+                <ol className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  {[
+                    ["Pick a section", "Use the menu to choose what you want to change."],
+                    ["Upload a photo", "Click “Upload” and choose a photo from your computer or phone."],
+                    ["See it live", "Your change appears on the website immediately."],
+                  ].map(([t, d], i) => (
+                    <li key={t} className="flex gap-3">
+                      <span className="shrink-0 w-8 h-8 rounded-full bg-[#6B4C2A] text-white text-[14px] font-semibold flex items-center justify-center">{i + 1}</span>
+                      <div>
+                        <p className="text-[15px] font-semibold">{t}</p>
+                        <p className="mt-0.5 text-[14px] leading-snug" style={{ color: MUTED }}>{d}</p>
                       </div>
-                    </div>
-                    {img.product_name && (
-                      <p className="mt-1.5 truncate" style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "#6B4C2A" }} title={img.product_name}>{img.product_name}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-        </div>
+                    </li>
+                  ))}
+                </ol>
+              </Panel>
 
-        {/* ── SECTION 3: Gallery Manager ── */}
-        <div>
-          <SectionHeader
-            title="🎨 Gallery — Add / Remove Images"
-            subtitle="Photos uploaded here appear in the Gallery page masonry grid."
-            count={`${galleryImages.length} image${galleryImages.length !== 1 ? "s" : ""}`}
-          />
-
-          {/* Drop zone */}
-          <div
-            className="mt-6 border-2 border-dashed rounded-sm p-8 text-center cursor-pointer transition-all mb-6"
-            style={{ borderColor: "rgba(107,76,42,0.25)" }}
-            onClick={() => galleryInputRef.current?.click()}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(201,151,58,0.5)"; e.currentTarget.style.background = "rgba(201,151,58,0.04)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(107,76,42,0.25)"; e.currentTarget.style.background = "transparent"; }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files.length) handleGalleryUpload(e.dataTransfer.files); }}
-          >
-            {galleryUploading ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 rounded-full animate-spin" style={{ border: "2px solid rgba(201,151,58,0.3)", borderTopColor: "#C9973A" }} />
-                <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "#8B7D6B" }}>Uploading…</p>
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Tip>Photos are made smaller automatically, so the website stays fast. You don't need to resize anything.</Tip>
+                <Tip>Made a mistake? Every banner and photo has a “Use default photo” button that puts the original back.</Tip>
               </div>
-            ) : (
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(107,76,42,0.1)" }}>
-                  <Plus size={28} style={{ color: "rgba(107,76,42,0.5)" }} />
-                </div>
-                <div>
-                  <p style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 15, color: "#4A3219" }}>Add photos or videos to gallery</p>
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#8B7D6B", marginTop: 4 }}>
-                    Click to select or drag and drop · Multiple at once · Photos: JPG, PNG, WebP (max 5MB) · Videos: MP4, WebM (max 10MB)
-                  </p>
-                </div>
-              </div>
-            )}
-            <input ref={galleryInputRef} type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple className="hidden"
-              onChange={(e) => { if (e.target.files?.length) handleGalleryUpload(e.target.files); e.target.value = ""; }}
-            />
-          </div>
-
-          {/* Gallery thumbnails */}
-          {galleryLoading ? (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-              {[...Array(6)].map((_, i) => <div key={i} className="aspect-square rounded-sm animate-pulse" style={{ background: "#EDE3CC" }} />)}
-            </div>
-          ) : galleryImages.length === 0 ? (
-            <div className="text-center py-10" style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "#8B7D6B" }}>
-              No gallery images yet. Upload your first photo above.
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-              {galleryImages.map((img) => (
-                <div key={img.id} className="relative group aspect-square">
-                  {isVideoUrl(img.url)
-                    ? <video src={img.url} muted playsInline preload="metadata" className="w-full h-full object-cover rounded-sm" />
-                    : <img src={img.url} alt="Gallery" className="w-full h-full object-cover rounded-sm" />}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-sm flex items-center justify-center" style={{ background: "rgba(15,11,8,0.6)" }}>
-                    <button onClick={() => handleGalleryDelete(img)} className="w-9 h-9 rounded-full flex items-center justify-center transition-colors" style={{ background: "#dc2626" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#b91c1c"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "#dc2626"; }}
-                    ><Trash2 size={15} color="#fff" /></button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            </>
           )}
-          <p className="mt-4 text-center" style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "rgba(139,125,107,0.5)" }}>
-            Changes appear on the Gallery page immediately after upload
-          </p>
-        </div>
 
+          {/* ── Homepage banner ──────────────────────────────────────── */}
+          {tab === "banner" && (
+            <>
+              <SectionHeader
+                title="Homepage banner"
+                description="The big picture at the very top of your homepage. Visitors on computers see the Desktop one, visitors on phones see the Mobile one."
+              />
+              <Tip>An animated WebP loads fastest. GIFs work too, but large GIFs make the page slower — keep them as small as you can.</Tip>
+              <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+                {BANNER_SLOTS.map((s) => renderSlot(s, s.section === "hero_mobile" ? "4 / 5" : "16 / 9"))}
+              </div>
+            </>
+          )}
+
+          {/* ── Homepage photos ──────────────────────────────────────── */}
+          {tab === "photos" && (
+            <>
+              <SectionHeader title="Homepage photos" description="The pictures behind the sections of your homepage. Each one has a default photo, so nothing ever looks empty." />
+              <div className="space-y-10">
+                {PHOTO_GROUPS.map((g) => {
+                  const slots = PHOTO_SLOTS.filter(g.match);
+                  if (!slots.length) return null;
+                  return (
+                    <section key={g.title} aria-label={g.title}>
+                      <div className="mb-3">
+                        <h2 className="text-[18px] font-semibold">{g.title}</h2>
+                        <p className="text-[14px]" style={{ color: MUTED }}>{g.hint}</p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 items-start">{slots.map((s) => renderSlot(s))}</div>
+                    </section>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* ── Products ─────────────────────────────────────────────── */}
+          {tab === "products" && (
+            <>
+              <SectionHeader title="Products" description="Add a product by choosing its category, typing a name and adding its photo. It appears on your Products page straight away." />
+
+              <Panel className="p-5 sm:p-6">
+                <h2 className="text-[17px] font-semibold">Add a product</h2>
+
+                <div className="mt-5 space-y-6">
+                  <fieldset>
+                    <legend className="flex items-center gap-2.5 text-[14px] font-semibold">
+                      <span className="w-6 h-6 rounded-full bg-[#6B4C2A] text-white text-[12px] flex items-center justify-center">1</span> Choose a category
+                    </legend>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {PRODUCT_CATEGORIES.map((c) => {
+                        const on = selectedCategory === c.id;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() => setSelectedCategory(c.id as ProductCategory)}
+                            className={`inline-flex items-center gap-2 h-11 px-4 rounded-full border text-[14px] font-medium transition-colors ${on ? "bg-[#6B4C2A] text-white border-[#6B4C2A] shadow-sm" : "bg-white text-[#1A1410] border-black/20 hover:border-[#6B4C2A] hover:bg-[#FBF9F4]"}`}
+                          >
+                            <span aria-hidden>{c.icon}</span> {c.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+
+                  <div>
+                    <label htmlFor="product-name" className="flex items-center gap-2.5 text-[14px] font-semibold">
+                      <span className="w-6 h-6 rounded-full bg-[#6B4C2A] text-white text-[12px] flex items-center justify-center">2</span> Product name <span className="font-normal" style={{ color: MUTED }}>(optional)</span>
+                    </label>
+                    <input
+                      id="product-name"
+                      type="text"
+                      value={productName}
+                      onChange={(e) => setProductName(e.target.value)}
+                      placeholder="e.g. Vintage Buffalo Leather Journal, A5"
+                      className="mt-3 w-full h-12 px-4 rounded-xl border border-black/20 bg-white text-[15px] placeholder:text-[#8A8076] focus:outline-none focus:border-[#6B4C2A] focus:ring-2 focus:ring-[#6B4C2A]/20"
+                    />
+                    <p className="mt-2 text-[13px]" style={{ color: MUTED }}>This name is shown on the product card and in enquiry emails. If you add several photos at once, they all get this name.</p>
+                  </div>
+
+                  <div>
+                    <p className="flex items-center gap-2.5 text-[14px] font-semibold mb-3">
+                      <span className="w-6 h-6 rounded-full bg-[#6B4C2A] text-white text-[12px] flex items-center justify-center">3</span> Add the photo
+                    </p>
+                    <DropZone
+                      title={`Add photos to ${catLabelOf(selectedCategory)}`}
+                      hint="Click here or drag photos in. JPG, PNG or WebP, up to 5 MB each. You can choose many at once."
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      busy={!!productProgress}
+                      progress={productProgress ?? undefined}
+                      onFiles={(f) => void handleProductUpload(f)}
+                    />
+                  </div>
+                </div>
+              </Panel>
+
+              <div className="mt-8">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <h2 className="text-[18px] font-semibold">Your products <span className="font-normal tabular-nums" style={{ color: MUTED }}>({filteredProducts.length}{filteredProducts.length !== productImages.length ? ` of ${productImages.length}` : ""})</span></h2>
+                  <label className="relative block sm:w-72">
+                    <span className="sr-only">Search products</span>
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: MUTED }} aria-hidden />
+                    <input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search by name"
+                      className="w-full h-11 pl-10 pr-3 rounded-xl border border-black/20 bg-white text-[14px] placeholder:text-[#8A8076] focus:outline-none focus:border-[#6B4C2A] focus:ring-2 focus:ring-[#6B4C2A]/20"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-4 flex gap-2 overflow-x-auto no-scrollbar pb-1" role="group" aria-label="Filter products by category">
+                  {[{ id: "all", label: "All", icon: "" }, ...PRODUCT_CATEGORIES].map((c) => {
+                    const on = listFilter === c.id;
+                    const n = c.id === "all" ? productImages.length : productImages.filter((p) => p.category === c.id).length;
+                    return (
+                      <button
+                        key={c.id}
+                        aria-pressed={on}
+                        onClick={() => setListFilter(c.id)}
+                        className={`shrink-0 inline-flex items-center gap-2 h-10 pl-4 pr-2.5 rounded-full border text-[13px] font-medium whitespace-nowrap transition-colors ${on ? "bg-[#6B4C2A] text-white border-[#6B4C2A]" : "bg-white text-[#1A1410] border-black/20 hover:border-[#6B4C2A]"}`}
+                      >
+                        {c.label}
+                        <span className={`min-w-[22px] h-[22px] px-1.5 rounded-full text-[11px] inline-flex items-center justify-center tabular-nums ${on ? "bg-white/20" : "bg-black/[0.06] text-[#4A3219]"}`}>{n}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-5">
+                  {productLoading ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {[...Array(8)].map((_, i) => <div key={i} className="aspect-[4/5] rounded-2xl bg-black/[0.06] animate-pulse" />)}
+                    </div>
+                  ) : filteredProducts.length === 0 ? (
+                    <EmptyState
+                      title={productImages.length === 0 ? "No products yet" : "Nothing matches"}
+                      text={productImages.length === 0 ? "Add your first product above — it takes about a minute." : "Try a different category or clear the search box."}
+                    >
+                      {search && <GhostButton onClick={() => setSearch("")}>Clear search</GhostButton>}
+                    </EmptyState>
+                  ) : (
+                    <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {filteredProducts.map((p) => (
+                        <li key={p.id}>
+                          <Panel className="overflow-hidden h-full flex flex-col">
+                            <div className="relative aspect-square bg-[#EFEBE3]">
+                              <img src={p.url} alt={p.product_name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                              <button
+                                onClick={() => askDeleteProduct(p)}
+                                aria-label={`Remove ${p.product_name || "product"}`}
+                                className="absolute top-2 right-2 w-9 h-9 rounded-full bg-white text-[#B42318] shadow-md flex items-center justify-center hover:bg-[#FEF3F2]"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-[14px] font-medium leading-snug line-clamp-2">{p.product_name || "Untitled"}</p>
+                              <p className="mt-1 text-[12px]" style={{ color: MUTED }}>{catLabelOf(p.category)}</p>
+                            </div>
+                          </Panel>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ── Gallery ──────────────────────────────────────────────── */}
+          {tab === "gallery" && (
+            <>
+              <SectionHeader title="Gallery" description="Photos and short videos shown on your Gallery page. Add as many as you like." />
+              <DropZone
+                title="Add photos or videos"
+                hint="Click here or drag files in. Photos: JPG, PNG or WebP up to 5 MB. Videos: MP4 or WebM up to 10 MB."
+                accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+                multiple
+                busy={!!galleryProgress}
+                progress={galleryProgress ?? undefined}
+                onFiles={(f) => void handleGalleryUpload(f)}
+              />
+
+              <h2 className="mt-8 mb-4 text-[18px] font-semibold">In your gallery <span className="font-normal tabular-nums" style={{ color: MUTED }}>({galleryImages.length})</span></h2>
+              {galleryLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {[...Array(8)].map((_, i) => <div key={i} className="aspect-square rounded-2xl bg-black/[0.06] animate-pulse" />)}
+                </div>
+              ) : galleryImages.length === 0 ? (
+                <EmptyState title="Your gallery is empty" text="Add a few photos above and they will appear on the Gallery page." />
+              ) : (
+                <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {galleryImages.map((img) => {
+                    const video = isVideoUrl(img.url);
+                    return (
+                      <li key={img.id}>
+                        <div className="relative aspect-square rounded-2xl overflow-hidden bg-[#EFEBE3] border border-black/10">
+                          {video ? <video src={img.url} muted playsInline preload="metadata" className="w-full h-full object-cover" /> : <img src={img.url} alt="Gallery item" loading="lazy" decoding="async" className="w-full h-full object-cover" />}
+                          {video && (
+                            <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-[#1A1410]/80 text-white text-[11px] font-medium px-2.5 py-1"><Play size={11} fill="currentColor" /> Video</span>
+                          )}
+                          <button
+                            onClick={() => askDeleteGallery(img)}
+                            aria-label={video ? "Remove this video" : "Remove this photo"}
+                            className="absolute top-2 right-2 w-9 h-9 rounded-full bg-white text-[#B42318] shadow-md flex items-center justify-center hover:bg-[#FEF3F2]"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Preview modal */}
+      {/* Photo preview */}
       {previewSlot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(0,0,0,0.85)" }} onClick={() => setPreviewSlot(null)}>
-          <div className="max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
-            <img src={getImageForSection(previewSlot.section)?.url ?? previewSlot.defaultUrl} alt={previewSlot.label} className="w-full object-cover" style={{ borderRadius: 2 }} />
-            <p className="text-center mt-3 text-sm" style={{ color: "rgba(250,247,240,0.7)", fontFamily: "var(--font-body)" }}>{previewSlot.label}</p>
-            <p className="text-center text-xs mt-1" style={{ color: "rgba(250,247,240,0.35)", fontFamily: "var(--font-body)" }}>Click anywhere to close</p>
+        <div className="fixed inset-0 z-[105] flex items-center justify-center p-4 sm:p-8 bg-[#1A1410]/80" onClick={() => setPreviewSlot(null)} role="dialog" aria-modal="true" aria-label={`Preview: ${previewSlot.label}`}>
+          <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setPreviewSlot(null)} aria-label="Close preview" className="absolute -top-3 -right-3 z-10 w-10 h-10 rounded-full bg-white text-[#1A1410] shadow-lg flex items-center justify-center"><X size={18} /></button>
+            <img src={getImageForSection(previewSlot.section)?.url ?? previewSlot.defaultUrl} alt={previewSlot.label} className="w-full max-h-[78vh] object-contain rounded-2xl bg-[#EFEBE3]" />
+            <p className="mt-3 text-center text-[14px] text-white/90">{previewSlot.label}</p>
           </div>
         </div>
       )}
@@ -561,74 +659,55 @@ function AdminPage() {
   );
 }
 
-// ── Shared section header ──────────────────────────────────────────────────────
-function SectionHeader({ title, subtitle, count }: { title: string; subtitle?: string; count?: string }) {
-  return (
-    <div className="flex items-start justify-between pb-3" style={{ borderBottom: "1px solid rgba(107,76,42,0.2)" }}>
-      <div>
-        <h2 style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6B4C2A" }}>{title}</h2>
-        {subtitle && <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#8B7D6B", marginTop: 3 }}>{subtitle}</p>}
-      </div>
-      {count && <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#8B7D6B", flexShrink: 0 }}>{count}</span>}
-    </div>
-  );
-}
+// ── Sign in ────────────────────────────────────────────────────────────────────
+function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
+  const [pw, setPw] = useState("");
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState(false);
 
-// ── Image card (fixed slots) ───────────────────────────────────────────────────
-function ImageCard({ slot, currentUrl, hasCustom, isUploading, onUpload, onDelete, onPreview }: {
-  slot: ImageSlot; currentUrl: string; hasCustom: boolean; isUploading: boolean;
-  onUpload: (file: File) => void; onDelete: () => void; onPreview: () => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const types = slot.allowGif ? ["image/jpeg", "image/png", "image/webp", "image/gif"] : ["image/jpeg", "image/png", "image/webp"];
-    const maxMB = slot.allowGif ? 10 : 5;
-    if (!types.includes(file.type)) { alert(`Only ${slot.allowGif ? "GIF, " : ""}JPG, PNG, and WebP images are supported.`); return; }
-    if (file.size > maxMB * 1024 * 1024) { alert(`File must be under ${maxMB}MB.`); return; }
-    onUpload(file);
-    e.target.value = "";
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pw === ADMIN_PASSWORD) {
+      sessionStorage.setItem("ins_admin", "true");
+      onSuccess();
+    } else {
+      setError(true);
+    }
   };
 
   return (
-    <div style={{ background: "#FAF7F0", borderRadius: 2, overflow: "hidden", border: "1px solid rgba(139,125,107,0.2)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-      <div className="relative overflow-hidden cursor-pointer group" style={{ aspectRatio: slot.aspectRatio, background: "#EDE3CC" }} onClick={onPreview}>
-        <img src={currentUrl} alt={slot.label} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: "rgba(15,11,8,0.55)" }}><Eye size={22} color="#FAF7F0" /></div>
-        <div className="absolute top-2 right-2" style={{ background: hasCustom ? "#C9973A" : "rgba(15,11,8,0.6)", color: hasCustom ? "#1A1410" : "#FAF7F0", fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 20 }}>
-          {hasCustom ? "Custom" : "Default"}
+    <div data-admin data-lenis-prevent className="fixed inset-0 z-[90] overflow-y-auto bg-[#F6F4EF] flex items-center justify-center px-4 py-10" style={{ fontFamily: "var(--font-body)" }}>
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <p className="text-[#1A1410]" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 30, letterSpacing: "0.02em" }}>INS Overseas</p>
+          <p className="mt-1.5 text-[12px] uppercase" style={{ color: MUTED, letterSpacing: "0.18em" }}>Website manager</p>
         </div>
-      </div>
-      <div style={{ padding: "14px 16px" }}>
-        <p style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 15, color: "#1A1410", marginBottom: 8 }}>{slot.label}</p>
-        <div className="flex items-center gap-1.5 mb-3">
-          <span style={{ fontSize: 11 }}>📍</span>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#8B7D6B", lineHeight: 1.4 }}>{slot.location}</span>
-        </div>
-        <div className="flex items-start gap-1.5 mb-4 px-3 py-2" style={{ background: "rgba(201,151,58,0.08)", border: "1px solid rgba(201,151,58,0.15)", borderRadius: 3 }}>
-          <span style={{ fontSize: 11, marginTop: 1 }}>💡</span>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "rgba(201,151,58,0.9)", lineHeight: 1.5 }}>{slot.tip}</span>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => inputRef.current?.click()} disabled={isUploading} className="flex-1 flex items-center justify-center gap-2 transition-colors"
-            style={{ background: isUploading ? "rgba(107,76,42,0.5)" : "#6B4C2A", color: "#FAF7F0", fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", padding: "10px 0", borderRadius: 2, cursor: isUploading ? "not-allowed" : "pointer" }}>
-            {isUploading ? <><div className="w-3 h-3 rounded-full animate-spin" style={{ border: "1.5px solid rgba(250,247,240,0.3)", borderTopColor: "#FAF7F0" }} />Uploading…</> : <><Upload size={13} />{hasCustom ? "Replace" : "Upload"}</>}
-          </button>
-          {hasCustom && (
-            <button onClick={onDelete} className="flex items-center justify-center transition-colors" style={{ width: 40, border: "1px solid rgba(220,38,38,0.35)", color: "#dc2626", borderRadius: 2 }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-            ><Trash2 size={14} /></button>
-          )}
-        </div>
-        <input ref={inputRef} type="file" accept={slot.allowGif ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"} className="hidden" onChange={handleFile} />
-        <a href={slot.pageUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 mt-3 transition-colors"
-          style={{ fontFamily: "var(--font-body)", fontSize: 11, letterSpacing: "0.08em", color: "rgba(139,125,107,0.6)", textDecoration: "none" }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = "#8B7D6B"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(139,125,107,0.6)"; }}
-        ><ExternalLink size={11} />View on site</a>
+        <form onSubmit={submit} className="bg-white rounded-2xl border border-black/10 shadow-[0_20px_50px_-24px_rgba(26,20,16,0.35)] p-6 sm:p-7">
+          <span className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: "#F3EEE2", color: "#6B4C2A" }}><ShieldCheck size={22} /></span>
+          <h1 className="text-[#1A1410]" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 28, lineHeight: 1.1 }}>Welcome back</h1>
+          <p className="mt-1.5 text-[14px]" style={{ color: MUTED }}>Enter your password to update your website's photos and products.</p>
+
+          <label htmlFor="admin-password" className="block mt-6 text-[13px] font-medium text-[#1A1410]">Password</label>
+          <div className="relative mt-2">
+            <input
+              id="admin-password"
+              type={show ? "text" : "password"}
+              value={pw}
+              onChange={(e) => { setPw(e.target.value); setError(false); }}
+              autoFocus
+              autoComplete="current-password"
+              aria-invalid={error}
+              aria-describedby={error ? "pw-error" : undefined}
+              className={`w-full h-12 pl-4 pr-12 rounded-xl border bg-white text-[15px] focus:outline-none focus:ring-2 ${error ? "border-[#B42318] focus:ring-[#B42318]/20" : "border-black/20 focus:border-[#6B4C2A] focus:ring-[#6B4C2A]/20"}`}
+            />
+            <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? "Hide password" : "Show password"} className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg flex items-center justify-center hover:bg-black/5" style={{ color: MUTED }}>
+              {show ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          {error && <p id="pw-error" role="alert" className="mt-2 text-[13px] text-[#B42318]">That password isn't right. Please try again.</p>}
+
+          <PrimaryButton type="submit" className="w-full mt-5 h-12">Sign in</PrimaryButton>
+        </form>
       </div>
     </div>
   );

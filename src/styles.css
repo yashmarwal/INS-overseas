@@ -140,12 +140,12 @@
   --umber: #6B4C2A;
   --umber-dark: #4A3219;
   --gold: #C9973A;
-  --gold-light: #E8B96A;
+  --gold-light: #F1CA85;
   --ink: #1A1410;
   --warm-grey: #8B7D6B;
   --warm-grey-light: #C4B8A8;
   --leather: #8B5E3C;
-  --sage: #7A8C6E;
+  --sage: #566A4B;
 
   --background: #FAF7F0;
   --foreground: #1A1410;
@@ -276,4 +276,34 @@ img {
 img.no-radius,
 section > div > img {
   border-radius: 0;
+}
+
+/* ── Accessible text colours ──────────────────────────────────────────────────────
+   The brand gold (#C9973A) and warm grey (#8B7D6B) read well on the dark sections but fall below
+   WCAG AA on cream / parchment (2.4:1 and 3.7:1). On light surfaces the same classes resolve to
+   deeper "ink" versions of the same hues (6.1:1 and 6.4:1 on cream). Dark surfaces keep the originals. */
+:root {
+  --gold-ink: #7A5710;
+  --grey-ink: #655A4C;
+}
+.text-gold:is(.bg-cream, .bg-parchment, .bg-parchment-dark, .bg-white),
+:is(.bg-cream, .bg-parchment, .bg-parchment-dark, .bg-white) .text-gold { color: var(--gold-ink); }
+.text-warm-grey:is(.bg-cream, .bg-parchment, .bg-parchment-dark, .bg-white),
+:is(.bg-cream, .bg-parchment, .bg-parchment-dark, .bg-white) .text-warm-grey { color: var(--grey-ink); }
+/* a dark panel nested inside a light section goes back to the bright originals */
+:is(.bg-ink, .bg-umber, .bg-umber-dark, .bg-sage, .bg-leather) .text-gold { color: var(--gold); }
+:is(.bg-ink, .bg-umber, .bg-umber-dark, .bg-sage, .bg-leather) .text-warm-grey { color: var(--warm-grey); }
+
+/* Tailwind's tabular-nums replaces (not adds to) font-variant-numeric, which would silently bring back the
+   old-style figures. Always keep lining figures alongside equal-width digits. */
+.tabular-nums { font-variant-numeric: lining-nums tabular-nums; }
+
+/* Admin: card and section headings use the clear UI sans (the page title keeps the brand serif) */
+[data-admin] h2, [data-admin] h3 { font-family: var(--font-body); font-weight: 600; letter-spacing: 0; }
+
+/* Page changes: the browser cross-dissolves the old page straight into the new one (View Transitions API), so no
+   background colour or glow ever shows between them. */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.38s; animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }

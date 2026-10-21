@@ -103,7 +103,7 @@ function Sust() {
             {stats.map((s, i) => (
               <motion.div key={s.label}
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.1 }}
-                className="bg-cream p-10 border-t-2 border-gold"
+                className="bg-white p-10 border-t-2 border-gold shadow-[0_1px_2px_rgba(26,20,16,0.05),0_12px_28px_-18px_rgba(26,20,16,0.3)]"
               >
                 <p className="text-gold" style={{ fontFamily: "var(--font-display)", fontWeight: 300, fontSize: 64, lineHeight: 1 }}>{s.value}</p>
                 <p className="mt-4 uppercase text-umber text-xs" style={{ letterSpacing: "0.2em" }}>{s.label}</p>

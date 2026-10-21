@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PageHero from "@/components/shared/PageHero";
 import { useProductImages } from "@/hooks/useProductImages";
-import { X, Mail, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Mail, Maximize2, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { SITE_URL } from "@/lib/seo";
 
 // ── Filter definitions ────────────────────────────────────────────────────────
@@ -155,6 +156,7 @@ function Products() {
   const [filter, setFilter] = useState("all");
   const { images: productRows, loading } = useProductImages();
   const [preview, setPreview] = useState<DynamicProduct | null>(null);
+  const isMobile = useIsMobile(); // phones get a compact floating card instead of the wide two-column dialog
 
   // Back gesture closes lightbox instead of navigating away
   useEffect(() => {
@@ -193,6 +195,13 @@ function Products() {
   const visible =
     filter === "all" ? allProducts : allProducts.filter((p) => p.category === filter);
 
+  const pillBar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const bar = pillBar.current;
+    const el = bar?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (bar && el) bar.scrollTo({ left: el.offsetLeft - (bar.clientWidth - el.offsetWidth) / 2, behavior: "smooth" });
+  }, [filter]);
+
   // Render the catalogue in batches as the visitor scrolls, instead of 100+ cards at once.
   const [count, setCount] = useState(BATCH);
   const [sentinel, setSentinel] = useState<HTMLDivElement | null>(null);
@@ -229,38 +238,60 @@ function Products() {
         subtitle="A curated catalogue of journals, papers, stationery and leather goods — crafted in Jaipur, shipped worldwide."
       />
 
-      {/* Filter tabs */}
-      <section className="sticky top-[72px] z-30 bg-cream border-b border-warm-grey-light/40">
-        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 py-4 flex gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => { setFilter(f.key); setCount(BATCH); }}
-              className={`shrink-0 uppercase text-[11px] px-4 py-2 border transition-all duration-200 ${
-                filter === f.key
-                  ? "bg-umber text-cream border-umber"
-                  : "border-warm-grey-light/60 text-umber hover:border-umber"
-              }`}
-              style={{ letterSpacing: "0.15em" }}
-            >
-              {f.label}
-            </button>
-          ))}
+      {/* Category pills */}
+      <section className="sticky top-[var(--nav-h,72px)] z-30 bg-parchment border-b border-umber/15 shadow-[0_6px_16px_-12px_rgba(26,20,16,0.35)]">
+        <div className="max-w-[1400px] mx-auto pl-5 sm:pl-8 lg:pl-20 pr-0 lg:pr-20">
+          <div
+            ref={pillBar}
+            role="group"
+            aria-label="Filter products by category"
+            className="relative flex gap-2.5 overflow-x-auto no-scrollbar py-3.5 pr-5 sm:pr-8 lg:pr-0"
+          >
+            {filters.map((f) => {
+              const active = filter === f.key;
+              const n = f.key === "all" ? allProducts.length : allProducts.filter((p) => p.category === f.key).length;
+              return (
+                <button
+                  key={f.key}
+                  aria-pressed={active}
+                  onClick={() => { setFilter(f.key); setCount(BATCH); }}
+                  className={`shrink-0 inline-flex items-center gap-2 h-11 pl-5 pr-3 rounded-full border text-[13px] font-medium whitespace-nowrap transition-all duration-200 active:scale-95 [-webkit-tap-highlight-color:transparent] ${
+                    active
+                      ? "bg-umber text-cream border-umber shadow-[0_6px_16px_-6px_rgba(107,76,42,0.7)]"
+                      : "bg-white text-umber-dark border-umber/40 hover:border-umber hover:bg-cream"
+                  }`}
+                  style={{ fontFamily: "var(--font-body)", letterSpacing: "0.03em" }}
+                >
+                  {f.label}
+                  <span
+                    className={`min-w-[26px] h-[26px] px-1.5 rounded-full inline-flex items-center justify-center text-[11px] tabular-nums ${
+                      active ? "bg-cream/20 text-cream" : "bg-umber/10 text-umber"
+                    }`}
+                  >
+                    {n}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
 
       {/* Grid */}
-      <section className="bg-cream py-16 lg:py-24">
+      <section className="bg-cream py-6 sm:py-10 lg:py-16">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
 
           {/* Skeletons */}
           {loading && (
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="aspect-[3/4] bg-parchment-dark rounded-sm" />
-                  <div className="h-4 bg-parchment-dark rounded mt-4 w-3/4" />
-                  <div className="h-3 bg-parchment-dark rounded mt-2 w-1/2" />
+                <div key={i} className="animate-pulse rounded-2xl bg-white border border-ink/10 overflow-hidden">
+                  <div className="aspect-[4/5] bg-parchment-dark" />
+                  <div className="p-4">
+                    <div className="h-4 bg-parchment-dark rounded w-3/4" />
+                    <div className="h-3 bg-parchment-dark rounded mt-2.5 w-1/2" />
+                    <div className="h-9 bg-parchment-dark rounded-full mt-4 w-28" />
+                  </div>
                 </div>
               ))}
             </div>
@@ -280,61 +311,65 @@ function Products() {
           {!loading && visible.length > 0 && (
             // key={filter}: switching category remounts the grid, so the new cards simply fade in
             // (no per-card layout tracking — that is what made 100+ products janky)
-            <div key={filter} className="grid grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-              {shown.map((p, i) => (
+            <div key={filter} className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
+              {shown.map((p, i) => {
+                const moq = (CATEGORY_MOQ[p.category] || "200 units minimum").match(/\d+/)?.[0] ?? "200";
+                const showDesc = !!p.description && p.description.trim().toLowerCase() !== p.name.trim().toLowerCase();
+                return (
                   <motion.article
                     key={p.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, delay: (i % 6) * 0.05 }}
-                    className="group cursor-pointer"
+                    className="group flex flex-col rounded-2xl bg-white border border-ink/10 shadow-[0_1px_2px_rgba(26,20,16,0.05),0_10px_24px_-16px_rgba(26,20,16,0.25)] overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_44px_-20px_rgba(26,20,16,0.4)]"
                   >
-                    {/* Image — click to open lightbox */}
-                    <div
-                      className="aspect-[3/4] overflow-hidden bg-parchment-dark relative"
+                    {/* Image — click to open the details lightbox */}
+                    <button
+                      type="button"
                       onClick={() => setPreview(p)}
+                      aria-label={`View details: ${p.name}`}
+                      className="relative block aspect-[4/5] w-full overflow-hidden bg-[#EFEBE3] text-left cursor-pointer"
                     >
                       <img
                         loading="lazy"
                         decoding="async"
                         src={p.image}
                         alt={p.name}
-                        className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
                       />
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-ink/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <span
-                          className="text-cream uppercase border border-cream/60 px-4 py-2"
-                          style={{ fontFamily: "var(--font-body)", fontSize: 11, letterSpacing: "0.2em" }}
-                        >
-                          View Details
+                      <span
+                        className="absolute top-2.5 left-2.5 max-w-[calc(100%-20px)] truncate bg-white/95 text-umber-dark uppercase px-2.5 py-1 rounded-full shadow-[0_1px_4px_rgba(26,20,16,0.15)]"
+                        style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 9, letterSpacing: "0.14em" }}
+                      >
+                        {CATEGORY_LABELS[p.category] || p.category}
+                      </span>
+                      <span className="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full bg-cream text-umber flex items-center justify-center shadow-md md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300" aria-hidden>
+                        <Maximize2 size={15} strokeWidth={1.8} />
+                      </span>
+                    </button>
+
+                    <div className="flex flex-1 flex-col p-3.5 sm:p-4">
+                      <h3
+                        className="text-ink leading-snug line-clamp-2"
+                        style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "clamp(16px, 1.7vw, 19px)" }}
+                      >
+                        {p.name}
+                      </h3>
+                      {showDesc && (
+                        <p className="mt-1 line-clamp-2" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 12.5, lineHeight: 1.5, color: "var(--grey-ink)" }}>
+                          {p.description}
+                        </p>
+                      )}
+                      <div className="mt-auto pt-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                        <span className="uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10, letterSpacing: "0.14em", color: "var(--grey-ink)" }}>
+                          MOQ {moq}+
                         </span>
+                        <EnquireButton product={p} compact />
                       </div>
                     </div>
-
-                    {/* Category */}
-                    <p
-                      className="mt-4 text-gold uppercase"
-                      style={{ fontFamily: "var(--font-body)", fontSize: 10, letterSpacing: "0.22em" }}
-                    >
-                      {CATEGORY_LABELS[p.category] || p.category}
-                    </p>
-
-                    {/* Name */}
-                    <h3
-                      className="mt-1 text-ink leading-snug"
-                      style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: "clamp(16px, 1.8vw, 20px)" }}
-                    >
-                      {p.name}
-                    </h3>
-
-                    {p.description && (
-                      <p className="mt-1 text-warm-grey text-sm font-light">{p.description}</p>
-                    )}
-
-                    <EnquireButton product={p} />
                   </motion.article>
-                ))}
+                );
+              })}
             </div>
           )}
 
@@ -343,7 +378,7 @@ function Products() {
         </div>
       </section>
 
-      {/* ── Lightbox ────────────────────────────────────────────────────── */}
+      {/* ── Product details ─────────────────────────────────────────────── */}
       <AnimatePresence>
         {preview && (
           <motion.div
@@ -351,127 +386,205 @@ function Products() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-ink/90 flex items-center justify-center p-4 md:p-8"
+            className="fixed inset-0 z-50 bg-ink/70 flex items-center justify-center p-5 md:p-6"
             onClick={closePreview}
           >
+            {isMobile ? (
+              <motion.div
+                role="dialog"
+                aria-modal="true"
+                aria-label={preview.name}
+                initial={{ opacity: 0, scale: 0.92, y: 28 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: 20 }}
+                transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+                className="relative w-full max-w-[360px] max-h-[92vh] overflow-y-auto overscroll-contain bg-white rounded-[32px] p-2.5 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.6)]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Photo, inset with its own rounded corners; tag, close and browse controls sit on it */}
+                <div className="relative aspect-square rounded-[24px] overflow-hidden bg-[#EFEBE3]">
+                  <img src={preview.image} alt={preview.name} className="w-full h-full object-cover" />
+                  <span
+                    className="absolute top-3.5 left-3.5 max-w-[60%] truncate bg-ink/55 text-white rounded-full px-3 py-1.5"
+                    style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12 }}
+                  >
+                    {CATEGORY_LABELS[preview.category] || preview.category}
+                  </span>
+                  <button
+                    onClick={closePreview}
+                    aria-label="Close"
+                    className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.25)] flex items-center justify-center active:scale-95 transition-transform"
+                  >
+                    <X size={18} />
+                  </button>
+                  {visible.length > 1 && (
+                    <>
+                      <button
+                        onClick={goPrev}
+                        disabled={currentIndex === 0}
+                        aria-label="Previous product"
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 text-ink shadow-md flex items-center justify-center active:scale-95 transition-all disabled:opacity-0 disabled:pointer-events-none"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <button
+                        onClick={goNext}
+                        disabled={currentIndex === visible.length - 1}
+                        aria-label="Next product"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 text-ink shadow-md flex items-center justify-center active:scale-95 transition-all disabled:opacity-0 disabled:pointer-events-none"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                      <span
+                        className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-ink/55 text-white rounded-full px-2.5 py-1 tabular-nums"
+                        style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11 }}
+                      >
+                        {currentIndex + 1} / {visible.length}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <div className="px-3.5 pt-4 pb-3">
+                  <h2 className="text-ink leading-[1.1]" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 26, letterSpacing: "-0.01em" }}>
+                    {preview.name}
+                  </h2>
+                  <p className="mt-1.5" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 15, color: "var(--grey-ink)" }}>
+                    {CATEGORY_LABELS[preview.category] || preview.category}
+                  </p>
+                  <p className="mt-2 leading-snug" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 13.5, color: "var(--grey-ink)" }}>
+                    {preview.description && preview.description.trim().toLowerCase() !== preview.name.trim().toLowerCase()
+                      ? preview.description
+                      : "Handmade in Sanganer, Jaipur. Lead time 30 days · custom branding available · ships by air or sea."}
+                  </p>
+
+                  <div className="mt-5 flex items-center justify-between gap-3">
+                    <span className="inline-flex items-center h-11 px-4 rounded-full bg-[#F1EEE8] text-ink tabular-nums" style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 15 }}>
+                      MOQ {(CATEGORY_MOQ[preview.category] || "200 units minimum").match(/\d+/)?.[0] ?? "200"}+
+                    </span>
+                    <a
+                      href={enquiryHref(preview)}
+                      aria-label={`Enquire about ${preview.name}`}
+                      className="inline-flex items-center gap-2.5 h-11 pl-5 pr-1.5 rounded-full bg-ink text-white active:scale-95 transition-transform"
+                      style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 14 }}
+                    >
+                      Enquire
+                      <span className="w-8 h-8 rounded-full bg-white text-ink flex items-center justify-center"><ArrowUpRight size={16} /></span>
+                    </a>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
             <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 20 }}
+              role="dialog"
+              aria-modal="true"
+              aria-label={preview.name}
+              initial={{ opacity: 0, scale: 0.97, y: 24 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, y: 20 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] }}
-              className="relative bg-cream w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl"
-              style={{ borderRadius: 2 }}
+              exit={{ opacity: 0, scale: 0.97, y: 24 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+              className="relative bg-white w-full max-w-4xl max-h-[94vh] sm:max-h-[90vh] overflow-y-auto overscroll-contain rounded-t-3xl sm:rounded-3xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close */}
               <button
                 onClick={closePreview}
-                className="absolute top-4 right-4 z-10 w-9 h-9 flex items-center justify-center bg-ink/10 hover:bg-ink/20 rounded-full transition-colors"
+                className="absolute top-3.5 right-3.5 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white text-ink shadow-[0_2px_10px_rgba(26,20,16,0.18)] ring-1 ring-ink/10 hover:bg-parchment transition-colors"
                 aria-label="Close"
               >
-                <X size={18} className="text-ink" />
+                <X size={18} />
               </button>
 
-              <div className="grid grid-cols-1 md:grid-cols-2">
-                {/* Image */}
-                <div className="aspect-[3/4] md:aspect-auto overflow-hidden bg-parchment-dark">
-                  <img
-                    loading="lazy"
-                    decoding="async"
-                    src={preview.image}
-                    alt={preview.name}
-                    className="w-full h-full object-cover"
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-[1.05fr_1fr]">
+                {/* Photo — its own tinted panel, so a white-background photo never melts into the page */}
+                <div className="bg-[#EFEBE3] aspect-[4/3] md:aspect-auto md:min-h-[520px] overflow-hidden md:border-r border-ink/10">
+                  <img src={preview.image} alt={preview.name} className="w-full h-full object-cover" />
                 </div>
 
                 {/* Details */}
-                <div className="p-7 md:p-9 flex flex-col justify-between">
-                  <div>
-                    {/* Category tag */}
-                    <span
-                      className="inline-block text-gold uppercase mb-4"
-                      style={{ fontFamily: "var(--font-body)", fontSize: 10, letterSpacing: "0.22em" }}
+                <div className="p-6 sm:p-8 md:p-10 flex flex-col">
+                  <span
+                    className="self-start bg-parchment text-umber-dark uppercase rounded-full px-3 py-1.5"
+                    style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10.5, letterSpacing: "0.14em" }}
+                  >
+                    {CATEGORY_LABELS[preview.category] || preview.category}
+                  </span>
+
+                  <h2
+                    className="mt-4 text-ink leading-[1.08]"
+                    style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "clamp(26px, 3.2vw, 38px)", letterSpacing: "-0.01em" }}
+                  >
+                    {preview.name}
+                  </h2>
+
+                  {preview.description && preview.description.trim().toLowerCase() !== preview.name.trim().toLowerCase() && (
+                    <p className="mt-3 leading-relaxed" style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 15, color: "var(--grey-ink)" }}>
+                      {preview.description}
+                    </p>
+                  )}
+
+                  <dl className="mt-6 border-t border-ink/10">
+                    {([
+                      ["MOQ",       CATEGORY_MOQ[preview.category] || "200 units minimum"],
+                      ["Lead Time", "30 days after order confirmation"],
+                      ["Custom",    "Logo debossing, embossing, foil available"],
+                      ["Shipping",  "Air 7–10 days · Sea 35–40 days"],
+                    ] as [string, string][]).map(([k, v]) => (
+                      <div key={k} className="flex gap-4 py-3 border-b border-ink/10">
+                        <dt
+                          className="shrink-0 w-[84px] uppercase pt-0.5"
+                          style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10.5, letterSpacing: "0.14em", color: "var(--grey-ink)" }}
+                        >
+                          {k}
+                        </dt>
+                        <dd className="text-ink" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 14, lineHeight: 1.45 }}>
+                          {v}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+
+                  <div className="mt-7 md:mt-auto pt-2 flex flex-col gap-3">
+                    <EnquireButton product={preview} large />
+                    <a
+                      href={`https://wa.me/919680478483?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${preview.name}". Please share wholesale pricing and MOQ.`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-center text-umber-dark hover:text-ink transition-colors underline underline-offset-4 decoration-umber/40"
+                      style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 13 }}
                     >
-                      {CATEGORY_LABELS[preview.category] || preview.category}
-                    </span>
-
-                    {/* Name */}
-                    <h2
-                      className="text-ink leading-tight mb-3"
-                      style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: "clamp(22px, 3vw, 30px)" }}
-                    >
-                      {preview.name}
-                    </h2>
-
-                    {preview.description && (
-                      <p
-                        className="text-warm-grey mb-6 leading-relaxed"
-                        style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 15 }}
-                      >
-                        {preview.description}
-                      </p>
-                    )}
-
-                    <div className="h-px bg-warm-grey-light/40 mb-6" />
-
-                    {/* Details list */}
-                    <div className="space-y-2.5 mb-8">
-                      {([
-                        ["MOQ",       CATEGORY_MOQ[preview.category] || "200 units minimum"],
-                        ["Lead Time", "30 days after order confirmation"],
-                        ["Custom",    "Logo debossing, embossing, foil available"],
-                        ["Shipping",  "Air 7–10 days · Sea 35–40 days"],
-                      ] as [string, string][]).map(([k, v]) => (
-                        <div key={k} className="flex gap-3">
-                          <span
-                            className="text-gold uppercase shrink-0 w-20"
-                            style={{ fontFamily: "var(--font-body)", fontSize: 10, letterSpacing: "0.15em", paddingTop: 2 }}
-                          >
-                            {k}
-                          </span>
-                          <span
-                            className="text-umber-dark"
-                            style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 13 }}
-                          >
-                            {v}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                      Prefer chat? Message us on WhatsApp
+                    </a>
                   </div>
-
-                  <EnquireButton product={preview} large />
                 </div>
               </div>
 
-              {/* Lightbox nav */}
+              {/* Browse */}
               {visible.length > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-warm-grey-light/30">
+                <div className="flex items-center justify-between gap-3 px-5 sm:px-8 py-4 border-t border-ink/10 bg-parchment">
                   <button
                     onClick={goPrev}
                     disabled={currentIndex === 0}
-                    className="flex items-center gap-1.5 text-umber disabled:opacity-30 hover:text-ink transition-colors"
-                    style={{ fontFamily: "var(--font-body)", fontSize: 12, letterSpacing: "0.1em" }}
+                    className="inline-flex items-center gap-1.5 h-10 pl-3 pr-4 rounded-full bg-white border border-umber/30 text-umber-dark hover:border-umber hover:bg-cream disabled:opacity-55 disabled:pointer-events-none transition-colors"
+                    style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 13 }}
                   >
                     <ChevronLeft size={16} /> Prev
                   </button>
-                  <span
-                    className="text-warm-grey"
-                    style={{ fontFamily: "var(--font-body)", fontSize: 12 }}
-                  >
-                    {currentIndex + 1} / {visible.length}
+                  <span className="tabular-nums" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 13, color: "var(--grey-ink)" }}>
+                    {currentIndex + 1} of {visible.length}
                   </span>
                   <button
                     onClick={goNext}
                     disabled={currentIndex === visible.length - 1}
-                    className="flex items-center gap-1.5 text-umber disabled:opacity-30 hover:text-ink transition-colors"
-                    style={{ fontFamily: "var(--font-body)", fontSize: 12, letterSpacing: "0.1em" }}
+                    className="inline-flex items-center gap-1.5 h-10 pl-4 pr-3 rounded-full bg-white border border-umber/30 text-umber-dark hover:border-umber hover:bg-cream disabled:opacity-55 disabled:pointer-events-none transition-colors"
+                    style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 13 }}
                   >
                     Next <ChevronRight size={16} />
                   </button>
                 </div>
               )}
             </motion.div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -480,25 +593,31 @@ function Products() {
 }
 
 // ── Enquire button ─────────────────────────────────────────────────────────────
-function EnquireButton({ product, large = false }: { product: DynamicProduct; large?: boolean }) {
+function enquiryHref(product: DynamicProduct) {
   const categoryLabel = CATEGORY_LABELS[product.category] || product.category;
   const subject = encodeURIComponent(`Product Enquiry: ${product.name} — INS Overseas`);
   const body = encodeURIComponent(
     `Hi INS Overseas Team,\n\nI am interested in the following product:\n\nProduct: ${product.name}\nCategory: ${categoryLabel}\n\nPlease share:\n- Wholesale pricing\n- Available sizes and variants\n- MOQ details\n- Lead time for bulk order\n- Custom branding options (if any)\n\nCompany: \nCountry: \nEstimated Quantity: \n\nThank you,`
   );
+  return `mailto:Sezan@ins-overseas.com?subject=${subject}&body=${body}`;
+}
 
+function EnquireButton({ product, large = false, compact = false }: { product: DynamicProduct; large?: boolean; compact?: boolean }) {
   return (
     <a
-      href={`mailto:Sezan@ins-overseas.com?subject=${subject}&body=${body}`}
-      className={`inline-flex items-center gap-2 transition-all duration-200 group ${
+      href={enquiryHref(product)}
+      aria-label={`Enquire about ${product.name}`}
+      className={`inline-flex items-center justify-center gap-2 transition-all duration-200 [-webkit-tap-highlight-color:transparent] ${
         large
-          ? "w-full justify-center bg-umber text-cream px-6 py-4 hover:bg-umber-dark uppercase text-[12px]"
-          : "mt-4 border border-umber text-umber px-5 py-2.5 hover:bg-umber hover:text-cream uppercase text-[11px]"
+          ? "w-full bg-umber text-cream px-6 py-4 hover:bg-umber-dark uppercase text-[12px]"
+          : compact
+            ? "h-10 px-4 rounded-full border border-umber/40 text-umber-dark hover:bg-umber hover:border-umber hover:text-cream active:scale-95 text-[12px]"
+            : "mt-4 border border-umber text-umber px-5 py-2.5 hover:bg-umber hover:text-cream uppercase text-[11px]"
       }`}
-      style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.15em" }}
+      style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: compact ? "0.04em" : "0.15em" }}
     >
-      <Mail size={large ? 15 : 12} />
-      Enquire about this product
+      <Mail size={large ? 15 : 13} strokeWidth={1.8} />
+      {compact ? "Enquire" : "Enquire about this product"}
     </a>
   );
 }

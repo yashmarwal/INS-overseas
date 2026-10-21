@@ -11,6 +11,7 @@ const router = createRouter({
   routeTree,
   context: { queryClient },
   defaultPreload: "intent", // fetch a page's code on hover / touch-start, so the click feels instant
+  defaultViewTransition: true, // the browser cross-dissolves old page into new (CSS in styles.css); no-op where unsupported
 });
 
 // Once the home page is settled, warm the data the two image-heavy pages need.

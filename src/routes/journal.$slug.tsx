@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Clock, Calendar } from "lucide-react";
 import { posts, type Post } from "@/data/blogPosts";
 import { SITE_URL, ORG_REF } from "@/lib/seo";
+import { revealProps } from "@/components/shared/Reveal";
 
 const PUBLISHER = {
   "@type": "Organization",
@@ -125,15 +126,15 @@ function BlogPost() {
   return (
     <>
       {/* Hero */}
-      <div className="relative h-[50vh] min-h-[340px] overflow-hidden">
+      <div className="relative min-h-[300px] lg:h-[50vh] lg:min-h-[340px] overflow-hidden">
         <img
           src={post.img}
           alt={post.title}
-          className="w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
           style={{ filter: "brightness(0.55) sepia(0.1)" }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/30 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-end px-5 sm:px-8 lg:px-20 pb-12 max-w-[1400px] mx-auto left-0 right-0">
+        <div className="relative lg:absolute lg:inset-0 flex flex-col justify-end pt-24 sm:pt-28 lg:pt-0 px-5 sm:px-8 lg:px-20 pb-10 lg:pb-12 max-w-[1400px] mx-auto lg:left-0 lg:right-0">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -216,8 +217,9 @@ function BlogPost() {
                 !para.endsWith(",") &&
                 !para.includes("—");
               return isHeading ? (
-                <h2
+                <motion.h2
                   key={i}
+                  {...revealProps(14)}
                   className="text-ink pt-6"
                   style={{
                     fontFamily: "var(--font-display)",
@@ -227,15 +229,16 @@ function BlogPost() {
                   }}
                 >
                   {para}
-                </h2>
+                </motion.h2>
               ) : (
-                <p
+                <motion.p
                   key={i}
+                  {...revealProps(14)}
                   className="text-warm-grey"
                   style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 16, lineHeight: 1.85 }}
                 >
                   {para}
-                </p>
+                </motion.p>
               );
             })}
           </div>

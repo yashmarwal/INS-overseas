@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
 import PageHero from "@/components/shared/PageHero";
 import { SITE_URL } from "@/lib/seo";
+import { revealProps } from "@/components/shared/Reveal";
 
 const groups: { cat: string; items: [string, string][] }[] = [
   {
@@ -265,7 +266,7 @@ function FAQ() {
       <section className="bg-cream py-20">
         <div className="max-w-3xl mx-auto px-5 sm:px-8 space-y-14">
           {groups.map((g) => (
-            <div key={g.cat}>
+            <motion.div key={g.cat} {...revealProps(24)}>
               <h2
                 className="text-xs uppercase text-gold mb-6"
                 style={{ letterSpacing: "0.25em" }}
@@ -319,7 +320,7 @@ function FAQ() {
                   );
                 })}
               </ul>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>

@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import PageHero from "@/components/shared/PageHero";
 import ContactStrip from "@/components/home/ContactStrip";
 import { MessageCircle, Mail, Phone } from "lucide-react";
+import { motion } from "framer-motion";
+import { revealProps } from "@/components/shared/Reveal";
 import { SITE_URL } from "@/lib/seo";
 
 const CANONICAL = `${SITE_URL}/contact`;
@@ -104,18 +106,18 @@ function Contact() {
             { icon: MessageCircle, label: "WhatsApp", sub: "Fastest response", href: "https://wa.me/919680478483", cta: "Open WhatsApp" },
             { icon: Mail, label: "Email", sub: "Detailed enquiries", href: "mailto:Sezan@ins-overseas.com", cta: "Send Email" },
             { icon: Phone, label: "Call", sub: "Mon–Sat, 24 hours", href: "tel:+919680478483", cta: "Call Now" },
-          ].map((c) => (
-            <a key={c.label} href={c.href} target="_blank" rel="noreferrer" className="bg-cream p-8 border border-warm-grey-light hover:border-gold transition-colors">
+          ].map((c, i) => (
+            <motion.a key={c.label} {...revealProps(24, i * 0.09)} href={c.href} target="_blank" rel="noreferrer" className="bg-white p-8 border border-ink/10 shadow-[0_1px_2px_rgba(26,20,16,0.05),0_12px_28px_-18px_rgba(26,20,16,0.3)] hover:border-gold transition-colors">
               <c.icon className="text-gold" size={28} />
               <h3 className="mt-4 text-ink text-2xl" style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}>{c.label}</h3>
               <p className="mt-1 text-warm-grey text-sm">{c.sub}</p>
               <p className="mt-4 uppercase text-[11px] text-umber" style={{ letterSpacing: "0.2em" }}>{c.cta} →</p>
-            </a>
+            </motion.a>
           ))}
         </div>
-        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 mt-12 aspect-[16/7] overflow-hidden">
+        <motion.div {...revealProps(28)} className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 mt-12 aspect-[16/7] overflow-hidden">
           <iframe title="INS Overseas, Sanganer" src="https://www.google.com/maps?q=Sanganer,Jaipur&output=embed" className="w-full h-full" loading="lazy" />
-        </div>
+        </motion.div>
       </section>
     </>
   );

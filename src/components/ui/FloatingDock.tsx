@@ -22,7 +22,7 @@ export function WhatsAppGlyph({ size = 20 }: { size?: number }) {
 
 // One dock slot. The icon swells as the cursor approaches (macOS-dock style); on touch screens
 // there is no hover, so a short label sits under the icon instead of a tooltip.
-function DockIcon({ mouseX, label, short, icon, active = false, children }: { mouseX: MotionValue<number>; label: string; short?: string; icon: ReactNode; active?: boolean; children: (inner: ReactNode) => ReactNode }) {
+function DockIcon({ mouseX, label, icon, active = false, children }: { mouseX: MotionValue<number>; label: string; icon: ReactNode; active?: boolean; children: (inner: ReactNode) => ReactNode }) {
   const ref = useRef<HTMLSpanElement>(null);
   const distance = useTransform(mouseX, (x) => {
     const b = ref.current?.getBoundingClientRect();
@@ -44,11 +44,7 @@ function DockIcon({ mouseX, label, short, icon, active = false, children }: { mo
       >
         {icon}
       </motion.span>
-      <span className={`md:hidden mt-1 uppercase leading-none ${active ? "text-gold" : "text-cream/70"}`} style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 8, letterSpacing: "0.1em" }}>
-        {/* narrow phones get the short word so neighbours are never cramped; wider ones get the full label */}
-        <span className="min-[420px]:hidden">{short ?? label}</span>
-        <span className="hidden min-[420px]:inline">{label}</span>
-      </span>
+      <span className={`md:hidden mt-1 uppercase leading-none ${active ? "text-gold" : "text-cream/70"}`} style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 7.5, letterSpacing: "0.05em" }}>{label}</span>
       <span
         aria-hidden
         className="hidden md:block pointer-events-none absolute left-1/2 -translate-x-1/2 -top-[52px] whitespace-nowrap bg-ink text-cream px-2.5 py-1 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200"
@@ -65,8 +61,8 @@ const iconCls = "text-cream";
 
 // Page shortcuts (left) and direct-contact actions (right), split by a hairline
 const pages = [
-  { to: "/products", label: "Products", short: "Shop", icon: <ShoppingBag size={18} strokeWidth={1.6} className={iconCls} /> },
-  { to: "/wholesale", label: "Wholesale", short: "Trade", icon: <Handshake size={19} strokeWidth={1.6} className={iconCls} /> },
+  { to: "/products", label: "Products", icon: <ShoppingBag size={18} strokeWidth={1.6} className={iconCls} /> },
+  { to: "/wholesale", label: "Wholesale", icon: <Handshake size={19} strokeWidth={1.6} className={iconCls} /> },
   { to: "/contact", label: "Contact", icon: <Mail size={18} strokeWidth={1.6} className={iconCls} /> },
 ] as const;
 
@@ -75,12 +71,29 @@ export default function FloatingDock() {
   const [chat, setChat] = useState(false);
   const [chatMounted, setChatMounted] = useState(false); // stays mounted after first use so the conversation is kept
   const [shown, setShown] = useState(false);
+  const [tucked, setTucked] = useState(false); // true while the page is scrolling
   const mouseX = useMotionValue(Infinity);
 
   // Appear once the splash has gone (or straight away when there is none)
   useEffect(() => {
     const t = setTimeout(() => setShown(true), preloader.active ? 1600 : 400);
     return () => clearTimeout(t);
+  }, []);
+
+  // While the page is moving the dock steps aside; once scrolling stops it comes back.
+  useEffect(() => {
+    let last = window.scrollY;
+    let idle = 0;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - last) < 2) return;
+      last = y;
+      setTucked(true);
+      window.clearTimeout(idle);
+      idle = window.setTimeout(() => setTucked(false), 220);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); window.clearTimeout(idle); };
   }, []);
 
   const closeChat = useCallback(() => setChat(false), []);
@@ -100,16 +113,17 @@ export default function FloatingDock() {
       <motion.nav
         aria-label="Quick contact"
         initial={{ opacity: 0, y: 24 }}
-        animate={shown ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-        transition={{ duration: 0.6, ease: EASE }}
+        animate={shown && !tucked ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+        transition={{ duration: tucked ? 0.3 : 0.5, ease: EASE }}
+        onFocusCapture={() => setTucked(false)}
         onPointerMove={(e) => { if (e.pointerType === "mouse") mouseX.set(e.clientX); }}
         onPointerLeave={() => mouseX.set(Infinity)}
         onPointerDown={(e) => { if (e.pointerType !== "mouse") mouseX.set(Infinity); }}
         // on phones the chat is a bottom sheet that would sit under the dock, so the dock steps aside while it is open
         // (the trailing ! makes the class beat the inline opacity / pointer-events that framer sets)
-        className={`fixed z-40 inset-x-3 mx-auto max-w-[420px] md:inset-x-auto md:mx-0 md:right-6 md:w-max md:max-w-none bottom-[calc(env(safe-area-inset-bottom)+14px)] md:bottom-6 flex items-end justify-evenly md:justify-start md:gap-3 px-2 md:px-4 py-2 md:py-2.5 rounded-full ${chat ? "max-md:opacity-0! max-md:pointer-events-none!" : ""}`}
+        className={`fixed z-40 inset-x-2 mx-auto max-w-[420px] md:inset-x-auto md:mx-0 md:right-6 md:w-max md:max-w-none bottom-[calc(env(safe-area-inset-bottom)+14px)] md:bottom-6 flex items-end justify-evenly md:justify-start md:gap-3 px-1 md:px-4 py-2 md:py-2.5 rounded-full ${chat ? "max-md:opacity-0! max-md:pointer-events-none!" : ""}`}
         style={{
-          pointerEvents: shown ? "auto" : "none",
+          pointerEvents: shown && !tucked ? "auto" : "none",
           background: "rgba(26,20,16,0.96)",
           border: "1px solid rgba(201,151,58,0.32)",
           boxShadow: "0 10px 30px rgba(26,20,16,0.38)",
@@ -118,7 +132,7 @@ export default function FloatingDock() {
         {pages.map((p) => {
           const active = pathname === p.to || pathname.startsWith(p.to + "/");
           return (
-            <DockIcon key={p.to} mouseX={mouseX} label={p.label} short={"short" in p ? p.short : undefined} icon={p.icon} active={active}>
+            <DockIcon key={p.to} mouseX={mouseX} label={p.label} icon={p.icon} active={active}>
               {(inner) => (
                 <Link className={slot} to={p.to} aria-label={p.label} aria-current={active ? "page" : undefined}>
                   {inner}

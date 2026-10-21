@@ -60,7 +60,7 @@ export default function FeaturedProducts() {
                 fontFamily: "var(--font-body)",
                 fontSize: 11,
                 letterSpacing: "0.15em",
-                color: "var(--color-warm-grey, #9A8F85)",
+                color: "var(--grey-ink)",
               }}
             >
               SWIPE TO EXPLORE

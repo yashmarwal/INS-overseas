@@ -13,7 +13,7 @@ export const Route = createFileRoute("/privacy-policy")({
 
 function PrivacyPolicy() {
   return (
-    <div className="bg-cream min-h-screen pt-32 pb-24">
+    <div className="bg-cream min-h-screen pt-24 pb-24 sm:pt-32">
       <div className="max-w-3xl mx-auto px-5 sm:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
