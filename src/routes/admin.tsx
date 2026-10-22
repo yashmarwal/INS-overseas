@@ -1,26 +1,43 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { IMAGE_SLOTS, type ImageSlot } from "@/data/imageSections";
 import { useGalleryImages, type GalleryImage } from "@/hooks/useGalleryImages";
 import { useProductImages, PRODUCT_CATEGORIES, type ProductCategory } from "@/hooks/useProductImages";
 import { isVideoUrl } from "@/lib/utils";
-import { compressImage } from "@/lib/compressImage";
+import { compressImage, compressImageDetailed, savingsSentence, type CompressResult } from "@/lib/compressImage";
+import ProductManager from "@/components/admin/ProductManager";
+import GalleryManager from "@/components/admin/GalleryManager";
+import LoginScreen from "@/components/admin/LoginScreen";
+import SecurityCard from "@/components/admin/SecurityCard";
 import {
-  ConfirmDialog, DropZone, EmptyState, GhostButton, MediaCard, MUTED, Panel, PrimaryButton, SectionHeader, Tip, Toast,
+  ConfirmDialog, DropZone, EmptyState, GhostButton, MediaCard, MUTED, Panel, SectionHeader, Tip, Toast,
   type Confirm, type ToastState,
 } from "@/components/admin/AdminUI";
-import { ExternalLink, Eye, EyeOff, Image as ImageIcon, Images, LayoutGrid, LogOut, Monitor, Package, Play, Search, ShieldCheck, Trash2, X } from "lucide-react";
+import { ExternalLink, Image as ImageIcon, Images, LayoutGrid, LogOut, Monitor, Package, X } from "lucide-react";
 
 // Every upload gets a unique timestamped name, so browsers/CDN may cache it for a year.
 const IMMUTABLE_CACHE = "31536000";
 const MB = 1024 * 1024;
-
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "insadmin2025";
+const MAX_PHOTO_MB = 25; // photos are shrunk in the browser before upload, so even a big phone photo is fine
+const MAX_GIF_MB = 10; // GIFs and videos can't be shrunk, so they keep a tight limit
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
+
+// The admin is not for search engines. (vercel.json also sends an X-Robots-Tag header for /admin; this covers the page itself.)
+function useNoIndex() {
+  useEffect(() => {
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    const prev = meta?.content;
+    const title = document.title;
+    meta?.setAttribute("content", "noindex, nofollow");
+    document.title = "Website manager";
+    return () => { if (meta && prev !== undefined) meta.setAttribute("content", prev); document.title = title; };
+  }, []);
+}
 
 type SiteImage = { id: string; section: string; url: string; storage_path: string };
 type Tab = "overview" | "banner" | "photos" | "products" | "gallery";
@@ -38,9 +55,17 @@ const IMG_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 function AdminPage() {
-  const [authed, setAuthed] = useState(
-    () => typeof sessionStorage !== "undefined" && sessionStorage.getItem("ins_admin") === "true",
-  );
+  useNoIndex();
+  // Signed in through Supabase Auth (checked on the server). undefined = still looking for a saved session.
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
+  useEffect(() => {
+    let alive = true;
+    void supabase.auth.getSession().then(({ data }) => { if (alive) setSession(data.session); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
+    return () => { alive = false; sub.subscription.unsubscribe(); };
+  }, []);
+  const authed = !!session;
+  const adminEmail = session?.user.email ?? "";
   const [tab, setTab] = useState<Tab>(() => (typeof sessionStorage !== "undefined" && (sessionStorage.getItem("ins_admin_tab") as Tab)) || "overview");
   const selectTab = (t: Tab) => {
     setTab(t);
@@ -61,8 +86,6 @@ function AdminPage() {
   const [productProgress, setProductProgress] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory>("leather-journals");
   const [productName, setProductName] = useState("");
-  const [listFilter, setListFilter] = useState<string>("all");
-  const [search, setSearch] = useState("");
 
   const [toast, setToast] = useState<ToastState>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
@@ -73,10 +96,7 @@ function AdminPage() {
     window.setTimeout(() => setToast((t) => (t && t.msg === msg ? null : t)), type === "error" ? 7000 : 4000);
   };
 
-  const logout = () => {
-    sessionStorage.removeItem("ins_admin");
-    setAuthed(false);
-  };
+  const logout = () => { void supabase.auth.signOut(); };
 
   const fetchImages = async () => {
     const { data } = await supabase.from("site_images").select("*");
@@ -92,7 +112,7 @@ function AdminPage() {
   // ── Fixed slot upload (banner + homepage photos) ─────────────────────────────
   const slotCheck = (slot: ImageSlot, file: File): string | null => {
     const types = slot.allowGif ? [...IMG_TYPES, "image/gif"] : IMG_TYPES;
-    const maxMB = slot.allowGif ? 10 : 5;
+    const maxMB = file.type === "image/gif" ? MAX_GIF_MB : MAX_PHOTO_MB;
     if (!types.includes(file.type)) return `That file type isn't supported. Please choose a ${slot.allowGif ? "GIF, " : ""}JPG, PNG or WebP image.`;
     if (file.size > maxMB * MB) return `That file is too large (${(file.size / MB).toFixed(1)} MB). The limit is ${maxMB} MB.`;
     return null;
@@ -106,7 +126,10 @@ function AdminPage() {
       // Upload the new file first; only remove the old one once the new one is saved,
       // so a failed upload never leaves the live site without its image.
       const existing = getImageForSection(slot.section);
-      const file = await compressImage(rawFile, slot.allowGif ? 2400 : 1400);
+      const res = await compressImageDetailed(rawFile, slot.allowGif ? 2400 : 1400, slot.allowGif ? 600 : 300);
+      if (res.unreadable) throw new Error("that file doesn't look like a photo we can read");
+      if (res.file.size > MAX_GIF_MB * MB) throw new Error(`it is still ${(res.file.size / MB).toFixed(1)} MB after shrinking (the limit is ${MAX_GIF_MB} MB)`);
+      const file = res.file;
       const ext = file.name.split(".").pop();
       const path = `${slot.section}_${Date.now()}.${ext}`;
 
@@ -164,14 +187,19 @@ function AdminPage() {
   const handleGalleryUpload = async (files: File[]) => {
     let added = 0;
     const skipped: string[] = [];
+    const results: CompressResult[] = [];
+    const nextSort = galleryImages.reduce((m, g) => Math.max(m, g.sort_order ?? 0), -1) + 1;
     try {
       for (let i = 0; i < files.length; i++) {
         const rawFile = files[i];
         setGalleryProgress(`Uploading ${i + 1} of ${files.length}…`);
         const isVideo = rawFile.type.startsWith("video/");
         const okType = isVideo ? ["video/mp4", "video/webm"].includes(rawFile.type) : IMG_TYPES.includes(rawFile.type);
-        if (!okType || rawFile.size > (isVideo ? 10 : 5) * MB) { skipped.push(rawFile.name); continue; }
-        const file = await compressImage(rawFile); // no-op for videos
+        if (!okType || rawFile.size > (isVideo ? MAX_GIF_MB : MAX_PHOTO_MB) * MB) { skipped.push(rawFile.name); continue; }
+        const res = await compressImageDetailed(rawFile, 1600, 180); // no-op for videos
+        if (!isVideo && (res.unreadable || res.file.size > MAX_GIF_MB * MB)) { skipped.push(rawFile.name); continue; }
+        if (!isVideo) results.push(res);
+        const file = res.file;
         const ext = file.name.split(".").pop();
         const path = `gallery_${Date.now()}_${i}.${ext}`;
         const { error: uploadError } = await supabase.storage.from("website-images").upload(path, file, { upsert: true, cacheControl: IMMUTABLE_CACHE, contentType: file.type });
@@ -180,7 +208,7 @@ function AdminPage() {
         const { error: insertError } = await supabase.from("site_images").insert({
           section: "gallery", label: "Gallery Image",
           url: urlData.publicUrl, storage_path: path,
-          sort_order: galleryImages.length + i, alt_text: "INS Overseas product",
+          sort_order: nextSort + added, alt_text: "INS Overseas product",
         });
         if (insertError) {
           await supabase.storage.from("website-images").remove([path]);
@@ -190,9 +218,9 @@ function AdminPage() {
       }
       await refetchGallery();
       if (skipped.length) {
-        showToast("error", `${added ? `${added} added. ` : ""}Skipped ${skipped.length} file${skipped.length > 1 ? "s" : ""} (${skipped.join(", ")}) — photos must be JPG/PNG/WebP under 5 MB, videos MP4/WebM under 10 MB.`);
+        showToast("error", `${added ? `${added} added. ` : ""}Skipped ${skipped.length} file${skipped.length > 1 ? "s" : ""} (${skipped.join(", ")}) — photos must be JPG/PNG/WebP under ${MAX_PHOTO_MB} MB, videos MP4/WebM under ${MAX_GIF_MB} MB.`);
       } else {
-        showToast("success", `${added} file${added > 1 ? "s" : ""} added to the gallery.`);
+        showToast("success", `${added} file${added > 1 ? "s" : ""} added to the gallery. ${savingsSentence(results)}`.trim());
       }
     } catch (e: any) {
       showToast("error", `The gallery upload stopped: ${e?.message || "unknown error"}`);
@@ -221,12 +249,19 @@ function AdminPage() {
   const handleProductUpload = async (files: File[]) => {
     let added = 0;
     const skipped: string[] = [];
+    const results: CompressResult[] = [];
+    const small: string[] = [];
+    const nextSort = productImages.reduce((m, p) => Math.max(m, p.sort_order ?? 0), -1) + 1;
     try {
       for (let i = 0; i < files.length; i++) {
         const rawFile = files[i];
         setProductProgress(`Uploading ${i + 1} of ${files.length}…`);
-        if (!IMG_TYPES.includes(rawFile.type) || rawFile.size > 5 * MB) { skipped.push(rawFile.name); continue; }
-        const file = await compressImage(rawFile);
+        if (!IMG_TYPES.includes(rawFile.type) || rawFile.size > MAX_PHOTO_MB * MB) { skipped.push(rawFile.name); continue; }
+        const res = await compressImageDetailed(rawFile);
+        if (res.unreadable || res.file.size > MAX_GIF_MB * MB) { skipped.push(rawFile.name); continue; }
+        results.push(res);
+        if (res.longEdge && res.longEdge < 700) small.push(rawFile.name);
+        const file = res.file;
         const ext = file.name.split(".").pop();
         const path = `product_${selectedCategory}_${Date.now()}_${i}.${ext}`;
         const { error: uploadError } = await supabase.storage.from("website-images").upload(path, file, { upsert: true, cacheControl: IMMUTABLE_CACHE, contentType: file.type });
@@ -241,7 +276,7 @@ function AdminPage() {
           category: selectedCategory,
           product_name: productName.trim() || catLabel,
           alt_text: productName.trim() || catLabel,
-          sort_order: productImages.filter((p) => p.category === selectedCategory).length + i,
+          sort_order: nextSort + added,
         });
         if (insertError) {
           await supabase.storage.from("website-images").remove([path]);
@@ -251,10 +286,11 @@ function AdminPage() {
       }
       await refetchProducts();
       setProductName("");
+      const extra = [savingsSentence(results), small.length ? `${small.length === 1 ? "One photo is" : `${small.length} photos are`} quite small (${small.join(", ")}) and may look soft on large screens.` : ""].filter(Boolean).join(" ");
       if (skipped.length) {
-        showToast("error", `${added ? `${added} added. ` : ""}Skipped ${skipped.length} file${skipped.length > 1 ? "s" : ""} (${skipped.join(", ")}) — photos must be JPG, PNG or WebP under 5 MB.`);
+        showToast("error", `${added ? `${added} added. ` : ""}Skipped ${skipped.length} file${skipped.length > 1 ? "s" : ""} (${skipped.join(", ")}) — photos must be JPG, PNG or WebP under ${MAX_PHOTO_MB} MB. ${extra}`.trim());
       } else {
-        showToast("success", `${added > 1 ? `${added} products` : "Product"} added to ${catLabelOf(selectedCategory)}.`);
+        showToast("success", `${added > 1 ? `${added} products` : "Product"} added to ${catLabelOf(selectedCategory)}. ${extra}`.trim());
       }
     } catch (e: any) {
       showToast("error", `The upload stopped: ${e?.message || "unknown error"}`);
@@ -263,31 +299,13 @@ function AdminPage() {
     }
   };
 
-  const doDeleteProduct = async (img: { id: string; storage_path: string }) => {
-    await supabase.storage.from("website-images").remove([img.storage_path]);
-    await supabase.from("site_images").delete().eq("id", img.id);
-    await refetchProducts();
-    showToast("success", "Product removed.");
-  };
-  const askDeleteProduct = (img: { id: string; storage_path: string; product_name?: string }) =>
-    setConfirm({
-      title: "Remove this product?",
-      message: `“${img.product_name || "This product"}” will disappear from the Products page. This can't be undone.`,
-      confirmLabel: "Remove",
-      onConfirm: () => void doDeleteProduct(img),
-    });
-
   // ── Derived numbers ───────────────────────────────────────────────────────────
   const bannerCustom = BANNER_SLOTS.filter((s) => getImageForSection(s.section)).length;
   const photosCustom = PHOTO_SLOTS.filter((s) => getImageForSection(s.section)).length;
   const videoCount = galleryImages.filter((g) => isVideoUrl(g.url)).length;
 
-  const filteredProducts = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return productImages.filter((p) => (listFilter === "all" || p.category === listFilter) && (!q || (p.product_name || "").toLowerCase().includes(q)));
-  }, [productImages, listFilter, search]);
-
-  if (!authed) return <LoginScreen onSuccess={() => setAuthed(true)} />;
+  if (session === undefined) return <div data-admin className="fixed inset-0 z-[90] bg-[#F6F4EF]" aria-busy="true" />;
+  if (!authed) return <LoginScreen />;
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: "overview", label: "Overview", icon: <LayoutGrid size={18} /> },
@@ -310,7 +328,7 @@ function AdminPage() {
         busy={uploading === slot.section}
         accept={slot.allowGif ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"}
         aspect={aspectOverride ?? slot.aspectRatio.replace("/", " / ")}
-        limitText={slot.allowGif ? "GIF, JPG, PNG or WebP · up to 10 MB" : "JPG, PNG or WebP · up to 5 MB"}
+        limitText={slot.allowGif ? "GIF up to 10 MB · or a JPG, PNG or WebP photo" : "JPG, PNG or WebP · made smaller automatically"}
         viewHref={slot.pageUrl}
         onFile={(f) => void handleUpload(slot, f)}
         onReset={() => askResetSlot(slot)}
@@ -374,6 +392,8 @@ function AdminPage() {
           {tab === "overview" && (
             <>
               <SectionHeader title="Welcome back" description="Update your photos and products here. Everything you change goes live on your website straight away — no need to do anything else." />
+
+              <SecurityCard email={adminEmail} showToast={showToast} />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
@@ -510,7 +530,7 @@ function AdminPage() {
                     </p>
                     <DropZone
                       title={`Add photos to ${catLabelOf(selectedCategory)}`}
-                      hint="Click here or drag photos in. JPG, PNG or WebP, up to 5 MB each. You can choose many at once."
+                      hint="Click here or drag photos in. JPG, PNG or WebP. They are made much smaller automatically, so big phone photos are fine. You can choose many at once."
                       accept="image/jpeg,image/png,image/webp"
                       multiple
                       busy={!!productProgress}
@@ -521,77 +541,7 @@ function AdminPage() {
                 </div>
               </Panel>
 
-              <div className="mt-8">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <h2 className="text-[18px] font-semibold">Your products <span className="font-normal tabular-nums" style={{ color: MUTED }}>({filteredProducts.length}{filteredProducts.length !== productImages.length ? ` of ${productImages.length}` : ""})</span></h2>
-                  <label className="relative block sm:w-72">
-                    <span className="sr-only">Search products</span>
-                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: MUTED }} aria-hidden />
-                    <input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search by name"
-                      className="w-full h-11 pl-10 pr-3 rounded-xl border border-black/20 bg-white text-[14px] placeholder:text-[#8A8076] focus:outline-none focus:border-[#6B4C2A] focus:ring-2 focus:ring-[#6B4C2A]/20"
-                    />
-                  </label>
-                </div>
-
-                <div className="mt-4 flex gap-2 overflow-x-auto no-scrollbar pb-1" role="group" aria-label="Filter products by category">
-                  {[{ id: "all", label: "All", icon: "" }, ...PRODUCT_CATEGORIES].map((c) => {
-                    const on = listFilter === c.id;
-                    const n = c.id === "all" ? productImages.length : productImages.filter((p) => p.category === c.id).length;
-                    return (
-                      <button
-                        key={c.id}
-                        aria-pressed={on}
-                        onClick={() => setListFilter(c.id)}
-                        className={`shrink-0 inline-flex items-center gap-2 h-10 pl-4 pr-2.5 rounded-full border text-[13px] font-medium whitespace-nowrap transition-colors ${on ? "bg-[#6B4C2A] text-white border-[#6B4C2A]" : "bg-white text-[#1A1410] border-black/20 hover:border-[#6B4C2A]"}`}
-                      >
-                        {c.label}
-                        <span className={`min-w-[22px] h-[22px] px-1.5 rounded-full text-[11px] inline-flex items-center justify-center tabular-nums ${on ? "bg-white/20" : "bg-black/[0.06] text-[#4A3219]"}`}>{n}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-5">
-                  {productLoading ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {[...Array(8)].map((_, i) => <div key={i} className="aspect-[4/5] rounded-2xl bg-black/[0.06] animate-pulse" />)}
-                    </div>
-                  ) : filteredProducts.length === 0 ? (
-                    <EmptyState
-                      title={productImages.length === 0 ? "No products yet" : "Nothing matches"}
-                      text={productImages.length === 0 ? "Add your first product above — it takes about a minute." : "Try a different category or clear the search box."}
-                    >
-                      {search && <GhostButton onClick={() => setSearch("")}>Clear search</GhostButton>}
-                    </EmptyState>
-                  ) : (
-                    <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {filteredProducts.map((p) => (
-                        <li key={p.id}>
-                          <Panel className="overflow-hidden h-full flex flex-col">
-                            <div className="relative aspect-square bg-[#EFEBE3]">
-                              <img src={p.url} alt={p.product_name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                              <button
-                                onClick={() => askDeleteProduct(p)}
-                                aria-label={`Remove ${p.product_name || "product"}`}
-                                className="absolute top-2 right-2 w-9 h-9 rounded-full bg-white text-[#B42318] shadow-md flex items-center justify-center hover:bg-[#FEF3F2]"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                            <div className="p-3">
-                              <p className="text-[14px] font-medium leading-snug line-clamp-2">{p.product_name || "Untitled"}</p>
-                              <p className="mt-1 text-[12px]" style={{ color: MUTED }}>{catLabelOf(p.category)}</p>
-                            </div>
-                          </Panel>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
+              <ProductManager products={productImages} loading={productLoading} refetch={refetchProducts} showToast={showToast} setConfirm={setConfirm} adminEmail={adminEmail} />
             </>
           )}
 
@@ -601,7 +551,7 @@ function AdminPage() {
               <SectionHeader title="Gallery" description="Photos and short videos shown on your Gallery page. Add as many as you like." />
               <DropZone
                 title="Add photos or videos"
-                hint="Click here or drag files in. Photos: JPG, PNG or WebP up to 5 MB. Videos: MP4 or WebM up to 10 MB."
+                hint="Click here or drag files in. Photos: JPG, PNG or WebP (made smaller automatically). Videos: MP4 or WebM up to 10 MB."
                 accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
                 multiple
                 busy={!!galleryProgress}
@@ -609,37 +559,7 @@ function AdminPage() {
                 onFiles={(f) => void handleGalleryUpload(f)}
               />
 
-              <h2 className="mt-8 mb-4 text-[18px] font-semibold">In your gallery <span className="font-normal tabular-nums" style={{ color: MUTED }}>({galleryImages.length})</span></h2>
-              {galleryLoading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {[...Array(8)].map((_, i) => <div key={i} className="aspect-square rounded-2xl bg-black/[0.06] animate-pulse" />)}
-                </div>
-              ) : galleryImages.length === 0 ? (
-                <EmptyState title="Your gallery is empty" text="Add a few photos above and they will appear on the Gallery page." />
-              ) : (
-                <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {galleryImages.map((img) => {
-                    const video = isVideoUrl(img.url);
-                    return (
-                      <li key={img.id}>
-                        <div className="relative aspect-square rounded-2xl overflow-hidden bg-[#EFEBE3] border border-black/10">
-                          {video ? <video src={img.url} muted playsInline preload="metadata" className="w-full h-full object-cover" /> : <img src={img.url} alt="Gallery item" loading="lazy" decoding="async" className="w-full h-full object-cover" />}
-                          {video && (
-                            <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-[#1A1410]/80 text-white text-[11px] font-medium px-2.5 py-1"><Play size={11} fill="currentColor" /> Video</span>
-                          )}
-                          <button
-                            onClick={() => askDeleteGallery(img)}
-                            aria-label={video ? "Remove this video" : "Remove this photo"}
-                            className="absolute top-2 right-2 w-9 h-9 rounded-full bg-white text-[#B42318] shadow-md flex items-center justify-center hover:bg-[#FEF3F2]"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+              <GalleryManager images={galleryImages} loading={galleryLoading} refetch={refetchGallery} onDelete={askDeleteGallery} showToast={showToast} adminEmail={adminEmail} />
             </>
           )}
         </div>
@@ -655,60 +575,6 @@ function AdminPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ── Sign in ────────────────────────────────────────────────────────────────────
-function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
-  const [pw, setPw] = useState("");
-  const [show, setShow] = useState(false);
-  const [error, setError] = useState(false);
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pw === ADMIN_PASSWORD) {
-      sessionStorage.setItem("ins_admin", "true");
-      onSuccess();
-    } else {
-      setError(true);
-    }
-  };
-
-  return (
-    <div data-admin data-lenis-prevent className="fixed inset-0 z-[90] overflow-y-auto bg-[#F6F4EF] flex items-center justify-center px-4 py-10" style={{ fontFamily: "var(--font-body)" }}>
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <p className="text-[#1A1410]" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 30, letterSpacing: "0.02em" }}>INS Overseas</p>
-          <p className="mt-1.5 text-[12px] uppercase" style={{ color: MUTED, letterSpacing: "0.18em" }}>Website manager</p>
-        </div>
-        <form onSubmit={submit} className="bg-white rounded-2xl border border-black/10 shadow-[0_20px_50px_-24px_rgba(26,20,16,0.35)] p-6 sm:p-7">
-          <span className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: "#F3EEE2", color: "#6B4C2A" }}><ShieldCheck size={22} /></span>
-          <h1 className="text-[#1A1410]" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 28, lineHeight: 1.1 }}>Welcome back</h1>
-          <p className="mt-1.5 text-[14px]" style={{ color: MUTED }}>Enter your password to update your website's photos and products.</p>
-
-          <label htmlFor="admin-password" className="block mt-6 text-[13px] font-medium text-[#1A1410]">Password</label>
-          <div className="relative mt-2">
-            <input
-              id="admin-password"
-              type={show ? "text" : "password"}
-              value={pw}
-              onChange={(e) => { setPw(e.target.value); setError(false); }}
-              autoFocus
-              autoComplete="current-password"
-              aria-invalid={error}
-              aria-describedby={error ? "pw-error" : undefined}
-              className={`w-full h-12 pl-4 pr-12 rounded-xl border bg-white text-[15px] focus:outline-none focus:ring-2 ${error ? "border-[#B42318] focus:ring-[#B42318]/20" : "border-black/20 focus:border-[#6B4C2A] focus:ring-[#6B4C2A]/20"}`}
-            />
-            <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? "Hide password" : "Show password"} className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg flex items-center justify-center hover:bg-black/5" style={{ color: MUTED }}>
-              {show ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-          {error && <p id="pw-error" role="alert" className="mt-2 text-[13px] text-[#B42318]">That password isn't right. Please try again.</p>}
-
-          <PrimaryButton type="submit" className="w-full mt-5 h-12">Sign in</PrimaryButton>
-        </form>
-      </div>
     </div>
   );
 }

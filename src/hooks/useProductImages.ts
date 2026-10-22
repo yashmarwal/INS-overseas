@@ -10,7 +10,16 @@ export type ProductImage = {
   category: string;
   sort_order: number;
   created_at: string;
+  /** "best" | "new" | null. Only present once the optional tag/featured columns exist in Supabase. */
+  tag?: string | null;
+  featured?: boolean | null;
 };
+
+export const PRODUCT_TAGS = [
+  { id: "best", label: "Best seller" },
+  { id: "new", label: "New" },
+] as const;
+export const tagLabel = (tag?: string | null) => PRODUCT_TAGS.find((t) => t.id === tag)?.label ?? null;
 
 export const PRODUCT_CATEGORIES = [
   { id: "leather-journals",        label: "Leather Journals",        icon: "📓" },

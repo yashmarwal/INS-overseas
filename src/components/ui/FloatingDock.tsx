@@ -96,6 +96,13 @@ export default function FloatingDock() {
     return () => { window.removeEventListener("scroll", onScroll); window.clearTimeout(idle); };
   }, []);
 
+  // Fetch and mount the (closed, invisible) chat while the browser is idle, so the first tap on Ask opens instantly
+  useEffect(() => {
+    const warm = () => { loadChat().then(() => setChatMounted(true)).catch(() => {}); };
+    const t = window.setTimeout(warm, 2500);
+    return () => window.clearTimeout(t);
+  }, []);
+
   const closeChat = useCallback(() => setChat(false), []);
   const toggleChat = () => { setChatMounted(true); setChat((c) => !c); };
 

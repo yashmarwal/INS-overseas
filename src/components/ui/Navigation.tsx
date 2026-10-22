@@ -24,6 +24,8 @@ export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // the page that is actually on screen (`pathname` flips the moment a link is tapped, before the new page is ready)
+  const renderedPath = useRouterState({ select: (s) => s.resolvedLocation?.pathname ?? s.location.pathname });
   const headerRef = useRef<HTMLElement>(null);
   const [hovered, setHovered] = useState<string | null>(null);
 
@@ -42,7 +44,10 @@ export default function Navigation() {
   const [enterDelay] = useState(() => (preloader.active ? 1.0 : 0.05));
 
   // Menu open: the page behind is locked, Escape closes it, and any navigation closes it
-  useEffect(() => { setOpen(false); }, [pathname]);
+  // The menu stays up while the next page loads and closes only once it is on screen, so the old page never flashes
+  // between the tap and the swap. (Tapping a link to the page you are already on closes it straight away.)
+  useEffect(() => { setOpen(false); }, [renderedPath]);
+  const closeIfSamePage = (to: string) => { if (to === renderedPath) setOpen(false); };
   useEffect(() => {
     if (!open) return;
     const html = document.documentElement;
@@ -78,6 +83,9 @@ export default function Navigation() {
             ? "rgb(250, 247, 240)"
             : "linear-gradient(to bottom, rgba(26,20,16,0.7) 0%, rgba(26,20,16,0.0) 100%)",
           borderBottom: scrolled ? "1px solid rgba(107,76,42,0.12)" : "1px solid transparent",
+          // kept out of the page cross-dissolve (see styles.css) so the sliding active pill is never doubled by a faded copy;
+          // not while the mobile menu is open, as the menu has to dissolve over the header
+          viewTransitionName: open ? undefined : "site-nav",
         }}
       >
         <div className={`max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-8 xl:px-12 2xl:px-20 flex items-center justify-between gap-6 transition-[padding] duration-300 ${scrolled ? "py-4 lg:py-2.5" : "py-4 lg:py-3.5"}`}>
@@ -198,11 +206,10 @@ export default function Navigation() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[80] bg-ink flex flex-col overflow-y-auto overscroll-contain"
-            style={{ backgroundImage: "radial-gradient(circle at 88% 4%, rgba(201,151,58,0.17) 0%, transparent 50%)" }}
           >
             {/* Header: brand + close */}
             <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
-              <Link to="/" onClick={() => setOpen(false)} className="leading-none">
+              <Link to="/" onClick={() => closeIfSamePage("/")} className="leading-none">
                 <span className="block text-cream" style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 19, letterSpacing: "0.15em" }}>
                   INS OVERSEAS
                 </span>
@@ -219,7 +226,7 @@ export default function Navigation() {
                 <X size={20} />
               </button>
             </div>
-            <div className="mx-6 h-px shrink-0" style={{ background: "linear-gradient(to right, rgba(201,151,58,0.55), rgba(201,151,58,0.12) 60%, transparent)" }} />
+            <div className="mx-6 h-px shrink-0 bg-gold/30" />
 
             {/* Links: index · label · state */}
             <nav className="px-6 pt-1 shrink-0" aria-label="Main">
@@ -234,7 +241,7 @@ export default function Navigation() {
                   >
                     <Link
                       to={l.to}
-                      onClick={() => setOpen(false)}
+                      onClick={() => closeIfSamePage(l.to)}
                       aria-current={active ? "page" : undefined}
                       className="group flex items-center gap-4 py-3 [@media(max-height:740px)]:py-2 border-b border-cream/10"
                     >
@@ -265,7 +272,7 @@ export default function Navigation() {
             <div className="mt-auto px-6 pt-7 pb-[calc(env(safe-area-inset-bottom)+22px)] shrink-0">
               <Link
                 to="/wholesale"
-                onClick={() => setOpen(false)}
+                onClick={() => closeIfSamePage("/wholesale")}
                 className="flex items-center justify-center gap-2.5 w-full py-4 bg-gold text-ink uppercase active:bg-gold-light transition-colors"
                 style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12, letterSpacing: "0.16em" }}
               >

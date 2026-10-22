@@ -5,14 +5,13 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { MotionConfig } from "framer-motion";
 
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import Navigation from "@/components/ui/Navigation";
 import Footer from "@/components/ui/Footer";
 import Preloader from "@/components/ui/Preloader";
-import CustomCursor from "@/components/ui/CustomCursor";
 import FloatingDock from "@/components/ui/FloatingDock";
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 
@@ -49,9 +48,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+// Jump to the top only once the new page is actually on screen. `location` changes the moment a link is clicked,
+// while the old page is still showing, so keying on it would flash the old page at the top before the swap.
 function ScrollToTop() {
-  const path = useRouterState({ select: (s) => s.location.pathname });
-  useEffect(() => {
+  const path = useRouterState({ select: (s) => s.resolvedLocation?.pathname });
+  useLayoutEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [path]);
   return null;
@@ -64,7 +65,6 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user">
         <Preloader />
-        <CustomCursor />
         <ScrollToTop />
         <Navigation />
         <main>

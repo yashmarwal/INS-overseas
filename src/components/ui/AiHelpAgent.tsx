@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, ArrowUpRight, RotateCcw, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
@@ -313,16 +313,32 @@ export default function AiHelpAgent({ open, onClose }: { open: boolean; onClose:
     if (window.history.state?.chatOpen) window.history.back();
   }, [onClose]);
 
-  // While the desk is open: page behind is locked, Escape closes, and on desktop the box is ready to type in
-  useEffect(() => {
-    if (!open) return;
+  // Locking page scroll re-lays-out the whole page, so it must not happen in the middle of the open / close animation:
+  // lock before the first frame is painted, release only after the exit animation has finished.
+  const unlockRef = useRef<(() => void) | null>(null);
+  const unlock = useCallback(() => { unlockRef.current?.(); unlockRef.current = null; }, []);
+  useLayoutEffect(() => {
+    if (!open || unlockRef.current) return;
     const html = document.documentElement;
     const prev = html.style.overflow;
+    // Hiding the scrollbar would widen the page by its width and nudge everything sideways, so hold that width.
+    // (Set directly on the few elements involved: a custom property or attribute on <html> would restyle the whole page.)
+    const sw = window.innerWidth - html.clientWidth;
+    const header = document.querySelector<HTMLElement>("header");
+    const dock = document.querySelector<HTMLElement>("nav[aria-label=\"Quick contact\"]");
+    if (sw > 0) { html.style.paddingRight = sw + "px"; if (header) header.style.right = sw + "px"; if (dock) dock.style.marginRight = sw + "px"; }
     html.style.overflow = "hidden";
+    unlockRef.current = () => { html.style.overflow = prev; html.style.paddingRight = ""; if (header) header.style.right = ""; if (dock) dock.style.marginRight = ""; };
+  }, [open]);
+  useEffect(() => unlock, [unlock]);
+
+  // While the desk is open: Escape closes, and on desktop the box is ready to type in
+  useEffect(() => {
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") handleClose(); };
     window.addEventListener("keydown", onKey);
-    if (window.matchMedia("(pointer: fine)").matches) window.setTimeout(() => inputRef.current?.focus(), 500);
-    return () => { html.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+    const focusTimer = window.matchMedia("(pointer: fine)").matches ? window.setTimeout(() => inputRef.current?.focus(), 500) : 0;
+    return () => { window.clearTimeout(focusTimer); window.removeEventListener("keydown", onKey); };
   }, [open, handleClose]);
 
   useEffect(() => {
@@ -354,14 +370,15 @@ export default function AiHelpAgent({ open, onClose }: { open: boolean; onClose:
   const enter = mobile
     ? { initial: { x: "100%" }, animate: { x: 0 }, exit: { x: "100%" }, transition: { type: "spring" as const, stiffness: 300, damping: 34 } }
     : {
-        initial: { opacity: 0, y: -12, clipPath: "inset(0 0 100% 0 round 28px)" },
-        animate: { opacity: 1, y: 0, clipPath: "inset(0 0 0% 0 round 28px)" },
-        exit: { opacity: 0, y: 14, clipPath: "inset(0 0 0% 0 round 28px)" },
-        transition: { duration: 0.75, ease: EASE },
+        // transform + opacity only: composited on the GPU, so opening never repaints the large panel
+        initial: { opacity: 0, y: 18, scale: 0.975 },
+        animate: { opacity: 1, y: 0, scale: 1 },
+        exit: { opacity: 0, y: 12, scale: 0.985 },
+        transition: { duration: 0.42, ease: EASE },
       };
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={unlock}>
       {open && (
         <>
           <motion.div
@@ -383,7 +400,7 @@ export default function AiHelpAgent({ open, onClose }: { open: boolean; onClose:
               aria-label="INS Assistant — ask INS Overseas"
               {...enter}
               className="pointer-events-auto relative flex flex-col overflow-hidden bg-cream text-ink w-full h-full md:h-[min(720px,calc(100vh-64px))] md:max-w-[640px] md:rounded-[28px]"
-              style={{ boxShadow: "0 50px 120px -30px rgba(0,0,0,0.75)" }}
+              style={{ boxShadow: "0 30px 70px -28px rgba(0,0,0,0.7)", willChange: "transform, opacity" }}
             >
               {/* header: ink band with a torn paper edge */}
               <div

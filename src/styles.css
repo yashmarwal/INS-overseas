@@ -215,32 +215,6 @@
     repeating-linear-gradient(90deg, rgba(74,50,25,0.04) 0 1px, transparent 1px 4px);
 }
 
-/* Hide native cursor on supported pointer devices */
-@media (hover: hover) and (pointer: fine) {
-  body, a, button, [role="button"] { cursor: none; }
-
-  /* Restore native cursor inside admin panel */
-  [data-admin],
-  [data-admin] *,
-  [data-admin] a,
-  [data-admin] button,
-  [data-admin] input,
-  [data-admin] textarea,
-  [data-admin] select,
-  [data-admin] label {
-    cursor: auto;
-  }
-  [data-admin] button,
-  [data-admin] a,
-  [data-admin] [role="button"] {
-    cursor: pointer;
-  }
-  [data-admin] input,
-  [data-admin] textarea {
-    cursor: text;
-  }
-}
-
 /* Marquee */
 @keyframes marquee {
   from { transform: translateX(0); }
@@ -304,6 +278,11 @@ section > div > img {
 /* Page changes: the browser cross-dissolves the old page straight into the new one (View Transitions API), so no
    background colour or glow ever shows between them. */
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.38s; animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+/* The header stays live through the dissolve: no old/new snapshots of it, just the real thing. */
+::view-transition-group(site-nav) { animation: none; }
+::view-transition-old(site-nav) { display: none; }
+::view-transition-new(site-nav) { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+

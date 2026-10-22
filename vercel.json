@@ -4,29 +4,98 @@
   "outputDirectory": "dist",
   "framework": null,
   "rewrites": [
-    { "source": "/products", "destination": "/products/index.html" },
-    { "source": "/wholesale", "destination": "/wholesale/index.html" },
-    { "source": "/about", "destination": "/about/index.html" },
-    { "source": "/contact", "destination": "/contact/index.html" },
-    { "source": "/our-craft", "destination": "/our-craft/index.html" },
-    { "source": "/sustainability", "destination": "/sustainability/index.html" },
-    { "source": "/gallery", "destination": "/gallery/index.html" },
-    { "source": "/faq", "destination": "/faq/index.html" },
-    { "source": "/manufacturing", "destination": "/manufacturing/index.html" },
-    { "source": "/journal", "destination": "/journal/index.html" },
-    { "source": "/privacy-policy", "destination": "/privacy-policy/index.html" },
-    { "source": "/terms-of-use", "destination": "/terms-of-use/index.html" },
-    { "source": "/products/leather-journals", "destination": "/products/leather-journals/index.html" },
-    { "source": "/products/handmade-paper", "destination": "/products/handmade-paper/index.html" },
-    { "source": "/products/leather-accessories", "destination": "/products/leather-accessories/index.html" },
-    { "source": "/products/stationery", "destination": "/products/stationery/index.html" },
-    { "source": "/journal/art-of-deckle-edges", "destination": "/journal/art-of-deckle-edges/index.html" },
-    { "source": "/journal/sanganer-village-papers-world", "destination": "/journal/sanganer-village-papers-world/index.html" },
-    { "source": "/journal/leather-journal-care-guide", "destination": "/journal/leather-journal-care-guide/index.html" },
-    { "source": "/journal/paper-fountain-pen-vs-watercolour", "destination": "/journal/paper-fountain-pen-vs-watercolour/index.html" },
-    { "source": "/journal/hand-stitched-bindings", "destination": "/journal/hand-stitched-bindings/index.html" },
-    { "source": "/journal/wholesale-guide-sourcing-handmade-paper-india", "destination": "/journal/wholesale-guide-sourcing-handmade-paper-india/index.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/products",
+      "destination": "/products/index.html"
+    },
+    {
+      "source": "/wholesale",
+      "destination": "/wholesale/index.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/about/index.html"
+    },
+    {
+      "source": "/contact",
+      "destination": "/contact/index.html"
+    },
+    {
+      "source": "/our-craft",
+      "destination": "/our-craft/index.html"
+    },
+    {
+      "source": "/sustainability",
+      "destination": "/sustainability/index.html"
+    },
+    {
+      "source": "/gallery",
+      "destination": "/gallery/index.html"
+    },
+    {
+      "source": "/faq",
+      "destination": "/faq/index.html"
+    },
+    {
+      "source": "/manufacturing",
+      "destination": "/manufacturing/index.html"
+    },
+    {
+      "source": "/journal",
+      "destination": "/journal/index.html"
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/privacy-policy/index.html"
+    },
+    {
+      "source": "/terms-of-use",
+      "destination": "/terms-of-use/index.html"
+    },
+    {
+      "source": "/products/leather-journals",
+      "destination": "/products/leather-journals/index.html"
+    },
+    {
+      "source": "/products/handmade-paper",
+      "destination": "/products/handmade-paper/index.html"
+    },
+    {
+      "source": "/products/leather-accessories",
+      "destination": "/products/leather-accessories/index.html"
+    },
+    {
+      "source": "/products/stationery",
+      "destination": "/products/stationery/index.html"
+    },
+    {
+      "source": "/journal/art-of-deckle-edges",
+      "destination": "/journal/art-of-deckle-edges/index.html"
+    },
+    {
+      "source": "/journal/sanganer-village-papers-world",
+      "destination": "/journal/sanganer-village-papers-world/index.html"
+    },
+    {
+      "source": "/journal/leather-journal-care-guide",
+      "destination": "/journal/leather-journal-care-guide/index.html"
+    },
+    {
+      "source": "/journal/paper-fountain-pen-vs-watercolour",
+      "destination": "/journal/paper-fountain-pen-vs-watercolour/index.html"
+    },
+    {
+      "source": "/journal/hand-stitched-bindings",
+      "destination": "/journal/hand-stitched-bindings/index.html"
+    },
+    {
+      "source": "/journal/wholesale-guide-sourcing-handmade-paper-india",
+      "destination": "/journal/wholesale-guide-sourcing-handmade-paper-india/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
@@ -50,33 +119,57 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=()"
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
         },
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'none'; upgrade-insecure-requests;"
+          "value": "default-src 'self'; script-src 'self' https://w.behold.so; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.unsplash.com https://vumbnail.com https://ebmhkylrkcrhxyzclevz.supabase.co https://*.behold.so https://behold.pictures https://*.behold.pictures https://*.cdninstagram.com https://*.fbcdn.net; font-src 'self' data:; media-src 'self' blob: https://ebmhkylrkcrhxyzclevz.supabase.co https://*.cdninstagram.com https://*.fbcdn.net https://behold.pictures https://*.behold.pictures; connect-src 'self' https://ebmhkylrkcrhxyzclevz.supabase.co wss://ebmhkylrkcrhxyzclevz.supabase.co https://cdn.jsdelivr.net https://api.web3forms.com https://*.behold.so; frame-src https://player.vimeo.com https://www.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
         },
         {
           "key": "X-DNS-Prefetch-Control",
           "value": "on"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
         }
       ]
     },
     {
       "source": "/assets/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/fonts/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/(hero-desktop|hero-mobile)\\.webp",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=2592000, stale-while-revalidate=86400" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000, stale-while-revalidate=86400"
+        }
+      ]
     },
     {
       "source": "/(blog|manufacturing)/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=2592000, stale-while-revalidate=86400" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000, stale-while-revalidate=86400"
+        }
+      ]
     },
     {
       "source": "/sitemap.xml",
@@ -114,6 +207,19 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/admin",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
         }
       ]
     }

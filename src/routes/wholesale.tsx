@@ -105,6 +105,7 @@ const steps = [
 
 function WholesaleForm() {
   const { submit, status } = useFormSubmit();
+  const [trap, setTrap] = useState(false); // honeypot: real visitors never see or tick this, bots tick everything
   const [fields, setFields] = useState({
     company: "", contact: "", email: "", phone: "",
     country: "", business: "", interest: "", volume: "", referral: "",
@@ -119,6 +120,7 @@ function WholesaleForm() {
     await submit({
       subject: `Wholesale Registration — ${fields.company} (${fields.country}) — INS Overseas`,
       from_name: fields.contact,
+      botcheck: trap, // Web3Forms silently discards anything with this ticked
       ...fields,
     });
     if (status !== "error") {
@@ -139,6 +141,7 @@ function WholesaleForm() {
 
   return (
     <form onSubmit={handleSubmit} className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <input type="checkbox" name="botcheck" checked={trap} onChange={(e) => setTrap(e.target.checked)} tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] w-px h-px opacity-0" />
       {fieldDefs.map(([n, l]) => (
         <input
           key={n}
