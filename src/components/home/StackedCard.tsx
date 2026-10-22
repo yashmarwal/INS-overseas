@@ -136,8 +136,8 @@ export function StackedCard({ index, total, photo, photoTo, pill, tag, title, de
         <h3 className="mt-1.5 text-ink line-clamp-3" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "clamp(28px, 3.4vw, 44px)", lineHeight: 1.06, letterSpacing: "-0.01em" }}>{title}</h3>
         <p className="mt-2.5 md:mt-3.5 line-clamp-3" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 15, lineHeight: 1.55, color: "var(--grey-ink)" }}>{desc}</p>
 
-        <div className="mt-4 md:mt-auto md:pt-6">
-          <div className="flex items-stretch gap-2">
+        <div className="@container mt-4 md:mt-auto md:pt-6">
+          <div className="flex items-stretch gap-1.5 @[296px]:gap-2">
             <InfoTile label={moqLabel} value={moqValue} grow />
             <InfoTile label="Lead" value="30 days" />
             <a href={chatHref} target="_blank" rel="noreferrer" aria-label={chatLabel} className={cardSquareBtn}>

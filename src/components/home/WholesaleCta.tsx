@@ -1,6 +1,12 @@
 import { motion } from "framer-motion";
-import { MessageCircle, Phone, FileText } from "lucide-react";
+import { ArrowUpRight, Phone } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
+
+const pill = "group relative overflow-hidden inline-flex items-center justify-between gap-6 h-14 pl-7 pr-1.5 rounded-full uppercase text-[12px] active:scale-[0.98] transition-[background-color,box-shadow,transform] duration-300";
+const pillStyle = { fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.12em" } as const;
+const chip = "w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105";
+const nudge = "transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5";
 
 export default function WholesaleCta() {
   return (
@@ -29,15 +35,19 @@ export default function WholesaleCta() {
           Join 500+ retailers worldwide who source handcrafted leather and paper goods from INS Overseas.
           Request our full wholesale catalogue with pricing, MOQ details, and custom options.
         </p>
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/wholesale" className="inline-flex items-center justify-center gap-2 bg-gold text-ink px-7 py-4 uppercase text-[12px]" style={{ letterSpacing: "0.12em", fontWeight: 500 }}>
-            <FileText size={16} /> Request Catalogue
+        {/* three pills in the site's button language: label on the left, a round icon chip on the right */}
+        <div className="mt-10 flex flex-col sm:flex-row sm:flex-wrap md:flex-nowrap md:-mx-20 gap-3 sm:gap-4 justify-center">
+          <Link to="/wholesale" className={`${pill} bg-gold text-ink hover:bg-gold-light hover:shadow-[0_10px_28px_-10px_rgba(201,151,58,0.7)]`} style={pillStyle}>
+            <span className="relative">Request Catalogue</span>
+            <span className={`${chip} bg-ink text-gold`}><ArrowUpRight size={18} className={nudge} /></span>
           </Link>
-          <a href="https://wa.me/919680478483" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 border border-cream px-7 py-4 uppercase text-[12px] hover:bg-cream hover:text-ink transition-colors" style={{ letterSpacing: "0.12em", fontWeight: 500 }}>
-            <MessageCircle size={16} /> WhatsApp Us
+          <a href="https://wa.me/919680478483" target="_blank" rel="noreferrer" className={`${pill} text-cream bg-cream/[0.06] shadow-[inset_0_0_0_1px_rgba(250,247,240,0.3)] hover:bg-cream/[0.12] hover:shadow-[inset_0_0_0_1px_rgba(250,247,240,0.55)]`} style={pillStyle}>
+            <span className="relative">WhatsApp Us</span>
+            <span className={`${chip} bg-cream text-[#25D366]`}><WhatsAppGlyph size={20} /></span>
           </a>
-          <Link to="/contact" className="inline-flex items-center justify-center gap-2 px-7 py-4 uppercase text-[12px] text-cream border border-cream/50 hover:bg-cream/10 transition-colors" style={{ letterSpacing: "0.12em", fontWeight: 500 }}>
-            <Phone size={16} /> Book a Call
+          <Link to="/contact" className={`${pill} text-cream shadow-[inset_0_0_0_1px_rgba(201,151,58,0.55)] hover:bg-gold/10 hover:shadow-[inset_0_0_0_1px_rgba(201,151,58,0.9)]`} style={pillStyle}>
+            <span className="relative">Book a Call</span>
+            <span className={`${chip} bg-gold/15 text-gold-light`}><Phone size={17} className={nudge} /></span>
           </Link>
         </div>
       </motion.div>

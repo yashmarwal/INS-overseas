@@ -11,15 +11,15 @@ import { moqNumber } from "@/data/catalogue";
 
 const WHATSAPP = "https://wa.me/919680478483";
 export const cardTile = "rounded-2xl bg-[#F1EEE8]";
-export const cardSquareBtn = `${cardTile} w-[52px] h-[52px] shrink-0 flex items-center justify-center text-ink hover:bg-[#E8E3D8] active:scale-95 transition-[background-color,transform] duration-200`;
+export const cardSquareBtn = `${cardTile} w-10 h-10 @[296px]:w-11 @[296px]:h-11 @[330px]:w-[52px] @[330px]:h-[52px] shrink-0 flex items-center justify-center text-ink hover:bg-[#E8E3D8] active:scale-95 transition-[background-color,transform] duration-200`;
 export const cardEnquirePill = "shrink-0 inline-flex items-center gap-2 h-11 pl-4 pr-1.5 rounded-full bg-ink text-white hover:bg-umber-dark active:scale-95 transition-[background-color,transform] duration-200";
 
 /** A small info tile: a tiny label over a bold value. */
 export function InfoTile({ label, value, grow = false }: { label: string; value: string; grow?: boolean }) {
   return (
-    <div className={`${cardTile} px-3.5 py-2 flex flex-col justify-center ${grow ? "flex-1 min-w-0" : "items-center"}`}>
+    <div className={`${cardTile} px-2.5 @[296px]:px-3 @[330px]:px-3.5 py-2 flex flex-col justify-center ${grow ? "flex-1 shrink-0" : "items-center shrink-0"}`}>
       <span className="uppercase leading-none" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10, letterSpacing: "0.12em", color: "var(--grey-ink)" }}>{label}</span>
-      <span className="mt-1 text-ink tabular-nums lining-nums leading-none whitespace-nowrap" style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 15 }}>{value}</span>
+      <span className="mt-1 text-ink tabular-nums lining-nums leading-none whitespace-nowrap text-[14px] @[330px]:text-[15px]" style={{ fontFamily: "var(--font-body)", fontWeight: 600 }}>{value}</span>
     </div>
   );
 }
@@ -39,7 +39,7 @@ export default function HomeProductCard({ name, category, categoryId, tag, image
   const chat = `${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${name}". Please share wholesale pricing and MOQ.`)}`;
 
   return (
-    <article className="group h-full rounded-[28px] bg-white p-2.5 border border-ink/[0.06] shadow-[0_22px_44px_-30px_rgba(26,20,16,0.45)] transition-[transform,box-shadow] duration-500 hover:-translate-y-1 hover:shadow-[0_30px_56px_-30px_rgba(26,20,16,0.5)]">
+    <article className="group h-full flex flex-col rounded-[28px] bg-white p-2.5 border border-ink/[0.06] shadow-[0_22px_44px_-30px_rgba(26,20,16,0.45)] transition-[transform,box-shadow] duration-500 hover:-translate-y-1 hover:shadow-[0_30px_56px_-30px_rgba(26,20,16,0.5)]">
       {/* photo */}
       <div className="relative aspect-square rounded-[20px] overflow-hidden bg-[#EFEBE3]">
         <div className="absolute inset-0 transition-transform duration-[1600ms] ease-out group-hover:scale-[1.04]">{image}</div>
@@ -59,19 +59,21 @@ export default function HomeProductCard({ name, category, categoryId, tag, image
       </div>
 
       {/* info tiles + quick actions */}
-      <div className="mt-2.5 flex items-stretch gap-2">
+      <div className="@container mt-2.5">
+       <div className="flex items-stretch gap-1.5 @[296px]:gap-2">
         <InfoTile label="MOQ" value={`${moqNumber(categoryId)}+ pcs`} grow />
         <InfoTile label="Lead" value="30 days" />
         <a href={chat} target="_blank" rel="noreferrer" aria-label={`Chat on WhatsApp about ${name}`} className={cardSquareBtn}>
           <WhatsAppGlyph size={20} />
         </a>
-        <Link to="/products" aria-label="See the full catalogue" className={cardSquareBtn}>
+        <Link to="/products" aria-label="See the full catalogue" className={`${cardSquareBtn} @max-[259px]:hidden`}>
           <ShoppingBag size={19} strokeWidth={1.7} />
         </Link>
+       </div>
       </div>
 
       {/* name + enquire */}
-      <div className="mt-3 px-1.5 pb-1.5 flex items-end justify-between gap-3">
+      <div className="mt-auto pt-3 px-1.5 pb-1.5 flex items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10.5, letterSpacing: "0.16em", color: "var(--grey-ink)" }}>INS Overseas</p>
           <h3 className="mt-1 text-ink line-clamp-2" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 21, lineHeight: 1.12, letterSpacing: "-0.005em" }}>{name}</h3>
