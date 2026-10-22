@@ -75,15 +75,6 @@ export default function LoginScreen() {
 
           <PrimaryButton type="submit" busy={busy} className="w-full mt-5 h-12">Sign in</PrimaryButton>
         </form>
-
-        <details className="mt-5 rounded-xl bg-white/60 border border-black/10 px-4 py-3 text-[13px] leading-relaxed" style={{ color: MUTED }}>
-          <summary className="cursor-pointer font-medium text-[#1A1410]">First time here, or can't sign in?</summary>
-          <ol className="mt-2 list-decimal pl-5 space-y-1">
-            <li>Open your project at supabase.com and go to <b>Authentication → Users</b>.</li>
-            <li>Press <b>Add user → Create new user</b>, type your email and a strong password, and tick <b>Auto Confirm User</b>.</li>
-            <li>Then sign in here with that email and password. To change a forgotten password, use the same page.</li>
-          </ol>
-        </details>
       </div>
     </div>
   );

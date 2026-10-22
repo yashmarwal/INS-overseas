@@ -5,7 +5,7 @@ import { buildSetupSql, deleteProducts, probeExtraColumns, updateRows } from "@/
 import { useDragReorder, useSavedOrder } from "@/components/admin/reorder";
 import { EmptyState, GhostButton, MUTED, Panel, PrimaryButton, type Confirm } from "@/components/admin/AdminUI";
 
-const HOME_SLOTS = 6; // how many featured products the homepage "Most Loved" row can show
+const HOME_SLOTS = 6; // how many featured products the homepage "Fresh From The Workshop" section can show
 const catLabelOf = (id: string) => PRODUCT_CATEGORIES.find((c) => c.id === id)?.label || id;
 const field = "w-full rounded-xl border border-black/20 bg-white text-[15px] placeholder:text-[#8A8076] focus:outline-none focus:border-[#6B4C2A] focus:ring-2 focus:ring-[#6B4C2A]/20";
 
@@ -425,7 +425,7 @@ function EditDialog({ product, extras, onClose, onSave, onDelete, onOpenSetup }:
                 <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="mt-0.5 w-5 h-5 accent-[#6B4C2A]" />
                 <span>
                   <span className="block text-[14px] font-semibold">Show on the homepage</span>
-                  <span className="block text-[13px]" style={{ color: MUTED }}>Appears in the “Most Loved This Season” row (up to {HOME_SLOTS} products, in your chosen order).</span>
+                  <span className="block text-[13px]" style={{ color: MUTED }}>Appears in its own “Fresh From The Workshop” section on the homepage (up to {HOME_SLOTS} products, in your chosen order).</span>
                 </span>
               </label>
             </>

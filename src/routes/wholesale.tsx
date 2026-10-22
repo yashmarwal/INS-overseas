@@ -117,13 +117,13 @@ function WholesaleForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submit({
+    const sent = await submit({
       subject: `Wholesale Registration — ${fields.company} (${fields.country}) — INS Overseas`,
       from_name: fields.contact,
       botcheck: trap, // Web3Forms silently discards anything with this ticked
       ...fields,
     });
-    if (status !== "error") {
+    if (sent) {
       setFields({ company: "", contact: "", email: "", phone: "", country: "", business: "", interest: "", volume: "", referral: "" });
     }
   };

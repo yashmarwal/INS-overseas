@@ -2,14 +2,17 @@ import { useRef, useState } from "react";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
+// Sends an enquiry through Web3Forms (it emails it to the inbox). `submit` resolves to true only when it was sent, so
+// the form can keep what the visitor typed if it was not.
 export function useFormSubmit() {
   const [status, setStatus] = useState<FormStatus>("idle");
+  const busy = useRef(false);
   const lastSent = useRef(0);
 
-  const submit = async (data: Record<string, string | boolean>) => {
-    // one enquiry per 15 seconds: stops double-clicks and scripts hammering the form
-    if (Date.now() - lastSent.current < 15_000) return;
-    lastSent.current = Date.now();
+  const submit = async (data: Record<string, string | boolean>): Promise<boolean> => {
+    // already sending, or just sent one: ignore double-clicks and scripts hammering the form (a FAILED send can be retried at once)
+    if (busy.current || Date.now() - lastSent.current < 15_000) return false;
+    busy.current = true;
     // nobody types more than this into a form; it keeps junk and oversized payloads out of the inbox
     const clean = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, typeof v === "string" ? v.slice(0, 2000) : v]));
     setStatus("submitting");
@@ -24,15 +27,20 @@ export function useFormSubmit() {
       });
       const json = await res.json();
       if (json.success) {
+        lastSent.current = Date.now();
         setStatus("success");
         setTimeout(() => setStatus("idle"), 5000);
-      } else {
-        setStatus("error");
-        setTimeout(() => setStatus("idle"), 4000);
+        return true;
       }
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 6000);
+      return false;
     } catch {
       setStatus("error");
-      setTimeout(() => setStatus("idle"), 4000);
+      setTimeout(() => setStatus("idle"), 6000);
+      return false;
+    } finally {
+      busy.current = false;
     }
   };
 

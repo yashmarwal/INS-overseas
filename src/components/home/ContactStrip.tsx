@@ -5,6 +5,7 @@ import { useFormSubmit } from "@/hooks/useFormSubmit";
 
 export default function ContactStrip() {
   const { submit, status } = useFormSubmit();
+  const [trap, setTrap] = useState(false); // honeypot: real visitors never see or tick this, bots tick everything
   const [fields, setFields] = useState({
     name: "", email: "", company: "", country: "", message: "",
   });
@@ -15,12 +16,13 @@ export default function ContactStrip() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submit({
+    const sent = await submit({
       subject: `Website Enquiry from ${fields.name} — INS Overseas`,
       from_name: fields.name,
+      botcheck: trap, // Web3Forms silently discards anything with this ticked
       ...fields,
     });
-    if (status !== "error") {
+    if (sent) {
       setFields({ name: "", email: "", company: "", country: "", message: "" });
     }
   };
@@ -55,6 +57,7 @@ export default function ContactStrip() {
           onSubmit={handleSubmit}
           className="space-y-6"
         >
+          <input type="checkbox" name="botcheck" checked={trap} onChange={(e) => setTrap(e.target.checked)} tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] w-px h-px opacity-0" />
           {[
             { name: "name",    label: "Your Name",     type: "text"  },
             { name: "email",   label: "Email Address", type: "email" },

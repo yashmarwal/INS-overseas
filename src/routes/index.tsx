@@ -9,7 +9,7 @@ import CraftProcess from "@/components/home/CraftProcess";
 import ManufacturingTeaser from "@/components/home/ManufacturingTeaser";
 import SustainabilitySection from "@/components/home/SustainabilitySection";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
-import Testimonials from "@/components/home/Testimonials";
+import FeaturedCollection from "@/components/home/FeaturedCollection";
 import WholesaleCta from "@/components/home/WholesaleCta";
 import HomeFaq from "@/components/home/HomeFaq";
 import InstagramFeed from "@/components/home/InstagramFeed";
@@ -42,15 +42,15 @@ function Home() {
       <HeroSection />
       <TrustBar />
       <ProductCategories />
-      <HeritageStory />
+      <div className="relative z-[2]"><HeritageStory /></div>{/* slides up over the last pinned collection card */}
       <CraftProcess />
       <SustainabilitySection />
       <FeaturedProducts />
+      <FeaturedCollection />
       {/* placeholder heights measured from the real section at each breakpoint — keep in sync with GlobalReach */}
-      <LazyMount className="bg-ink min-h-[960px] md:min-h-[1040px] lg:min-h-[1150px] xl:min-h-[1220px]">
+      <LazyMount className="relative z-[2] bg-ink min-h-[832px] sm:min-h-[888px] md:min-h-[945px] lg:min-h-[1064px] xl:min-h-[1254px] min-[1440px]:min-h-[1327px]">
         <Suspense fallback={null}><GlobalReach /></Suspense>
       </LazyMount>
-      <Testimonials />
       <WholesaleCta />
       <ManufacturingTeaser />
       <HomeFaq />

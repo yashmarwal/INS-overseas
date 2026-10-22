@@ -67,10 +67,11 @@ const activeRoutes: Route[] = [
 ];
 
 // Build the projection once so icon math matches the map exactly.
-const MAP_WIDTH = 960;
-const MAP_HEIGHT = 500;
+// The world fills the whole width of the box (the sphere is ~5.41 x scale wide), with the polar ends trimmed off.
+const MAP_WIDTH = 1240;
+const MAP_HEIGHT = 600;
 const projection = geoEqualEarth()
-  .scale(160)
+  .scale((MAP_WIDTH / 5.413) * 1.08)
   .center([10, 10])
   .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
 
@@ -134,7 +135,7 @@ function ShipIcon({ size = 1 }: { size?: number }) {
   );
 }
 
-function Stat({ value, suffix = "", label }: { value: number; suffix?: string; label: string }) {
+function Stat({ value, suffix = "", label, group = true }: { value: number; suffix?: string; label: string; group?: boolean }) {
   const { value: v, ref } = useCounter(value);
   return (
     <div className="flex flex-col items-center text-center">
@@ -143,7 +144,7 @@ function Stat({ value, suffix = "", label }: { value: number; suffix?: string; l
         className="text-gold-light lining-nums tabular-nums"
         style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 28 }}
       >
-        {v.toLocaleString()}{suffix}
+        {group ? v.toLocaleString() : v}{suffix}
       </span>
       <span
         className="mt-1 text-cream uppercase"
@@ -192,14 +193,16 @@ export default function GlobalReach() {
         </div>
 
         <div
-          className="mt-8 md:mt-16 relative w-full rounded-xl overflow-hidden"
-          style={{ height: "min(500px, 56vw)", minHeight: 320 }}
+          className="mt-8 md:mt-16 relative w-full rounded-xl overflow-hidden max-sm:!aspect-[1.7]"
+          style={{ aspectRatio: `${MAP_WIDTH} / ${MAP_HEIGHT}` }}
         >
+          {/* on phones the map is enlarged a further 30% and trimmed at the sides (the empty Pacific), so it is not a thin strip */}
           <ComposableMap
             projection={projection as never}
             width={MAP_WIDTH}
             height={MAP_HEIGHT}
             viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+            className="max-sm:scale-[1.3] max-sm:origin-[56%_50%]"
             style={{ width: "100%", height: "100%", background: "#0F0B08" }}
           >
             <Geographies geography={GEO_URL}>
@@ -332,7 +335,7 @@ export default function GlobalReach() {
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 border-y border-warm-grey/15 py-8">
           <Stat value={40} suffix="+" label="Countries" />
           <Stat value={3} label="Continents" />
-          <Stat value={1995} label="Since" />
+          <Stat value={1995} label="Since" group={false} /> {/* a year: no thousands separator */}
           <Stat value={895700} suffix="+" label="Products Shipped" />
         </div>
 

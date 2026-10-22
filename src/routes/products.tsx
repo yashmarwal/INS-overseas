@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PageHero from "@/components/shared/PageHero";
@@ -7,6 +7,7 @@ import { X, Mail, Maximize2, ArrowUpRight, ChevronLeft, ChevronRight } from "luc
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SITE_URL } from "@/lib/seo";
+import { CATEGORY_LABELS, CATEGORY_MOQ } from "@/data/catalogue";
 
 // ── Filter definitions ────────────────────────────────────────────────────────
 const filters = [
@@ -20,25 +21,6 @@ const filters = [
   { key: "handblock-print-fabric",     label: "Handblock Print Fabric" },
 ] as const;
 
-const CATEGORY_LABELS: Record<string, string> = {
-  "leather-journals":        "Leather Journal",
-  "leather-bags":            "Leather Bag",
-  "handmade-paper-gift-box": "Paper Gift Box",
-  "handmade-paper-gift-bag": "Paper Gift Bag",
-  "handmade-seed-paper":     "Seed Paper",
-  "handmade-deckle-edge-paper": "Deckle Edge Paper",
-  "handblock-print-fabric":     "Handblock Print Fabric",
-};
-
-const CATEGORY_MOQ: Record<string, string> = {
-  "leather-journals":        "200 units minimum",
-  "leather-bags":            "150 units minimum",
-  "handmade-paper-gift-box": "200 units minimum",
-  "handmade-paper-gift-bag": "800 units minimum",
-  "handmade-seed-paper":     "1500 units minimum",
-  "handmade-deckle-edge-paper": "200 units minimum",
-  "handblock-print-fabric":     "200 units minimum",
-};
 
 // ── Static fallback products ──────────────────────────────────────────────────
 const staticProducts = [
@@ -153,9 +135,27 @@ export const Route = createFileRoute("/products")({
 
 const BATCH = 12;
 
+// The four collection links on the homepage (/products/leather-journals, /products/handmade-paper, …) open this same
+// page already filtered to that collection. A collection is one product category, or a small group of them.
+const COLLECTIONS: Record<string, { label: string; cats: string[] }> = {
+  "leather-journals":    { label: "Leather Journals",    cats: ["leather-journals"] },
+  "handmade-paper":      { label: "Handmade Paper",      cats: ["handmade-deckle-edge-paper", "handmade-seed-paper"] },
+  "stationery":          { label: "Artisan Stationery",  cats: ["handmade-paper-gift-box", "handmade-paper-gift-bag"] },
+  "leather-accessories": { label: "Leather Accessories", cats: ["leather-bags"] },
+};
+const filterForSlug = (slug: string) => {
+  const c = COLLECTIONS[slug];
+  if (!c) return "all";
+  return c.cats.length === 1 ? c.cats[0] : `collection:${slug}`; // one category: reuse its own pill
+};
+const categoriesOf = (filter: string) => (filter.startsWith("collection:") ? COLLECTIONS[filter.slice(11)]?.cats ?? [] : filter === "all" ? null : [filter]);
+
 // ── Products page ─────────────────────────────────────────────────────────────
 function Products() {
-  const [filter, setFilter] = useState("all");
+  // /products/<collection> opens already filtered; /products shows everything
+  const slug = useRouterState({ select: (s) => s.location.pathname.split("/")[2] ?? "" });
+  const [filter, setFilter] = useState(() => filterForSlug(slug));
+  useEffect(() => { setFilter(filterForSlug(slug)); setCount(BATCH); }, [slug]);
   const { images: productRows, loading } = useProductImages();
   const [preview, setPreview] = useState<DynamicProduct | null>(null);
   const isMobile = useIsMobile(); // phones get a compact floating card instead of the wide two-column dialog
@@ -195,8 +195,12 @@ function Products() {
       ? dynamicProducts
       : staticProducts.map((p) => ({ ...p, isDynamic: false }));
 
-  const visible =
-    filter === "all" ? allProducts : allProducts.filter((p) => p.category === filter);
+  const activeCats = categoriesOf(filter);
+  const visible = activeCats ? allProducts.filter((p) => activeCats.includes(p.category)) : allProducts;
+  // a collection spanning several categories gets its own pill, right after "All"
+  const pills: { key: string; label: string }[] = filter.startsWith("collection:")
+    ? [filters[0], { key: filter, label: COLLECTIONS[filter.slice(11)]?.label ?? "Collection" }, ...filters.slice(1)]
+    : [...filters];
 
   const pillBar = useRef<HTMLDivElement>(null);
   const pillsSection = useRef<HTMLElement>(null);
@@ -264,9 +268,10 @@ function Products() {
             aria-label="Filter products by category"
             className="relative flex gap-2.5 overflow-x-auto no-scrollbar py-3.5 pr-5 sm:pr-8 lg:pr-0"
           >
-            {filters.map((f) => {
+            {pills.map((f) => {
               const active = filter === f.key;
-              const n = f.key === "all" ? allProducts.length : allProducts.filter((p) => p.category === f.key).length;
+              const cats = categoriesOf(f.key);
+              const n = cats ? allProducts.filter((p) => cats.includes(p.category)).length : allProducts.length;
               return (
                 <button
                   key={f.key}
