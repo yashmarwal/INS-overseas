@@ -90,11 +90,8 @@ export default function Navigation() {
       >
         <div className={`max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-8 xl:px-12 2xl:px-20 flex items-center justify-between gap-6 transition-[padding] duration-300 ${scrolled ? "py-4 lg:py-2.5" : "py-4 lg:py-3.5"}`}>
           <Link to="/" className="flex items-center gap-2.5 leading-none shrink-0">
-            {/* a small paper-corner ornament: gives the wordmark a brand mark on desktop */}
-            <svg className="hidden xl:block shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M12 1.8 22.2 12 12 22.2 1.8 12Z" stroke="#C9973A" strokeWidth="1.4" />
-              <path d="M12 7.2 16.8 12 12 16.8 7.2 12Z" fill="#C9973A" />
-            </svg>
+            {/* the real INS Overseas crest (gold on transparent), taller than the text so it reads as the brand mark */}
+            <img src="/logo-mark.png" alt="" aria-hidden width={39} height={52} className={`shrink-0 h-11 w-auto lg:h-14 -my-3 transition-[filter] duration-500 ${scrolled ? "brightness-[0.72] saturate-150" : ""}`} />
             <div>
               <div
                 style={{ fontFamily: "var(--font-display)", fontWeight: 500, letterSpacing: "0.15em" }}
@@ -209,12 +206,15 @@ export default function Navigation() {
           >
             {/* Header: brand + close */}
             <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
-              <Link to="/" onClick={() => closeIfSamePage("/")} className="leading-none">
+              <Link to="/" onClick={() => closeIfSamePage("/")} className="flex items-center gap-3 leading-none">
+                <img src="/logo-mark.png" alt="" aria-hidden width={39} height={52} className="shrink-0 h-12 w-auto" />
+                <span>
                 <span className="block text-cream" style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 19, letterSpacing: "0.15em" }}>
                   INS OVERSEAS
                 </span>
                 <span className="block mt-1.5 text-gold/80 uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 9, letterSpacing: "0.3em" }}>
                   Est. 1995 · Jaipur
+                </span>
                 </span>
               </Link>
               <button
