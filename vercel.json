@@ -163,7 +163,7 @@
       ]
     },
     {
-      "source": "/(blog|manufacturing)/(.*)",
+      "source": "/(blog|manufacturing|video)/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

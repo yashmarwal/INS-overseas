@@ -14,6 +14,7 @@ import Footer from "@/components/ui/Footer";
 import Preloader from "@/components/ui/Preloader";
 import FloatingDock from "@/components/ui/FloatingDock";
 import EnquiryList from "@/components/ui/EnquiryList";
+import VideoBubble from "@/components/ui/VideoBubble";
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 import { historyKey, saveScroll, savedScroll } from "@/lib/scrollMemory";
 
@@ -115,6 +116,7 @@ function RootComponent() {
         <Footer />
         <FloatingDock />
         <EnquiryList />
+        <VideoBubble />
       </MotionConfig>
     </QueryClientProvider>
   );

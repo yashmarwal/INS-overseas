@@ -73,21 +73,21 @@ export default function HeritageStory() {
           transition={{ duration: 1.1 }}
           className="hidden lg:block lg:col-span-5 relative h-[520px]"
         >
-          <div className="absolute top-0 right-0 w-[78%] h-[70%] overflow-hidden bg-parchment-dark">
+          <div className="absolute z-10 top-0 right-0 w-[78%] h-[70%] overflow-hidden bg-parchment-dark">
             <SiteImage
               section="heritage_artisan"
               alt="Indian artisan at work"
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="absolute bottom-0 left-0 w-[60%] h-[48%] overflow-hidden border-[6px] border-cream shadow-2xl bg-parchment-dark">
+          <div className="absolute z-20 bottom-0 left-0 w-[60%] h-[48%] overflow-hidden border-[6px] border-cream shadow-2xl bg-parchment-dark">
             <SiteImage
               section="heritage_paper"
               alt="Deckle edge paper close up"
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="absolute top-6 right-6 w-[78%] h-[70%] border border-gold -z-0 translate-x-4 translate-y-4" />
+          <div aria-hidden className="absolute z-0 top-6 right-6 w-[78%] h-[70%] border border-gold translate-x-4 translate-y-4" />
         </motion.div>
       </div>
     </section>

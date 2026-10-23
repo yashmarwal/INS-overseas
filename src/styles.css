@@ -299,3 +299,86 @@ section > div > img {
   animation: imgShimmer 1.8s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) { .img-shimmer { animation: none; } }
+
+/* ── Video bubble: a small round reel in the bottom-left corner that grows into a player ── */
+.reel {
+  --reel-size: 56px;
+  --reel-r: 28px;
+  --reel-w: min(88vw, calc((100dvh - 48px) * 0.5625), 380px);
+  --reel-h: calc(var(--reel-w) * 1.7778);
+  --reel-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  position: fixed;
+  z-index: 40;
+  left: 12px;
+  bottom: calc(env(safe-area-inset-bottom) + 97px); /* just above the phone dock, clear of the quote-list button */
+  width: var(--reel-size);
+  height: var(--reel-size);
+  border-radius: var(--reel-r);
+  transition: width 0.55s var(--reel-ease), height 0.55s var(--reel-ease), left 0.55s var(--reel-ease), bottom 0.55s var(--reel-ease), border-radius 0.55s var(--reel-ease);
+}
+@media (min-width: 768px) {
+  .reel { --reel-size: 72px; --reel-r: 36px; left: 24px; bottom: 24px; }
+}
+@media (max-width: 339px) {
+  .reel { bottom: calc(env(safe-area-inset-bottom) + 157px); }
+}
+/* open: the card grows out of the corner into the middle of the screen */
+.reel[data-open="true"] {
+  --reel-r: 28px;
+  z-index: 85;
+  width: var(--reel-w);
+  height: var(--reel-h);
+  left: calc(50% - var(--reel-w) / 2);
+  bottom: calc(50% - var(--reel-h) / 2);
+}
+.reel-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: #1b1813;
+  box-shadow: 0 0 0 2px #c9973a, 0 14px 34px -10px rgba(15, 11, 8, 0.55);
+}
+.reel-full { transition: opacity 0.35s ease; }
+.reel-hit { border-radius: inherit; cursor: pointer; background: transparent; }
+.reel-ui { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+.reel[data-open="true"] .reel-ui { opacity: 1; pointer-events: auto; transition-delay: 0.3s; }
+/* the ✕ sits exactly on the circle's edge (the 45-degree point, 14.6% in from the top and right) */
+.reel-x {
+  position: absolute;
+  top: calc(14.6% - 11px);
+  right: calc(14.6% - 11px);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1a1410;
+  color: #f1ca85;
+  box-shadow: 0 0 0 1.5px #faf7f0, 0 2px 6px rgba(15, 11, 8, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.reel-x::before { content: ""; position: absolute; inset: -5px; } /* a slightly larger touch target, without stealing the circle's */
+.reel-x:hover { background: #b42318; color: #fff; transform: scale(1.08); }
+.reel[data-open="true"] .reel-x { opacity: 0; pointer-events: none; transform: scale(0.6); }
+/* a soft ring that pulses a few times to say "tap me", then stops */
+.reel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 0 0 rgba(201, 151, 58, 0.5);
+  animation: reelPulse 2.6s ease-out 1.2s 4;
+}
+.reel[data-open="true"]::after { display: none; }
+@keyframes reelPulse { 0% { box-shadow: 0 0 0 0 rgba(201, 151, 58, 0.5); } 70%, 100% { box-shadow: 0 0 0 16px rgba(201, 151, 58, 0); } }
+.reel-spinner { width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.25); border-top-color: #f1ca85; animation: reelSpin 0.9s linear infinite; }
+@keyframes reelSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .reel, .reel-full, .reel-ui, .reel-x { transition-duration: 0.01s; }
+  .reel::after, .reel-spinner { animation: none; }
+}
