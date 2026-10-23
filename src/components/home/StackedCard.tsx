@@ -3,7 +3,7 @@ import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } f
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
-import { cardEnquirePill, cardSquareBtn, EnquiryToggle, InfoTile } from "@/components/home/HomeProductCard";
+import { cardEnquirePill, cardSquareBtn, InfoTile, QuoteToggle } from "@/components/home/HomeProductCard";
 import type { EnquiryItem } from "@/lib/enquiryList";
 
 // Cards that stack as you scroll: each one pins under the header while the next slides up over it, and the ones
@@ -91,7 +91,7 @@ export type StackedCardProps = {
   title: string;
   desc: string;
   moqLabel?: string; // defaults to "MOQ"
-  /** when given, the round bag button ticks this piece onto the visitor's enquiry list instead of linking to "secondary" */
+  /** when given, a labelled "Add to quote" button sits on the photo and puts this piece on the visitor's quote list */
   listItem?: EnquiryItem;
   moqValue: string; // e.g. "200+ pcs"
   chatHref: string;
@@ -131,7 +131,10 @@ export function StackedCard({ index, total, photo, photoTo, pill, tag, title, de
       {photoTo ? (
         <Link to={photoTo} aria-label={`Explore ${title}`} className={photoCls}>{photoInner}</Link>
       ) : (
-        <div className={photoCls}>{photoInner}</div>
+        <div className={photoCls}>
+          {photoInner}
+          {listItem && <QuoteToggle item={listItem} className="absolute bottom-3 left-3 z-[1]" />}
+        </div>
       )}
 
       <div className="flex flex-col px-1.5 pb-1.5 md:py-6 md:pr-5">
@@ -146,13 +149,9 @@ export function StackedCard({ index, total, photo, photoTo, pill, tag, title, de
             <a href={chatHref} target="_blank" rel="noreferrer" aria-label={chatLabel} className={cardSquareBtn}>
               <WhatsAppGlyph size={20} />
             </a>
-            {listItem ? (
-              <EnquiryToggle item={listItem} />
-            ) : (
-              <Link to={secondary.to} aria-label={secondary.label} className={`${cardSquareBtn} hidden sm:flex`}>
-                {secondary.icon}
-              </Link>
-            )}
+            <Link to={secondary.to} aria-label={secondary.label} className={`${cardSquareBtn} hidden sm:flex`}>
+              {secondary.icon}
+            </Link>
           </div>
           {primary.to ? (
             <Link to={primary.to} className={primaryCls} style={primaryStyle}>{primaryInner}</Link>

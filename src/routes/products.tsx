@@ -3,7 +3,11 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PageHero from "@/components/shared/PageHero";
 import { useProductImages, tagLabel } from "@/hooks/useProductImages";
-import { X, Mail, Maximize2, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Mail, Maximize2, ArrowUpRight, ChevronLeft, ChevronRight, Check, Plus, Share2 } from "lucide-react";
+import ShareSheet from "@/components/ui/ShareSheet";
+import { productShareUrl, shortCode } from "@/lib/share";
+import { historyKey, savedProductView, saveProductView } from "@/lib/scrollMemory";
+import { enquiryId, toggleEnquiry, useInEnquiry } from "@/lib/enquiryList";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SITE_URL } from "@/lib/seo";
@@ -154,10 +158,18 @@ const categoriesOf = (filter: string) => (filter.startsWith("collection:") ? COL
 function Products() {
   // /products/<collection> opens already filtered; /products shows everything
   const slug = useRouterState({ select: (s) => s.location.pathname.split("/")[2] ?? "" });
-  const [filter, setFilter] = useState(() => filterForSlug(slug));
-  useEffect(() => { setFilter(filterForSlug(slug)); setCount(BATCH); }, [slug]);
+  // coming back with Back / Forward: the same category and the same number of cards as when the visitor left
+  const viewKey = useRef(historyKey());
+  const [filter, setFilter] = useState(() => savedProductView(viewKey.current)?.filter ?? filterForSlug(slug));
+  const prevSlug = useRef(slug); // (compare, not "first run": React StrictMode runs effects twice in development)
+  useEffect(() => {
+    if (prevSlug.current === slug) return;
+    prevSlug.current = slug;
+    setFilter(filterForSlug(slug)); setCount(BATCH);
+  }, [slug]);
   const { images: productRows, loading } = useProductImages();
   const [preview, setPreview] = useState<DynamicProduct | null>(null);
+  const [shareFor, setShareFor] = useState<DynamicProduct | null>(null);
   const isMobile = useIsMobile(); // phones get a compact floating card instead of the wide two-column dialog
 
   // Back gesture closes lightbox instead of navigating away
@@ -195,6 +207,31 @@ function Products() {
       ? dynamicProducts
       : staticProducts.map((p) => ({ ...p, isDynamic: false }));
 
+  // drop the share code from the address bar once it has done its job
+  const tidyAddress = () => {
+    const u = new URL(window.location.href);
+    if (!u.searchParams.has("p") && !u.searchParams.has("product")) return;
+    u.searchParams.delete("p");
+    u.searchParams.delete("product");
+    window.history.replaceState(window.history.state, "", u.pathname + u.search + u.hash);
+  };
+  const deepHandled = useRef<string | null>(null);
+  const deepOpened = useRef(false);
+  useEffect(() => {
+    if (loading) return;
+    const qs = new URLSearchParams(window.location.search);
+    const id = qs.get("p") ?? qs.get("product");
+    if (!id || deepHandled.current === id) return;
+    deepHandled.current = id;
+    const p = allProducts.find((x) => shortCode(x.id) === id || x.id === id);
+    if (p) { deepOpened.current = true; setPreview(p); } else tidyAddress(); // unknown link: just show the catalogue
+  }, [loading, allProducts.length]);
+  useEffect(() => {
+    if (preview || !deepOpened.current) return;
+    deepOpened.current = false;
+    tidyAddress();
+  }, [preview]);
+
   const activeCats = categoriesOf(filter);
   const visible = activeCats ? allProducts.filter((p) => activeCats.includes(p.category)) : allProducts;
   // a collection spanning several categories gets its own pill, right after "All"
@@ -224,7 +261,8 @@ function Products() {
   }, [filter]);
 
   // Render the catalogue in batches as the visitor scrolls, instead of 100+ cards at once.
-  const [count, setCount] = useState(BATCH);
+  const [count, setCount] = useState(() => savedProductView(viewKey.current)?.count ?? BATCH);
+  useEffect(() => { saveProductView(viewKey.current, { filter, count }); }, [filter, count]);
   const [sentinel, setSentinel] = useState<HTMLDivElement | null>(null);
   const shown = visible.slice(0, count);
   useEffect(() => {
@@ -243,13 +281,14 @@ function Products() {
   useEffect(() => {
     if (!preview) return;
     const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || shareFor) return; // the share sheet handles its own keys
       if (e.key === "Escape") closePreview();
       if (e.key === "ArrowLeft") goPrev();
       if (e.key === "ArrowRight") goNext();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [preview, currentIndex, visible]);
+  }, [preview, currentIndex, visible, shareFor]);
 
   return (
     <>
@@ -346,6 +385,7 @@ function Products() {
                     className="group flex flex-col rounded-2xl bg-white border border-ink/10 shadow-[0_1px_2px_rgba(26,20,16,0.05),0_10px_24px_-16px_rgba(26,20,16,0.25)] overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_44px_-20px_rgba(26,20,16,0.4)]"
                   >
                     {/* Image — click to open the details lightbox */}
+                    <div className="relative">
                     <button
                       type="button"
                       onClick={() => setPreview(p)}
@@ -377,6 +417,16 @@ function Products() {
                         <Maximize2 size={15} strokeWidth={1.8} />
                       </span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setShareFor(p)}
+                      aria-label={`Share ${p.name}`}
+                      title="Share this product"
+                      className="absolute bottom-2.5 left-2.5 w-9 h-9 rounded-full bg-cream text-umber flex items-center justify-center shadow-md hover:bg-white active:scale-95 transition-[background-color,transform] duration-200 [-webkit-tap-highlight-color:transparent]"
+                    >
+                      <Share2 size={15} strokeWidth={1.8} />
+                    </button>
+                    </div>
 
                     <div className="flex flex-1 flex-col p-3.5 sm:p-4">
                       <h3
@@ -390,11 +440,14 @@ function Products() {
                           {p.description}
                         </p>
                       )}
-                      <div className="mt-auto pt-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                      <div className="mt-auto pt-3.5 flex flex-col gap-2.5">
                         <span className="uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10, letterSpacing: "0.14em", color: "var(--grey-ink)" }}>
                           MOQ {moq}+
                         </span>
-                        <EnquireButton product={p} compact />
+                        <div className="flex items-center gap-2 w-full max-[399px]:flex-col">
+                          <ListButton product={p} compact />
+                          <EnquireButton product={p} compact />
+                        </div>
                       </div>
                     </div>
                   </motion.article>
@@ -445,7 +498,7 @@ function Products() {
                       ? preview.description
                       : "Handmade in Sanganer, Jaipur. Lead time 30 days · custom branding available · ships by air or sea."}
                   </p>
-                  <ActionRow product={preview} className="mt-5" />
+                  <ActionRow product={preview} className="mt-5" onShare={() => setShareFor(preview)} />
                 </div>
               </motion.div>
             ) : (
@@ -495,7 +548,7 @@ function Products() {
                       ))}
                     </dl>
 
-                    <ActionRow product={preview} className="mt-7 md:mt-auto md:pt-6" />
+                    <ActionRow product={preview} className="mt-7 md:mt-auto md:pt-6" onShare={() => setShareFor(preview)} />
                   </div>
                 </div>
               </motion.div>
@@ -503,6 +556,11 @@ function Products() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ShareSheet
+        product={shareFor ? { id: shareFor.id, name: shareFor.name, category: shareFor.category, image: shareFor.image } : null}
+        onClose={() => setShareFor(null)}
+      />
     </>
   );
 }
@@ -549,7 +607,7 @@ function PhotoPane({ product, count, index, onPrev, onNext, onClose, className =
 }
 
 /** MOQ pill + dark Enquire pill, with the WhatsApp alternative underneath. */
-function ActionRow({ product, className = "" }: { product: DynamicProduct; className?: string }) {
+function ActionRow({ product, className = "", onShare }: { product: DynamicProduct; className?: string; onShare: () => void }) {
   return (
     <div className={className}>
       <div className="flex items-center justify-between gap-3">
@@ -566,8 +624,19 @@ function ActionRow({ product, className = "" }: { product: DynamicProduct; class
           <span className="w-8 h-8 rounded-full bg-white text-ink flex items-center justify-center"><ArrowUpRight size={16} /></span>
         </a>
       </div>
+      <div className="mt-3 flex items-center gap-2">
+        <ListButton product={product} />
+        <button
+          type="button"
+          onClick={onShare}
+          className="shrink-0 h-11 px-4 rounded-full inline-flex items-center justify-center gap-2 border border-umber/40 text-umber-dark hover:bg-umber hover:border-umber hover:text-cream active:scale-95 transition-[background-color,color,transform] duration-200"
+          style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 13 }}
+        >
+          <Share2 size={16} strokeWidth={1.8} /> Share
+        </button>
+      </div>
       <a
-        href={`https://wa.me/919680478483?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${product.name}". Please share wholesale pricing and MOQ.`)}`}
+        href={`https://wa.me/919680478483?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${product.name}". Please share wholesale pricing and MOQ.\n${productShareUrl(product.id)}`)}`}
         target="_blank"
         rel="noreferrer"
         className="mt-4 flex items-center justify-center gap-2 text-umber-dark hover:text-ink transition-colors underline underline-offset-4 decoration-umber/40"
@@ -580,12 +649,48 @@ function ActionRow({ product, className = "" }: { product: DynamicProduct; class
   );
 }
 
+// ── Enquiry list button ────────────────────────────────────────────────────────
+// Puts the piece on the visitor's quote list (the gold "Quote list" pill above the dock sends the whole list in one message).
+// compact = the round button on a grid card; otherwise the labelled button in the details popup.
+function ListButton({ product, compact = false }: { product: DynamicProduct; compact?: boolean }) {
+  const moq = (CATEGORY_MOQ[product.category] || "200 units minimum").match(/\d+/)?.[0] ?? "200";
+  const item = { id: enquiryId(product.name), name: product.name, category: CATEGORY_LABELS[product.category] || product.category, moq: `${moq}+ pcs`, url: productShareUrl(product.id) };
+  const on = useInEnquiry(item.id);
+  const label = on ? `Remove ${product.name} from your quote list` : `Add ${product.name} to your quote list`;
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={() => toggleEnquiry(item)}
+        aria-pressed={on}
+        aria-label={label}
+        className={`h-9 sm:h-10 flex-1 max-[399px]:flex-none max-[399px]:w-full min-w-0 px-2 sm:px-3 rounded-full inline-flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-95 transition-[background-color,color,transform] duration-200 text-[12px] [-webkit-tap-highlight-color:transparent] ${on ? "bg-ink text-gold" : "border border-umber/40 text-umber-dark hover:bg-umber hover:border-umber hover:text-cream"}`}
+        style={{ fontFamily: "var(--font-body)", fontWeight: 600, letterSpacing: "0.02em" }}
+      >
+        {on ? <Check size={14} strokeWidth={2.4} /> : <Plus size={14} strokeWidth={2.2} />}
+        {on ? "Added" : <><span className="sm:hidden">Quote</span><span className="hidden sm:inline">Add to quote</span></>}
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => toggleEnquiry(item)}
+      aria-pressed={on}
+      className={`flex-1 min-w-0 h-11 px-3 rounded-full inline-flex items-center justify-center gap-2 whitespace-nowrap active:scale-[0.98] transition-[background-color,color,transform] duration-200 ${on ? "bg-ink text-gold" : "border border-umber/40 text-umber-dark hover:bg-umber hover:border-umber hover:text-cream"}`}
+      style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 13 }}
+    >
+      {on ? <><Check size={16} strokeWidth={2.2} /> Added to quote list</> : <><Plus size={16} strokeWidth={2.2} /> Add to quote list</>}
+    </button>
+  );
+}
+
 // ── Enquire button ─────────────────────────────────────────────────────────────
 function enquiryHref(product: DynamicProduct) {
   const categoryLabel = CATEGORY_LABELS[product.category] || product.category;
   const subject = encodeURIComponent(`Product Enquiry: ${product.name} — INS Overseas`);
   const body = encodeURIComponent(
-    `Hi INS Overseas Team,\n\nI am interested in the following product:\n\nProduct: ${product.name}\nCategory: ${categoryLabel}\n\nPlease share:\n- Wholesale pricing\n- Available sizes and variants\n- MOQ details\n- Lead time for bulk order\n- Custom branding options (if any)\n\nCompany: \nCountry: \nEstimated Quantity: \n\nThank you,`
+    `Hi INS Overseas Team,\n\nI am interested in the following product:\n\nProduct: ${product.name}\nCategory: ${categoryLabel}\nProduct link: ${productShareUrl(product.id)}\n\nPlease share:\n- Wholesale pricing\n- Available sizes and variants\n- MOQ details\n- Lead time for bulk order\n- Custom branding options (if any)\n\nCompany: \nCountry: \nEstimated Quantity: \n\nThank you,`
   );
   return `mailto:Sezan@ins-overseas.com?subject=${subject}&body=${body}`;
 }
@@ -599,12 +704,12 @@ function EnquireButton({ product, large = false, compact = false }: { product: D
         large
           ? "w-full bg-umber text-cream px-6 py-4 hover:bg-umber-dark uppercase text-[12px]"
           : compact
-            ? "h-10 px-4 rounded-full border border-umber/40 text-umber-dark hover:bg-umber hover:border-umber hover:text-cream active:scale-95 text-[12px]"
+            ? "h-9 sm:h-10 flex-1 max-[399px]:flex-none max-[399px]:w-full min-w-0 px-2 sm:px-4 rounded-full border border-umber/40 text-umber-dark hover:bg-umber hover:border-umber hover:text-cream active:scale-95 text-[12px]"
             : "mt-4 border border-umber text-umber px-5 py-2.5 hover:bg-umber hover:text-cream uppercase text-[11px]"
       }`}
       style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: compact ? "0.04em" : "0.15em" }}
     >
-      <Mail size={large ? 15 : 13} strokeWidth={1.8} />
+      <Mail size={large ? 15 : 13} strokeWidth={1.8} className={compact ? "hidden sm:block" : ""} />
       {compact ? "Enquire" : "Enquire about this product"}
     </a>
   );

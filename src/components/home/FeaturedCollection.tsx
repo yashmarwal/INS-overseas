@@ -6,6 +6,7 @@ import { headingLinkCls, headingLinkStyle } from "@/components/shared/EditorialH
 import { StackedCard, StackPin, StackTail, useStack } from "@/components/home/StackedCard";
 import { enquiryId } from "@/components/home/HomeProductCard";
 import FadeImg from "@/components/shared/FadeImg";
+import { productShareUrl } from "@/lib/share";
 import { moqNumber } from "@/data/catalogue";
 import { PRODUCT_CATEGORIES, productsQuery, tagLabel, type ProductImage } from "@/hooks/useProductImages";
 
@@ -54,18 +55,18 @@ export default function FeaturedCollection() {
                   index={i}
                   total={picks.length}
                   photo={<FadeImg src={p.url} alt={name} loading="lazy" decoding="async" className="w-full h-full object-cover" />}
-                  listItem={{ id: enquiryId(name), name, category: catLabel(p.category), moq: `${moqNumber(p.category)}+ pcs` }}
+                  listItem={{ id: enquiryId(name), name, category: catLabel(p.category), moq: `${moqNumber(p.category)}+ pcs`, url: productShareUrl(p.id) }}
                   pill={catLabel(p.category)}
                   tag={tag ? { label: tag, gold: p.tag === "best" } : null}
                   title={name}
                   desc={blurb(p)}
                   moqValue={`${moqNumber(p.category)}+ pcs`}
-                  chatHref={`${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${name}". Please share wholesale pricing and MOQ.`)}`}
+                  chatHref={`${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${name}". Please share wholesale pricing and MOQ.\n${productShareUrl(p.id)}`)}`}
                   chatLabel={`Chat on WhatsApp about ${name}`}
                   secondary={{ to: "/products", label: "See the full catalogue", icon: <ShoppingBag size={19} strokeWidth={1.7} /> }}
                   primary={{
                     label: "Enquire",
-                    href: `mailto:Sezan@ins-overseas.com?subject=${encodeURIComponent(`Enquiry: ${name}`)}&body=${encodeURIComponent(`Hi INS Overseas team,\r\n\r\nI am interested in ${name}. Please share more details including pricing and MOQ.\r\n\r\nThank you`)}`,
+                    href: `mailto:Sezan@ins-overseas.com?subject=${encodeURIComponent(`Enquiry: ${name}`)}&body=${encodeURIComponent(`Hi INS Overseas team,\r\n\r\nI am interested in ${name}. Please share more details including pricing and MOQ.\r\n\r\nProduct link: ${productShareUrl(p.id)}\r\n\r\nThank you`)}`,
                   }}
                 />
               </StackPin>

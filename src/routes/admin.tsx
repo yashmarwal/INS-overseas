@@ -47,7 +47,8 @@ const PHOTO_SLOTS = IMAGE_SLOTS.filter((s) => !s.allowGif);
 const PHOTO_GROUPS: { title: string; hint: string; match: (s: ImageSlot) => boolean }[] = [
   { title: "Collection cards", hint: "The four big category tiles on the homepage.", match: (s) => s.section.startsWith("category_") },
   { title: "Our Story", hint: "The two photos next to your story text.", match: (s) => s.section.startsWith("heritage_") },
-  { title: "Bestsellers", hint: "The six cards under “Most Loved This Season”.", match: (s) => s.section.startsWith("featured_") },
+  { title: "Bestsellers", hint: "The six cards under “Most Loved This Season”.", match: (s) => s.section.startsWith("featured_") && !s.section.endsWith("_hover") },
+  { title: "Bestsellers: second photos (optional)", hint: "Add a second photo to any bestseller card. On a computer it fades in when someone hovers over the card. Leave empty and the card simply keeps its one photo.", match: (s) => s.section.endsWith("_hover") },
   { title: "Wholesale banner", hint: "The wide picture behind the wholesale call-to-action.", match: (s) => s.section === "wholesale_bg" },
 ];
 
@@ -176,10 +177,15 @@ function AdminPage() {
     showToast("success", `“${slot.label}” is back to the default photo.`);
   };
   const askResetSlot = (slot: ImageSlot) =>
-    setConfirm({
+    setConfirm(slot.defaultUrl ? {
       title: "Use the default photo?",
       message: `Your uploaded photo for “${slot.label}” will be removed and the original default will show on the website instead.`,
       confirmLabel: "Use default",
+      onConfirm: () => void doResetSlot(slot),
+    } : {
+      title: "Remove this photo?",
+      message: `The photo for “${slot.label}” will be removed. The card on the website goes back to showing just its main photo.`,
+      confirmLabel: "Remove photo",
       onConfirm: () => void doResetSlot(slot),
     });
 
@@ -326,6 +332,7 @@ function AdminPage() {
         tip={slot.tip}
         url={existing?.url ?? slot.defaultUrl}
         isCustom={!!existing}
+        noDefault={!slot.defaultUrl}
         busy={uploading === slot.section}
         accept={slot.allowGif ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"}
         aspect={aspectOverride ?? slot.aspectRatio.replace("/", " / ")}

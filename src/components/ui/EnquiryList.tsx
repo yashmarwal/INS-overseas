@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
@@ -16,6 +16,25 @@ export default function EnquiryList() {
   const list = useEnquiryList();
   const [open, setOpen] = useState(false);
   const [tucked, setTucked] = useState(false);
+  const [tip, setTip] = useState(false);
+  const prevLen = useRef(0);
+
+  // the first time someone adds a piece, a short hint explains what the list is (shown once, ever)
+  useEffect(() => {
+    let t = 0;
+    if (prevLen.current === 0 && list.length === 1) {
+      try {
+        if (!localStorage.getItem("ins_quote_tip_seen")) {
+          localStorage.setItem("ins_quote_tip_seen", "1");
+          setTip(true);
+          t = window.setTimeout(() => setTip(false), 7000);
+        }
+      } catch { /* private mode: no hint */ }
+    }
+    if (list.length === 0) setTip(false);
+    prevLen.current = list.length;
+    return () => window.clearTimeout(t);
+  }, [list.length]);
 
   useEffect(() => {
     let last = window.scrollY;
@@ -37,7 +56,7 @@ export default function EnquiryList() {
 
   if (pathname.startsWith("/admin")) return null;
 
-  const mail = `mailto:Sezan@ins-overseas.com?subject=${encodeURIComponent(`Enquiry: ${list.length} piece${list.length === 1 ? "" : "s"}`)}&body=${encodeURIComponent(enquiryMailBody(list))}`;
+  const mail = `mailto:Sezan@ins-overseas.com?subject=${encodeURIComponent(`Quote request: ${list.length} piece${list.length === 1 ? "" : "s"}`)}&body=${encodeURIComponent(enquiryMailBody(list))}`;
   const wa = `${WHATSAPP}?text=${encodeURIComponent(enquiryWhatsAppText(list))}`;
   const action = "flex-1 inline-flex items-center justify-center gap-2 h-12 rounded-full uppercase active:scale-[0.98] transition-[background-color,transform] duration-200";
   const actionStyle = { fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 12, letterSpacing: "0.1em" } as const;
@@ -53,15 +72,26 @@ export default function EnquiryList() {
             exit={{ opacity: 0, y: 16 }}
             transition={{ duration: 0.35, ease: EASE }}
             style={{ pointerEvents: tucked ? "none" : "auto" }}
-            className="fixed z-40 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-6 bottom-[calc(env(safe-area-inset-bottom)+92px)] md:bottom-[92px]"
+            className="fixed z-40 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-6 bottom-[calc(env(safe-area-inset-bottom)+97px)] md:bottom-[108px]"
           >
+            {tip && (
+              <button
+                type="button"
+                onClick={() => setTip(false)}
+                className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 w-[260px] text-left rounded-2xl bg-ink text-cream px-4 py-3 shadow-[0_14px_34px_-12px_rgba(26,20,16,0.6)]"
+                style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 13, lineHeight: 1.45 }}
+              >
+                <span className="block text-gold-light" style={{ fontWeight: 600 }}>Added to your quote list</span>
+                Add more pieces, then tap this button to send them all in one message and get one quote.
+              </button>
+            )}
             <DialogPrimitive.Trigger
               className="inline-flex items-center gap-2.5 h-12 pl-4 pr-1.5 rounded-full bg-gold text-ink shadow-[0_12px_30px_-10px_rgba(26,20,16,0.55)] active:scale-95 transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ink [-webkit-tap-highlight-color:transparent]"
               style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 12, letterSpacing: "0.08em" }}
-              aria-label={`Open your enquiry list, ${list.length} piece${list.length === 1 ? "" : "s"}`}
+              aria-label={`Open your quote list, ${list.length} piece${list.length === 1 ? "" : "s"}`}
             >
               <ShoppingBag size={17} strokeWidth={1.8} />
-              <span className="uppercase">Enquiry list</span>
+              <span className="uppercase">Quote list</span>
               <span className="min-w-9 h-9 px-2 rounded-full bg-ink text-gold flex items-center justify-center tabular-nums lining-nums" style={{ fontSize: 13 }}>{list.length}</span>
             </DialogPrimitive.Trigger>
           </motion.div>
@@ -76,8 +106,8 @@ export default function EnquiryList() {
         >
           <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
             <div>
-              <DialogPrimitive.Title className="text-ink" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 28, lineHeight: 1.05 }}>Your enquiry list</DialogPrimitive.Title>
-              <p className="mt-1.5 text-umber" style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 14, lineHeight: 1.5 }}>One message for everything you have picked. We reply with pricing, MOQ and samples.</p>
+              <DialogPrimitive.Title className="text-ink" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 28, lineHeight: 1.05 }}>Your quote list</DialogPrimitive.Title>
+              <p className="mt-1.5 text-umber" style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 14, lineHeight: 1.5 }}>Pick as many pieces as you like, then send them all in one message, each with its link. We reply with pricing, MOQ and samples.</p>
             </div>
             <DialogPrimitive.Close aria-label="Close" className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[#F1EEE8] text-ink hover:bg-[#E8E3D8] transition-colors"><X size={18} /></DialogPrimitive.Close>
           </div>
@@ -86,7 +116,11 @@ export default function EnquiryList() {
             {list.map((it) => (
               <li key={it.id} className="flex items-center gap-3 rounded-2xl bg-[#F1EEE8] pl-4 pr-2 py-2.5">
                 <div className="min-w-0 flex-1">
-                  <p className="text-ink truncate" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, lineHeight: 1.15 }}>{it.name}</p>
+                  {it.url ? (
+                    <a href={it.url} target="_blank" rel="noreferrer" className="block text-ink truncate hover:underline underline-offset-2" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, lineHeight: 1.15 }}>{it.name}</a>
+                  ) : (
+                    <p className="text-ink truncate" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, lineHeight: 1.15 }}>{it.name}</p>
+                  )}
                   <p className="mt-0.5 text-grey-ink tabular-nums lining-nums" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 12 }}>{it.category} · MOQ from {it.moq}</p>
                 </div>
                 <button type="button" onClick={() => removeEnquiry(it.id)} aria-label={`Remove ${it.name}`} className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-ink/70 hover:bg-ink/10 hover:text-ink transition-colors">
@@ -97,6 +131,7 @@ export default function EnquiryList() {
           </ul>
 
           <div className="px-4 pt-3 pb-5">
+            <p className="mb-2.5 px-1 text-umber uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11, letterSpacing: "0.16em" }}>Send your quote request</p>
             <div className="flex gap-2.5">
               <a href={wa} target="_blank" rel="noreferrer" className={`${action} bg-ink text-white hover:bg-umber-dark`} style={actionStyle}>
                 <WhatsAppGlyph size={18} /> WhatsApp

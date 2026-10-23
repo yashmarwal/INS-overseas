@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
-import { ArrowUpRight, Check, ShoppingBag } from "lucide-react";
+import { ArrowUpRight, Check, Plus } from "lucide-react";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { tagLabel } from "@/hooks/useProductImages";
 import { moqNumber } from "@/data/catalogue";
-import { toggleEnquiry, useInEnquiry, type EnquiryItem } from "@/lib/enquiryList";
+import { enquiryId, toggleEnquiry, useInEnquiry, type EnquiryItem } from "@/lib/enquiryList";
+import { collectionShareUrl } from "@/lib/share";
 
 // The homepage product card: a soft white card with an inset rounded photo, label chips floating on the photo,
 // a row of little info tiles and quick actions, and the name with a single clear "Enquire" button underneath.
@@ -24,23 +25,25 @@ export function InfoTile({ label, value, grow = false }: { label: string; value:
   );
 }
 
-/** The round bag button: ticks a piece onto the visitor's enquiry list (and un-ticks it). */
-export function EnquiryToggle({ item, className = "" }: { item: EnquiryItem; className?: string }) {
+/** "+ Add to quote": puts a piece on the visitor's quote list (and takes it off again). Sits on the card's photo. */
+export function QuoteToggle({ item, className = "" }: { item: EnquiryItem; className?: string }) {
   const on = useInEnquiry(item.id);
   return (
     <button
       type="button"
       onClick={() => toggleEnquiry(item)}
       aria-pressed={on}
-      aria-label={on ? `Remove ${item.name} from your enquiry list` : `Add ${item.name} to your enquiry list`}
-      className={`${cardSquareBtn} ${on ? "bg-ink! text-gold hover:bg-umber-dark!" : ""} ${className}`}
+      aria-label={on ? `Remove ${item.name} from your quote list` : `Add ${item.name} to your quote list`}
+      className={`inline-flex items-center gap-1.5 h-9 pl-3 pr-3.5 rounded-full shadow-[0_2px_10px_rgba(26,20,16,0.25)] active:scale-95 transition-[background-color,color,transform] duration-200 [-webkit-tap-highlight-color:transparent] ${on ? "bg-ink text-gold" : "bg-white/95 text-ink hover:bg-white"} ${className}`}
+      style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 12 }}
     >
-      {on ? <Check size={19} strokeWidth={2.2} /> : <ShoppingBag size={19} strokeWidth={1.7} />}
+      {on ? <Check size={15} strokeWidth={2.4} /> : <Plus size={15} strokeWidth={2.2} />}
+      {on ? "Added to quote" : "Add to quote"}
     </button>
   );
 }
 
-export const enquiryId = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+export { enquiryId };
 
 export type HomeCardProps = {
   name: string;
@@ -55,8 +58,8 @@ export type HomeCardProps = {
 
 export default function HomeProductCard({ name, category, categoryId, tag, image, hoverImage }: HomeCardProps) {
   const label = tagLabel(tag);
-  const mail = `mailto:Sezan@ins-overseas.com?subject=${encodeURIComponent(`Enquiry: ${name}`)}&body=${encodeURIComponent(`Hi INS Overseas team,\r\n\r\nI am interested in ${name}. Please share more details including pricing and MOQ.\r\n\r\nThank you`)}`;
-  const chat = `${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${name}". Please share wholesale pricing and MOQ.`)}`;
+  const mail = `mailto:Sezan@ins-overseas.com?subject=${encodeURIComponent(`Enquiry: ${name}`)}&body=${encodeURIComponent(`Hi INS Overseas team,\r\n\r\nI am interested in ${name}. Please share more details including pricing and MOQ.\r\n\r\nSee the collection: ${collectionShareUrl(categoryId)}\r\n\r\nThank you`)}`;
+  const chat = `${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${name}". Please share wholesale pricing and MOQ.\n${collectionShareUrl(categoryId)}`)}`;
 
   return (
     <article className="group h-full flex flex-col rounded-[28px] bg-white p-2.5 border border-ink/[0.06] shadow-[0_22px_44px_-30px_rgba(26,20,16,0.45)] transition-[transform,box-shadow] duration-500 hover:-translate-y-1 hover:shadow-[0_30px_56px_-30px_rgba(26,20,16,0.5)]">
@@ -66,6 +69,7 @@ export default function HomeProductCard({ name, category, categoryId, tag, image
           {image}
           {hoverImage && <div className="absolute inset-0 opacity-0 transition-opacity duration-500 [@media(hover:hover)]:group-hover:opacity-100">{hoverImage}</div>}
         </div>
+        <QuoteToggle item={{ id: enquiryId(name), name, category, moq: `${moqNumber(categoryId)}+ pcs`, url: collectionShareUrl(categoryId) }} className="absolute bottom-3 left-3 z-[1]" />
         <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-1.5">
           {label && (
             <span
@@ -89,7 +93,6 @@ export default function HomeProductCard({ name, category, categoryId, tag, image
         <a href={chat} target="_blank" rel="noreferrer" aria-label={`Chat on WhatsApp about ${name}`} className={cardSquareBtn}>
           <WhatsAppGlyph size={20} />
         </a>
-        <EnquiryToggle item={{ id: enquiryId(name), name, category, moq: `${moqNumber(categoryId)}+ pcs` }} className="@max-[259px]:hidden" />
        </div>
       </div>
 

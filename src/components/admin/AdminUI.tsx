@@ -144,6 +144,8 @@ export function MediaCard(props: {
   tip?: string;
   url: string;
   isCustom: boolean;
+  /** an optional photo with no default: the undo button reads "Remove photo" */
+  noDefault?: boolean;
   busy: boolean;
   accept: string;
   aspect: string;
@@ -190,12 +192,12 @@ export function MediaCard(props: {
         <div className="mt-auto flex flex-col gap-2 pt-1">
           <PrimaryButton onClick={() => input.current?.click()} busy={props.busy} disabled={props.busy} className="w-full">
             {!props.busy && <Upload size={16} />}
-            {props.busy ? "Uploading…" : props.isCustom ? "Replace photo" : "Upload a photo"}
+            {props.busy ? "Uploading…" : props.isCustom ? "Replace photo" : props.url ? "Upload a photo" : "Add a photo"}
           </PrimaryButton>
           <div className="flex items-center justify-between gap-2">
             {props.isCustom ? (
               <button type="button" onClick={props.onReset} className="inline-flex items-center gap-1.5 min-h-[44px] -ml-1 pr-2 pl-1 text-[13px] font-medium text-[#B42318] hover:underline">
-                <RotateCcw size={14} /> Use default photo
+                <RotateCcw size={14} /> {props.noDefault ? "Remove photo" : "Use default photo"}
               </button>
             ) : <span />}
             {props.viewHref && (

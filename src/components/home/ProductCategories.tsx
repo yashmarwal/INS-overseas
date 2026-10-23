@@ -3,6 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 import EditorialHeading from "@/components/shared/EditorialHeading";
 import SiteImage from "@/components/shared/SiteImage";
 import { StackedCard, StackPin, StackTail, useStack } from "@/components/home/StackedCard";
+import { absoluteUrl } from "@/lib/share";
 
 // The four collections, as cards that stack while you scroll (see StackedCard).
 // The photos are the "Collection cards" slots in the admin (Homepage photos).
@@ -60,7 +61,8 @@ export default function ProductCategories() {
                 desc={c.desc}
                 moqLabel="MOQ from"
                 moqValue={`${c.moq} pcs`}
-                chatHref={`${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'd like to see your ${c.title} range. Please share the catalogue and wholesale pricing.`)}`}
+                chatHref={`${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'd like to see your ${c.title} range. Please share the catalogue and wholesale pricing.
+${absoluteUrl(c.to)}`)}`}
                 chatLabel={`Chat on WhatsApp about ${c.title}`}
                 secondary={{ to: c.to, label: `See all ${c.title}`, icon: <ArrowUpRight size={19} strokeWidth={1.7} /> }}
                 primary={{ label: `Explore ${c.title}`, to: c.to }}
