@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
-import SectionHeading from "@/components/shared/SectionHeading";
+import EditorialHeading from "@/components/shared/EditorialHeading";
 import SiteImage from "@/components/shared/SiteImage";
 import { StackedCard, StackPin, StackTail, useStack } from "@/components/home/StackedCard";
 
@@ -46,7 +46,7 @@ export default function ProductCategories() {
   return (
     <section className="bg-parchment pt-14 md:pt-24 lg:pt-32" style={{ marginBottom: -hold }}>
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-        <SectionHeading eyebrow="Our Collections" title={<>Crafted With <em className="italic font-light">Intention</em></>} />
+        <EditorialHeading eyebrow="Our Collections" count={`${String(cats.length).padStart(2, "0")} collections`} line1="Crafted With" line2="Intention" intro="Leather, handmade paper and artisan stationery, made by hand in Jaipur and shipped worldwide." />
         <div ref={ref} className="mt-6 md:mt-10">
           {cats.map((c, i) => (
             <StackPin key={c.title} i={i} n={cats.length} progress={progress}>

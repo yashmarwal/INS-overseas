@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, ShoppingBag } from "lucide-react";
-import SectionHeading from "@/components/shared/SectionHeading";
+import EditorialHeading from "@/components/shared/EditorialHeading";
+import { headingLinkCls, headingLinkStyle } from "@/components/shared/EditorialHeading";
 import { StackedCard, StackPin, StackTail, useStack } from "@/components/home/StackedCard";
+import { enquiryId } from "@/components/home/HomeProductCard";
+import FadeImg from "@/components/shared/FadeImg";
 import { moqNumber } from "@/data/catalogue";
 import { PRODUCT_CATEGORIES, productsQuery, tagLabel, type ProductImage } from "@/hooks/useProductImages";
 
@@ -26,18 +29,20 @@ export default function FeaturedCollection() {
   return (
     <section className="bg-cream pt-16 md:pt-24 lg:pt-32" style={{ marginBottom: -hold }} aria-labelledby="handpicked-title">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-        <SectionHeading eyebrow="Handpicked" title={<span id="handpicked-title">Fresh From <em className="italic font-light">The Workshop</em></span>}>
-          A few pieces we are especially proud of right now. Ask for pricing and samples on any of them.
-        </SectionHeading>
-        <div className="mt-5 text-center">
-          <Link
-            to="/products"
-            className="inline-flex items-center gap-2 text-umber uppercase hover:gap-3 transition-all duration-200"
-            style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12, letterSpacing: "0.16em" }}
-          >
-            See all products <ArrowRight size={14} />
-          </Link>
-        </div>
+        <EditorialHeading
+          id="handpicked-title"
+          eyebrow="Handpicked"
+          count={`${String(picks.length).padStart(2, "0")} new`}
+          line1="Fresh From"
+          line2="The Workshop"
+          intro="A few pieces we are especially proud of right now. Ask for pricing and samples on any of them."
+          aside={
+            <Link to="/products" className={headingLinkCls} style={headingLinkStyle}>
+              See all products
+              <span className="w-9 h-9 rounded-full bg-gold text-ink flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5"><ArrowRight size={16} /></span>
+            </Link>
+          }
+        />
 
         <div ref={ref} className="mt-6 md:mt-10">
           {picks.map((p, i) => {
@@ -48,7 +53,8 @@ export default function FeaturedCollection() {
                 <StackedCard
                   index={i}
                   total={picks.length}
-                  photo={<img src={p.url} alt={name} loading="lazy" decoding="async" className="w-full h-full object-cover" />}
+                  photo={<FadeImg src={p.url} alt={name} loading="lazy" decoding="async" className="w-full h-full object-cover" />}
+                  listItem={{ id: enquiryId(name), name, category: catLabel(p.category), moq: `${moqNumber(p.category)}+ pcs` }}
                   pill={catLabel(p.category)}
                   tag={tag ? { label: tag, gold: p.tag === "best" } : null}
                   title={name}

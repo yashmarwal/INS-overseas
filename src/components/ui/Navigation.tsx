@@ -94,8 +94,8 @@ export default function Navigation() {
             <img src="/logo-mark.png" alt="" aria-hidden width={39} height={52} className={`shrink-0 h-11 w-auto lg:h-14 -my-3 transition-[filter] duration-500 ${scrolled ? "brightness-[0.72] saturate-150" : ""}`} />
             <div>
               <div
-                style={{ fontFamily: "var(--font-display)", fontWeight: 500, letterSpacing: "0.15em" }}
-                className={`text-[15px] sm:text-lg whitespace-nowrap ${scrolled ? "text-ink" : "text-cream"}`}
+                style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}
+                className={`text-[15px] sm:text-lg lg:text-[15px] xl:text-lg tracking-[0.15em] lg:tracking-[0.1em] xl:tracking-[0.15em] whitespace-nowrap ${scrolled ? "text-ink" : "text-cream"}`}
               >
                 INS OVERSEAS
               </div>

@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, ShoppingBag } from "lucide-react";
+import { ArrowUpRight, Check, ShoppingBag } from "lucide-react";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { tagLabel } from "@/hooks/useProductImages";
 import { moqNumber } from "@/data/catalogue";
+import { toggleEnquiry, useInEnquiry, type EnquiryItem } from "@/lib/enquiryList";
 
 // The homepage product card: a soft white card with an inset rounded photo, label chips floating on the photo,
 // a row of little info tiles and quick actions, and the name with a single clear "Enquire" button underneath.
@@ -24,6 +24,24 @@ export function InfoTile({ label, value, grow = false }: { label: string; value:
   );
 }
 
+/** The round bag button: ticks a piece onto the visitor's enquiry list (and un-ticks it). */
+export function EnquiryToggle({ item, className = "" }: { item: EnquiryItem; className?: string }) {
+  const on = useInEnquiry(item.id);
+  return (
+    <button
+      type="button"
+      onClick={() => toggleEnquiry(item)}
+      aria-pressed={on}
+      aria-label={on ? `Remove ${item.name} from your enquiry list` : `Add ${item.name} to your enquiry list`}
+      className={`${cardSquareBtn} ${on ? "bg-ink! text-gold hover:bg-umber-dark!" : ""} ${className}`}
+    >
+      {on ? <Check size={19} strokeWidth={2.2} /> : <ShoppingBag size={19} strokeWidth={1.7} />}
+    </button>
+  );
+}
+
+export const enquiryId = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 export type HomeCardProps = {
   name: string;
   category: string; // shown label, e.g. "Leather Journals"
@@ -31,9 +49,11 @@ export type HomeCardProps = {
   tag?: string | null; // "best" | "new"
   /** The photo, e.g. <img className="w-full h-full object-cover"> or <SiteImage …>. It fills the photo panel. */
   image: ReactNode;
+  /** optional second photo that fades in on hover (pointer devices only); nothing happens when it is empty */
+  hoverImage?: ReactNode;
 };
 
-export default function HomeProductCard({ name, category, categoryId, tag, image }: HomeCardProps) {
+export default function HomeProductCard({ name, category, categoryId, tag, image, hoverImage }: HomeCardProps) {
   const label = tagLabel(tag);
   const mail = `mailto:Sezan@ins-overseas.com?subject=${encodeURIComponent(`Enquiry: ${name}`)}&body=${encodeURIComponent(`Hi INS Overseas team,\r\n\r\nI am interested in ${name}. Please share more details including pricing and MOQ.\r\n\r\nThank you`)}`;
   const chat = `${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${name}". Please share wholesale pricing and MOQ.`)}`;
@@ -41,8 +61,11 @@ export default function HomeProductCard({ name, category, categoryId, tag, image
   return (
     <article className="group h-full flex flex-col rounded-[28px] bg-white p-2.5 border border-ink/[0.06] shadow-[0_22px_44px_-30px_rgba(26,20,16,0.45)] transition-[transform,box-shadow] duration-500 hover:-translate-y-1 hover:shadow-[0_30px_56px_-30px_rgba(26,20,16,0.5)]">
       {/* photo */}
-      <div className="relative aspect-square rounded-[20px] overflow-hidden bg-[#EFEBE3]">
-        <div className="absolute inset-0 transition-transform duration-[1600ms] ease-out group-hover:scale-[1.04]">{image}</div>
+      <div className="relative aspect-square rounded-[20px] overflow-hidden img-shimmer">
+        <div className="absolute inset-0 transition-transform duration-[1600ms] ease-out group-hover:scale-[1.04]">
+          {image}
+          {hoverImage && <div className="absolute inset-0 opacity-0 transition-opacity duration-500 [@media(hover:hover)]:group-hover:opacity-100">{hoverImage}</div>}
+        </div>
         <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-1.5">
           {label && (
             <span
@@ -66,9 +89,7 @@ export default function HomeProductCard({ name, category, categoryId, tag, image
         <a href={chat} target="_blank" rel="noreferrer" aria-label={`Chat on WhatsApp about ${name}`} className={cardSquareBtn}>
           <WhatsAppGlyph size={20} />
         </a>
-        <Link to="/products" aria-label="See the full catalogue" className={`${cardSquareBtn} @max-[259px]:hidden`}>
-          <ShoppingBag size={19} strokeWidth={1.7} />
-        </Link>
+        <EnquiryToggle item={{ id: enquiryId(name), name, category, moq: `${moqNumber(categoryId)}+ pcs` }} className="@max-[259px]:hidden" />
        </div>
       </div>
 

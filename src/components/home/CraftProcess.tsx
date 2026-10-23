@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import SectionHeading from "@/components/shared/SectionHeading";
+import EditorialHeading from "@/components/shared/EditorialHeading";
 import { Sprout, Droplet, Sun, BookOpen, Truck } from "lucide-react";
 
 const steps = [
@@ -39,15 +39,12 @@ export default function CraftProcess() {
   return (
     <section className="bg-parchment-dark linen py-14 md:py-24 lg:py-32">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-        <SectionHeading
+        <EditorialHeading
           eyebrow="The Craft Process"
-          title={
-            <>
-              From Raw Cotton to
-              <br />
-              <em className="italic font-light">Finished Journal</em>
-            </>
-          }
+          count="05 steps"
+          line1="From Raw Cotton to"
+          line2="Finished Journal"
+          intro="Five hand-done steps, from Jaipur's cotton rags to a journal on your shelf."
         />
 
         {/* ── DESKTOP: 5-column grid (unchanged) ── */}

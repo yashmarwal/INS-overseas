@@ -301,7 +301,8 @@ function AdminPage() {
 
   // ── Derived numbers ───────────────────────────────────────────────────────────
   const bannerCustom = BANNER_SLOTS.filter((s) => getImageForSection(s.section)).length;
-  const photosCustom = PHOTO_SLOTS.filter((s) => getImageForSection(s.section)).length;
+  const MAIN_PHOTO_SLOTS = PHOTO_SLOTS.filter((s) => s.defaultUrl);
+  const photosCustom = MAIN_PHOTO_SLOTS.filter((s) => getImageForSection(s.section)).length;
   const videoCount = galleryImages.filter((g) => isVideoUrl(g.url)).length;
 
   if (session === undefined) return <div data-admin className="fixed inset-0 z-[90] bg-[#F6F4EF]" aria-busy="true" />;
@@ -398,7 +399,7 @@ function AdminPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   { id: "banner" as Tab, icon: <Monitor size={20} />, title: "Homepage banner", big: `${bannerCustom} of ${BANNER_SLOTS.length}`, sub: "banners are your own photos", cta: "Change banner" },
-                  { id: "photos" as Tab, icon: <Images size={20} />, title: "Homepage photos", big: `${photosCustom} of ${PHOTO_SLOTS.length}`, sub: "photos are your own", cta: "Change photos" },
+                  { id: "photos" as Tab, icon: <Images size={20} />, title: "Homepage photos", big: `${photosCustom} of ${MAIN_PHOTO_SLOTS.length}`, sub: "photos are your own", cta: "Change photos" },
                   { id: "products" as Tab, icon: <Package size={20} />, title: "Products", big: String(productImages.length), sub: `products in ${PRODUCT_CATEGORIES.length} categories`, cta: "Add or remove products" },
                   { id: "gallery" as Tab, icon: <ImageIcon size={20} />, title: "Gallery", big: String(galleryImages.length), sub: videoCount ? `items (${videoCount} video${videoCount > 1 ? "s" : ""})` : "photos and videos", cta: "Manage gallery" },
                 ].map((c) => (

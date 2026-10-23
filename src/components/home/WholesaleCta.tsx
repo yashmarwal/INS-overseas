@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowUpRight, Phone } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import TornTop from "@/components/shared/TornTop";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 
 const pill = "group relative overflow-hidden inline-flex items-center justify-between gap-6 h-14 pl-7 pr-1.5 rounded-full uppercase text-[12px] active:scale-[0.98] transition-[background-color,box-shadow,transform] duration-300";
@@ -11,6 +12,7 @@ const nudge = "transition-transform duration-300 group-hover:translate-x-0.5 gro
 export default function WholesaleCta() {
   return (
     <section className="relative py-14 md:py-24 lg:py-44 overflow-hidden bg-ink">
+      <TornTop color="#FAF7F0" />
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}

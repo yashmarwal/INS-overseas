@@ -10,6 +10,7 @@ import ManufacturingTeaser from "@/components/home/ManufacturingTeaser";
 import SustainabilitySection from "@/components/home/SustainabilitySection";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import FeaturedCollection from "@/components/home/FeaturedCollection";
+import OrderingSteps from "@/components/home/OrderingSteps";
 import WholesaleCta from "@/components/home/WholesaleCta";
 import HomeFaq from "@/components/home/HomeFaq";
 import InstagramFeed from "@/components/home/InstagramFeed";
@@ -48,9 +49,10 @@ function Home() {
       <FeaturedProducts />
       <FeaturedCollection />
       {/* placeholder heights measured from the real section at each breakpoint — keep in sync with GlobalReach */}
-      <LazyMount className="relative z-[2] bg-ink min-h-[832px] sm:min-h-[888px] md:min-h-[945px] lg:min-h-[1064px] xl:min-h-[1254px] min-[1440px]:min-h-[1327px]">
+      <LazyMount className="relative z-[2] bg-ink min-h-[calc(804px_+_45.4vw)] sm:min-h-[calc(644px_+_59vw)] md:min-h-[calc(631px_+_60.8vw)] lg:min-h-[calc(616px_+_60.8vw)] xl:min-h-[calc(857px_+_42vw)] min-[1440px]:min-h-[1462px]">
         <Suspense fallback={null}><GlobalReach /></Suspense>
       </LazyMount>
+      <OrderingSteps />
       <WholesaleCta />
       <ManufacturingTeaser />
       <HomeFaq />

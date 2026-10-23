@@ -3,7 +3,8 @@ import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } f
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
-import { cardEnquirePill, cardSquareBtn, InfoTile } from "@/components/home/HomeProductCard";
+import { cardEnquirePill, cardSquareBtn, EnquiryToggle, InfoTile } from "@/components/home/HomeProductCard";
+import type { EnquiryItem } from "@/lib/enquiryList";
 
 // Cards that stack as you scroll: each one pins under the header while the next slides up over it, and the ones
 // underneath settle back a little. Only transform is animated (a scroll-linked scale), so it stays jitter-free; the
@@ -90,6 +91,8 @@ export type StackedCardProps = {
   title: string;
   desc: string;
   moqLabel?: string; // defaults to "MOQ"
+  /** when given, the round bag button ticks this piece onto the visitor's enquiry list instead of linking to "secondary" */
+  listItem?: EnquiryItem;
   moqValue: string; // e.g. "200+ pcs"
   chatHref: string;
   chatLabel: string;
@@ -97,9 +100,9 @@ export type StackedCardProps = {
   primary: { label: string; to?: string; href?: string };
 };
 
-export function StackedCard({ index, total, photo, photoTo, pill, tag, title, desc, moqLabel = "MOQ", moqValue, chatHref, chatLabel, secondary, primary }: StackedCardProps) {
+export function StackedCard({ index, total, photo, photoTo, pill, tag, title, desc, moqLabel = "MOQ", listItem, moqValue, chatHref, chatLabel, secondary, primary }: StackedCardProps) {
   const pillCls = "rounded-full px-3 py-1.5";
-  const photoCls = "group relative block aspect-[4/3] md:aspect-auto md:min-h-[420px] rounded-[20px] overflow-hidden bg-[#EFEBE3]";
+  const photoCls = "group relative block aspect-[4/3] md:aspect-auto md:min-h-[420px] rounded-[20px] overflow-hidden img-shimmer";
   const photoInner = (
     <>
       <div className="absolute inset-0 transition-transform duration-[1800ms] ease-out group-hover:scale-[1.05]">{photo}</div>
@@ -143,9 +146,13 @@ export function StackedCard({ index, total, photo, photoTo, pill, tag, title, de
             <a href={chatHref} target="_blank" rel="noreferrer" aria-label={chatLabel} className={cardSquareBtn}>
               <WhatsAppGlyph size={20} />
             </a>
-            <Link to={secondary.to} aria-label={secondary.label} className={`${cardSquareBtn} hidden sm:flex`}>
-              {secondary.icon}
-            </Link>
+            {listItem ? (
+              <EnquiryToggle item={listItem} />
+            ) : (
+              <Link to={secondary.to} aria-label={secondary.label} className={`${cardSquareBtn} hidden sm:flex`}>
+                {secondary.icon}
+              </Link>
+            )}
           </div>
           {primary.to ? (
             <Link to={primary.to} className={primaryCls} style={primaryStyle}>{primaryInner}</Link>

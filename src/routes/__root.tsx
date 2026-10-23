@@ -13,6 +13,7 @@ import Navigation from "@/components/ui/Navigation";
 import Footer from "@/components/ui/Footer";
 import Preloader from "@/components/ui/Preloader";
 import FloatingDock from "@/components/ui/FloatingDock";
+import EnquiryList from "@/components/ui/EnquiryList";
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 
 function NotFoundComponent() {
@@ -72,6 +73,7 @@ function RootComponent() {
         </main>
         <Footer />
         <FloatingDock />
+        <EnquiryList />
       </MotionConfig>
     </QueryClientProvider>
   );

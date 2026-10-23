@@ -159,16 +159,20 @@ export function MediaCard(props: {
     <Panel className="overflow-hidden flex flex-col">
       <button
         type="button"
-        onClick={props.onPreview}
-        aria-label={`Preview ${props.title}`}
+        onClick={props.url ? props.onPreview : undefined}
+        aria-label={props.url ? `Preview ${props.title}` : props.title}
         className="group relative block w-full bg-[#EFEBE3] overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#6B4C2A]"
         style={{ aspectRatio: props.aspect }}
       >
-        <img src={props.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+        {props.url ? (
+          <img src={props.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center px-6 text-center text-[13px]" style={{ color: MUTED }}>No photo yet. This one is optional.</span>
+        )}
         <span
           className={`absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${props.isCustom ? "bg-[#2F6B3F] text-white" : "bg-white text-[#1A1410] shadow-sm"}`}
         >
-          {props.isCustom ? <><CheckCircle size={12} /> Your photo</> : "Default photo"}
+          {props.isCustom ? <><CheckCircle size={12} /> Your photo</> : props.url ? "Default photo" : "Not set"}
         </span>
         <span className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-white/95 flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden>
           <Eye size={16} className="text-[#1A1410]" />

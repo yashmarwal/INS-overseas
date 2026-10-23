@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ComposableMap, Geographies, Geography, Marker, Line } from "react-simple-maps";
 import { geoEqualEarth } from "d3-geo";
 import { useCounter } from "@/hooks/useCounter";
+import EditorialHeading from "@/components/shared/EditorialHeading";
 
 const GEO_URL =
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -75,11 +76,12 @@ const projection = geoEqualEarth()
   .center([10, 10])
   .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
 
-const countryNames = [
-  "USA", "United Kingdom", "Germany", "France", "Netherlands", "Japan",
-  "Australia", "UAE", "Canada", "Italy", "Singapore", "South Africa",
-  "Spain", "Sweden", "Switzerland", "New Zealand", "Belgium", "Denmark",
-];
+// name + ISO code; the round flags are small self-hosted SVGs in /public/flags
+const countries = [
+  ["USA", "us"], ["United Kingdom", "gb"], ["Germany", "de"], ["France", "fr"], ["Netherlands", "nl"], ["Japan", "jp"],
+  ["Australia", "au"], ["UAE", "ae"], ["Canada", "ca"], ["Italy", "it"], ["Singapore", "sg"], ["South Africa", "za"],
+  ["Spain", "es"], ["Sweden", "se"], ["Switzerland", "ch"], ["New Zealand", "nz"], ["Belgium", "be"], ["Denmark", "dk"],
+] as const;
 
 function PlaneIcon({ size = 1 }: { size?: number }) {
   const s = size;
@@ -176,21 +178,7 @@ export default function GlobalReach() {
   return (
     <section className="bg-ink text-cream py-20 md:py-28 lg:py-32 overflow-hidden" style={{ background: "#0F0B08" }}>
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-3">
-            <span className="h-px w-10 bg-gold" />
-            <span className="text-gold uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 11, letterSpacing: "0.2em" }}>
-              Global Reach
-            </span>
-            <span className="h-px w-10 bg-gold" />
-          </div>
-          <h2
-            className="mt-6 text-cream mx-auto max-w-3xl"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 300, fontSize: "clamp(32px, 4vw, 56px)", lineHeight: 1.08, letterSpacing: "-0.01em" }}
-          >
-            Crafted in Jaipur. Loved in <em className="italic font-light text-gold-light">40+ Countries.</em>
-          </h2>
-        </div>
+        <EditorialHeading light eyebrow="Global Reach" count="40+ countries" line1="Crafted in Jaipur." line2="Loved in 40+ Countries." intro="Wholesale orders leave Sanganer by air and by sea, to buyers across Europe, the UK, the USA, the Middle East and Asia-Pacific." />
 
         <div
           className="mt-8 md:mt-16 relative w-full rounded-xl overflow-hidden max-sm:!aspect-[1.7]"
@@ -347,9 +335,10 @@ export default function GlobalReach() {
           className="mt-10 overflow-hidden"
         >
           <div
-            className="flex whitespace-nowrap"
+            // w-max: the track is exactly as wide as its content, so translating -50% lands precisely on the second copy (a seamless loop)
+            className="flex w-max whitespace-nowrap will-change-transform motion-reduce:animate-none!"
             style={{
-              animation: "marquee 30s linear infinite",
+              animation: "marquee 20s linear infinite",
               fontFamily: "var(--font-body)",
               fontWeight: 300,
               fontSize: 13,
@@ -357,9 +346,10 @@ export default function GlobalReach() {
               letterSpacing: "0.12em",
             }}
           >
-            {[...countryNames, ...countryNames].map((c, i) => (
-              <span key={i} className="flex items-center gap-6 pr-6">
-                {c} <span className="text-gold">·</span>
+            {[...countries, ...countries].map(([name, code], i) => (
+              <span key={i} className="shrink-0 flex items-center gap-2.5 mr-3 rounded-full pl-1.5 pr-4 py-1.5" style={{ boxShadow: "inset 0 0 0 1px rgba(250,247,240,0.14)" }}>
+                <img src={`/flags/${code}.svg`} alt="" width={22} height={22} decoding="async" className="shrink-0 w-[22px] h-[22px] object-cover" style={{ borderRadius: "50%" }} />
+                {name}
               </span>
             ))}
           </div>

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import SectionHeading from "@/components/shared/SectionHeading";
+import EditorialHeading from "@/components/shared/EditorialHeading";
+import { headingLinkCls, headingLinkStyle } from "@/components/shared/EditorialHeading";
 import { ArrowRight } from "lucide-react";
 import { posts } from "@/data/blogPosts";
 
@@ -11,7 +12,18 @@ export default function BlogPreview() {
   return (
     <section className="hidden md:block bg-parchment py-24 lg:py-32">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-        <SectionHeading eyebrow="The Journal" title={<>From <em className="italic font-light">The Journal</em></>} />
+        <EditorialHeading
+          eyebrow="The Journal"
+          line1="Notes From"
+          line2="The Workshop Floor"
+          intro="Stories on leather, paper and the people who make them."
+          aside={
+            <Link to="/journal" className={headingLinkCls} style={headingLinkStyle}>
+              Read the journal
+              <span className="w-9 h-9 rounded-full bg-gold text-ink flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5"><ArrowRight size={16} /></span>
+            </Link>
+          }
+        />
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-10">
           {previewPosts.map((p, i) => (
             <motion.article
