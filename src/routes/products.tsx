@@ -408,20 +408,23 @@ function Products() {
                         alt={p.name}
                         className="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
                       />
-                      <span
-                        className="absolute top-2.5 left-2.5 max-w-[calc(100%-20px)] truncate bg-white/95 text-umber-dark uppercase px-2.5 py-1 rounded-full shadow-[0_1px_4px_rgba(26,20,16,0.15)]"
-                        style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 9, letterSpacing: "0.14em" }}
-                      >
-                        {categoryLabel(p.category)}
-                      </span>
-                      {tagLabel(p.tag) && (
+                      {/* one row for both chips: on a narrow card the label wraps under the category instead of covering it */}
+                      <span className="absolute top-2.5 left-2.5 right-2.5 flex flex-wrap items-start gap-1">
                         <span
-                          className={`absolute top-2.5 right-2.5 uppercase px-2.5 py-1 rounded-full shadow-[0_1px_4px_rgba(26,20,16,0.2)] ${p.tag === "best" ? "bg-gold text-ink" : "bg-ink text-cream"}`}
-                          style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 9, letterSpacing: "0.12em" }}
+                          className="max-w-full truncate bg-white/95 text-umber-dark uppercase px-2.5 py-1 rounded-full shadow-[0_1px_4px_rgba(26,20,16,0.15)]"
+                          style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 9, letterSpacing: "0.14em" }}
                         >
-                          {tagLabel(p.tag)}
+                          {categoryLabel(p.category)}
                         </span>
-                      )}
+                        {tagLabel(p.tag) && (
+                          <span
+                            className={`shrink-0 uppercase px-2.5 py-1 rounded-full shadow-[0_1px_4px_rgba(26,20,16,0.2)] ${p.tag === "best" ? "bg-gold text-ink" : "bg-ink text-cream"}`}
+                            style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 9, letterSpacing: "0.12em" }}
+                          >
+                            {tagLabel(p.tag)}
+                          </span>
+                        )}
+                      </span>
                       <span className="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full bg-cream text-umber flex items-center justify-center shadow-md md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300" aria-hidden>
                         <Maximize2 size={15} strokeWidth={1.8} />
                       </span>
