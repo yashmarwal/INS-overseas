@@ -8,7 +8,7 @@ export type ShareProduct = { id: string; name: string; category: string; image: 
 
 // "Share this product": a sheet with the product's own link and one-tap Copy / WhatsApp / Email (and the phone's own share
 // menu where there is one). Opening the link lands on the Products page with exactly this product's details open.
-export default function ShareSheet({ product, onClose }: { product: ShareProduct | null; onClose: () => void }) {
+export default function ShareSheet({ product, onClose, onShared }: { product: ShareProduct | null; onClose: () => void; onShared?: (productId: string) => void }) {
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState(false); // copy was blocked: the link is selected instead, ready for Ctrl+C / long-press
   const timer = useRef(0);
@@ -32,12 +32,13 @@ export default function ShareSheet({ product, onClose }: { product: ShareProduct
     if (!ok) return;
     setSelected(false);
     setCopied(true);
+    if (product) onShared?.(product.id);
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setCopied(false), 2200);
   };
   const doNative = async () => {
     if (!product) return;
-    try { await navigator.share({ title: product.name, text: `${product.name} — INS Overseas`, url }); } catch { /* cancelled */ }
+    try { await navigator.share({ title: product.name, text: `${product.name} — INS Overseas`, url }); onShared?.(product.id); } catch { /* cancelled */ }
   };
 
   const action = "flex-1 min-w-[96px] inline-flex items-center justify-center gap-2 h-12 rounded-full uppercase active:scale-[0.98] transition-[background-color,transform] duration-200";
@@ -91,10 +92,10 @@ export default function ShareSheet({ product, onClose }: { product: ShareProduct
               </p>
 
               <div className="px-4 pt-3 pb-6 flex flex-wrap gap-2.5">
-                <a href={`https://wa.me/?text=${encodeURIComponent(txt.whatsapp)}`} target="_blank" rel="noreferrer" className={`${action} bg-ink text-white hover:bg-umber-dark`} style={actionStyle}>
+                <a href={`https://wa.me/?text=${encodeURIComponent(txt.whatsapp)}`} target="_blank" rel="noreferrer" onClick={() => onShared?.(product.id)} className={`${action} bg-ink text-white hover:bg-umber-dark`} style={actionStyle}>
                   <WhatsAppGlyph size={18} /> WhatsApp
                 </a>
-                <a href={`mailto:?subject=${encodeURIComponent(txt.mailSubject)}&body=${encodeURIComponent(txt.mailBody)}`} className={`${action} bg-white text-ink shadow-[inset_0_0_0_1px_rgba(26,20,16,0.25)] hover:bg-[#F1EEE8]`} style={actionStyle}>
+                <a href={`mailto:?subject=${encodeURIComponent(txt.mailSubject)}&body=${encodeURIComponent(txt.mailBody)}`} onClick={() => onShared?.(product.id)} className={`${action} bg-white text-ink shadow-[inset_0_0_0_1px_rgba(26,20,16,0.25)] hover:bg-[#F1EEE8]`} style={actionStyle}>
                   <Mail size={17} /> Email
                 </a>
                 {canNative && (

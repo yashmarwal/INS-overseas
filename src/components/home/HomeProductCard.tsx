@@ -3,7 +3,7 @@ import { ArrowUpRight, Check, Plus } from "lucide-react";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { tagLabel } from "@/hooks/useProductImages";
 import { moqNumber } from "@/data/catalogue";
-import { enquiryId, toggleEnquiry, useInEnquiry, type EnquiryItem } from "@/lib/enquiryList";
+import { enquiryId, LIST_MAX, toggleEnquiry, useEnquiryList, type EnquiryItem } from "@/lib/enquiryList";
 import { collectionShareUrl } from "@/lib/share";
 
 // The homepage product card: a soft white card with an inset rounded photo, label chips floating on the photo,
@@ -27,18 +27,22 @@ export function InfoTile({ label, value, grow = false }: { label: string; value:
 
 /** "+ Add to quote": puts a piece on the visitor's quote list (and takes it off again). Sits on the card's photo. */
 export function QuoteToggle({ item, className = "" }: { item: EnquiryItem; className?: string }) {
-  const on = useInEnquiry(item.id);
+  const list = useEnquiryList();
+  const on = list.some((i) => i.id === item.id);
+  const full = !on && list.length >= LIST_MAX;
   return (
     <button
       type="button"
       onClick={() => toggleEnquiry(item)}
       aria-pressed={on}
-      aria-label={on ? `Remove ${item.name} from your quote list` : `Add ${item.name} to your quote list`}
+      disabled={full}
+      title={full ? `Your quote list is full (${LIST_MAX} pieces). Send it first, or remove a piece.` : undefined}
+      aria-label={on ? `Remove ${item.name} from your quote list` : full ? "Your quote list is full" : `Add ${item.name} to your quote list`}
       className={`inline-flex items-center gap-1.5 h-9 pl-3 pr-3.5 rounded-full shadow-[0_2px_10px_rgba(26,20,16,0.25)] active:scale-95 transition-[background-color,color,transform] duration-200 [-webkit-tap-highlight-color:transparent] ${on ? "bg-ink text-gold" : "bg-white/95 text-ink hover:bg-white"} ${className}`}
       style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 12 }}
     >
       {on ? <Check size={15} strokeWidth={2.4} /> : <Plus size={15} strokeWidth={2.2} />}
-      {on ? "Added to quote" : "Add to quote"}
+      {on ? "Added to quote" : full ? "List full" : "Add to quote"}
     </button>
   );
 }

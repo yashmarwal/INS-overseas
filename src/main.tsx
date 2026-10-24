@@ -25,6 +25,7 @@ const warm = async () => {
   ]);
   queryClient.prefetchQuery(productsQuery());
   queryClient.prefetchQuery(galleryQuery);
+  import("./components/ui/CatalogueHost").catch(() => {}); // the (small) catalogue dialog, so the PDF button opens at once
 };
 if ("requestIdleCallback" in window) requestIdleCallback(warm, { timeout: 5000 });
 else setTimeout(warm, 3000);

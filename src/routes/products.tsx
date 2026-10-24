@@ -3,47 +3,27 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PageHero from "@/components/shared/PageHero";
 import { useProductImages, tagLabel } from "@/hooks/useProductImages";
-import { X, Mail, Maximize2, ArrowUpRight, ChevronLeft, ChevronRight, Check, Plus, Share2 } from "lucide-react";
+import { X, Mail, Maximize2, ArrowUpRight, ChevronLeft, ChevronRight, Check, Plus, Share2, FileDown } from "lucide-react";
+import { openCatalogue, warmCatalogue } from "@/lib/catalogueUi";
 import ShareSheet from "@/components/ui/ShareSheet";
 import { productShareUrl, shortCode } from "@/lib/share";
+import { trackProduct } from "@/lib/track";
 import { historyKey, savedProductView, saveProductView } from "@/lib/scrollMemory";
-import { enquiryId, toggleEnquiry, useInEnquiry } from "@/lib/enquiryList";
+import { LIST_MAX, toggleEnquiry, useEnquiryList } from "@/lib/enquiryList";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SITE_URL } from "@/lib/seo";
-import { CATEGORY_LABELS, CATEGORY_MOQ } from "@/data/catalogue";
+import { CATEGORY_PILLS, categoryLabel, productLead, productMoq } from "@/data/catalogue";
+import { staticProducts } from "@/data/staticProducts";
+import { useProductTerms } from "@/hooks/useProductTerms";
+import { useCategories } from "@/hooks/useCategories";
 
 // ── Filter definitions ────────────────────────────────────────────────────────
-const filters = [
-  { key: "all",                     label: "All"                   },
-  { key: "leather-journals",        label: "Leather Journals"      },
-  { key: "leather-bags",            label: "Leather Bags"          },
-  { key: "handmade-paper-gift-box", label: "Paper Gift Box"        },
-  { key: "handmade-paper-gift-bag", label: "Paper Gift Bag"        },
-  { key: "handmade-seed-paper",     label: "Seed Paper"            },
-  { key: "handmade-deckle-edge-paper", label: "Deckle Edge Paper"      },
-  { key: "handblock-print-fabric",     label: "Handblock Print Fabric" },
-] as const;
+const filters = [{ key: "all", label: "All" }, ...CATEGORY_PILLS] as const;
 
 
 // ── Static fallback products ──────────────────────────────────────────────────
-const staticProducts = [
-  { id: "s1",  name: "Vintage Buffalo Leather Journal", category: "leather-journals",        image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=900&q=80",  description: "A5 · wrap-around strap · 240 deckle pages" },
-  { id: "s2",  name: "Antique Goat Leather Diary",      category: "leather-journals",        image: "https://images.unsplash.com/photo-1519682337058-a94d519337bc?auto=format&fit=crop&w=900&q=80",  description: "A6 · brass closure · custom embossing" },
-  { id: "s3",  name: "Refillable Leather Notebook",     category: "leather-journals",        image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=900&q=80",  description: "A5 · interchangeable inserts · hand-stitched spine" },
-  { id: "s4",  name: "Travel Journal with Pocket",      category: "leather-journals",        image: "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=900&q=80",  description: "Pocket sized · expandable gusset · brass corner" },
-  { id: "s5",  name: "Leather Crossbody Bag",           category: "leather-bags",            image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80",  description: "Full-grain · brass buckles · adjustable strap" },
-  { id: "s6",  name: "Buffalo Leather Tote",            category: "leather-bags",            image: "https://images.unsplash.com/photo-1606522754091-a3bbf9ad4cb3?auto=format&fit=crop&w=900&q=80",  description: "Oversized · interior pocket · burnished handles" },
-  { id: "s7",  name: "Handmade Paper Gift Box",         category: "handmade-paper-gift-box", image: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=80",  description: "Recycled cotton paper · gold foil accent" },
-  { id: "s8",  name: "Paper Gift Bags Set (12pc)",      category: "handmade-paper-gift-bag", image: "https://images.unsplash.com/photo-1607344645866-009c320b63e0?auto=format&fit=crop&w=900&q=80",  description: "Recycled cotton · ribbon handles · assorted" },
-  { id: "s9",  name: "Plantable Seed Paper Set",        category: "handmade-seed-paper",     image: "https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?auto=format&fit=crop&w=900&q=80",  description: "Wildflower mix · 20 sheets · biodegradable" },
-  { id: "s10", name: "Deckle Edge Notebook (Set of 6)",    category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?auto=format&fit=crop&w=900&q=80",  description: "Cotton rag · unlined · A5 · deckle edges" },
-  { id: "s11", name: "Deckle Edge Writing Pad",             category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80",  description: "120 gsm · fountain-pen friendly · A4" },
-  { id: "s12", name: "Deckle Edge Loose Sheets (Pack 50)",  category: "handmade-deckle-edge-paper", image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80",  description: "Ivory cotton rag · A4 · deckle all four edges" },
-  { id: "s13", name: "Block-Printed Cotton Fabric",         category: "handblock-print-fabric",     image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=80",  description: "Hand-blocked · natural dye · 44 inch width" },
-  { id: "s14", name: "Indigo Block-Print Table Runner",     category: "handblock-print-fabric",     image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=900&q=80",  description: "100% cotton · Sanganer motifs · 72 inch" },
-  { id: "s15", name: "Floral Block-Print Fabric (Per Metre)",category: "handblock-print-fabric",    image: "https://images.unsplash.com/photo-1517164850305-99a3e65bb47e?auto=format&fit=crop&w=900&q=80",  description: "Rajasthani floral pattern · reactive dye · 45 inch" },
-];
+
 
 type DynamicProduct = {
   id: string;
@@ -167,7 +147,10 @@ function Products() {
     prevSlug.current = slug;
     setFilter(filterForSlug(slug)); setCount(BATCH);
   }, [slug]);
-  const { images: productRows, loading } = useProductImages();
+  const { images: productRows, loading: productsLoading } = useProductImages();
+  const { custom: customCats, loading: catsLoading } = useCategories(); // the admin's own categories (names, minimum orders)
+  const { loading: termsLoading } = useProductTerms(); // each product's own minimum order / lead time, when it has one
+  const loading = productsLoading || catsLoading || termsLoading;
   const [preview, setPreview] = useState<DynamicProduct | null>(null);
   const [shareFor, setShareFor] = useState<DynamicProduct | null>(null);
   const isMobile = useIsMobile(); // phones get a compact floating card instead of the wide two-column dialog
@@ -181,6 +164,8 @@ function Products() {
       return () => window.removeEventListener("popstate", handlePopState);
     }
   }, [preview]);
+
+  useEffect(() => { if (preview) trackProduct(preview.id, "view"); }, [preview?.id]);
 
   const closePreview = () => {
     if (window.history.state?.previewOpen) {
@@ -235,9 +220,14 @@ function Products() {
   const activeCats = categoriesOf(filter);
   const visible = activeCats ? allProducts.filter((p) => activeCats.includes(p.category)) : allProducts;
   // a collection spanning several categories gets its own pill, right after "All"
+  // the built-in categories, then the admin's own (those only once they have a product, so there is never an empty pill)
+  const pillBase: { key: string; label: string }[] = [
+    ...filters,
+    ...customCats.filter((c) => allProducts.some((p) => p.category === c.id)).map((c) => ({ key: c.id, label: c.label })),
+  ];
   const pills: { key: string; label: string }[] = filter.startsWith("collection:")
-    ? [filters[0], { key: filter, label: COLLECTIONS[filter.slice(11)]?.label ?? "Collection" }, ...filters.slice(1)]
-    : [...filters];
+    ? [pillBase[0], { key: filter, label: COLLECTIONS[filter.slice(11)]?.label ?? "Collection" }, ...pillBase.slice(1)]
+    : pillBase;
 
   const pillBar = useRef<HTMLDivElement>(null);
   const pillsSection = useRef<HTMLElement>(null);
@@ -368,13 +358,32 @@ function Products() {
             </div>
           )}
 
+          {/* the catalogue PDF: built on the spot from the products shown here */}
+          {!loading && allProducts.length > 0 && (
+            <div className="mb-5 sm:mb-6 flex items-center justify-between gap-3">
+              <p className="text-[13px]" style={{ fontFamily: "var(--font-body)", color: "var(--grey-ink)" }} aria-live="polite">{visible.length} product{visible.length === 1 ? "" : "s"}</p>
+              <button
+                type="button"
+                onClick={() => openCatalogue(filter)}
+                onPointerEnter={warmCatalogue}
+                onFocus={warmCatalogue}
+                className="inline-flex items-center gap-2 h-11 pl-4 pr-5 rounded-full border border-umber/40 text-umber-dark bg-white hover:bg-umber hover:border-umber hover:text-cream active:scale-95 transition-[background-color,color,transform] duration-200 [-webkit-tap-highlight-color:transparent]"
+                style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 13 }}
+              >
+                <FileDown size={16} strokeWidth={1.9} />
+                <span className="sm:hidden">Catalogue PDF</span>
+                <span className="hidden sm:inline">Download catalogue (PDF)</span>
+              </button>
+            </div>
+          )}
+
           {/* Product grid */}
           {!loading && visible.length > 0 && (
             // key={filter}: switching category remounts the grid, so the new cards simply fade in
             // (no per-card layout tracking — that is what made 100+ products janky)
             <div key={filter} className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
               {shown.map((p, i) => {
-                const moq = (CATEGORY_MOQ[p.category] || "200 units minimum").match(/\d+/)?.[0] ?? "200";
+                const moq = productMoq(p.id, p.category);
                 const showDesc = !!p.description && p.description.trim().toLowerCase() !== p.name.trim().toLowerCase();
                 return (
                   <motion.article
@@ -403,7 +412,7 @@ function Products() {
                         className="absolute top-2.5 left-2.5 max-w-[calc(100%-20px)] truncate bg-white/95 text-umber-dark uppercase px-2.5 py-1 rounded-full shadow-[0_1px_4px_rgba(26,20,16,0.15)]"
                         style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 9, letterSpacing: "0.14em" }}
                       >
-                        {CATEGORY_LABELS[p.category] || p.category}
+                        {categoryLabel(p.category)}
                       </span>
                       {tagLabel(p.tag) && (
                         <span
@@ -491,12 +500,12 @@ function Products() {
                     {preview.name}
                   </h2>
                   <p className="mt-1.5" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 15, color: "var(--grey-ink)" }}>
-                    {CATEGORY_LABELS[preview.category] || preview.category}
+                    {categoryLabel(preview.category)}
                   </p>
                   <p className="mt-2 leading-snug" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 13.5, color: "var(--grey-ink)" }}>
                     {preview.description && preview.description.trim().toLowerCase() !== preview.name.trim().toLowerCase()
                       ? preview.description
-                      : "Handmade in Sanganer, Jaipur. Lead time 30 days · custom branding available · ships by air or sea."}
+                      : `Handmade in Sanganer, Jaipur. Lead time ${productLead(preview.id)} days · custom branding available · ships by air or sea.`}
                   </p>
                   <ActionRow product={preview} className="mt-5" onShare={() => setShareFor(preview)} />
                 </div>
@@ -522,7 +531,7 @@ function Products() {
                       {preview.name}
                     </h2>
                     <p className="mt-2" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 15, color: "var(--grey-ink)" }}>
-                      {CATEGORY_LABELS[preview.category] || preview.category}
+                      {categoryLabel(preview.category)}
                     </p>
                     {preview.description && preview.description.trim().toLowerCase() !== preview.name.trim().toLowerCase() && (
                       <p className="mt-3 leading-relaxed" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 14.5, color: "var(--grey-ink)" }}>
@@ -532,8 +541,8 @@ function Products() {
 
                     <dl className="mt-6 flex flex-col gap-2">
                       {([
-                        ["MOQ",       CATEGORY_MOQ[preview.category] || "200 units minimum"],
-                        ["Lead Time", "30 days after order confirmation"],
+                        ["MOQ",       `${productMoq(preview.id, preview.category)} units minimum`],
+                        ["Lead Time", `${productLead(preview.id)} days after order confirmation`],
                         ["Custom",    "Logo debossing, embossing, foil available"],
                         ["Shipping",  "Air 7–10 days · Sea 35–40 days"],
                       ] as [string, string][]).map(([k, v]) => (
@@ -560,6 +569,7 @@ function Products() {
       <ShareSheet
         product={shareFor ? { id: shareFor.id, name: shareFor.name, category: shareFor.category, image: shareFor.image } : null}
         onClose={() => setShareFor(null)}
+        onShared={(id) => trackProduct(id, "share")}
       />
     </>
   );
@@ -577,7 +587,7 @@ function PhotoPane({ product, count, index, onPrev, onNext, onClose, className =
         className="absolute top-3.5 left-3.5 max-w-[60%] truncate bg-ink/55 text-white rounded-full px-3 py-1.5"
         style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12 }}
       >
-        {CATEGORY_LABELS[product.category] || product.category}
+        {categoryLabel(product.category)}
       </span>
       <button
         onClick={onClose}
@@ -612,10 +622,11 @@ function ActionRow({ product, className = "", onShare }: { product: DynamicProdu
     <div className={className}>
       <div className="flex items-center justify-between gap-3">
         <span className="inline-flex items-center h-11 px-4 rounded-full bg-[#F1EEE8] text-ink tabular-nums" style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 15 }}>
-          MOQ {(CATEGORY_MOQ[product.category] || "200 units minimum").match(/\d+/)?.[0] ?? "200"}+
+          MOQ {productMoq(product.id, product.category)}+
         </span>
         <a
           href={enquiryHref(product)}
+          onClick={() => trackProduct(product.id, "enquire")}
           aria-label={`Enquire about ${product.name}`}
           className="inline-flex items-center gap-2.5 h-11 pl-5 pr-1.5 rounded-full bg-ink text-white active:scale-95 hover:bg-umber-dark transition-all"
           style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 14 }}
@@ -639,6 +650,7 @@ function ActionRow({ product, className = "", onShare }: { product: DynamicProdu
         href={`https://wa.me/919680478483?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${product.name}". Please share wholesale pricing and MOQ.\n${productShareUrl(product.id)}`)}`}
         target="_blank"
         rel="noreferrer"
+        onClick={() => trackProduct(product.id, "enquire")}
         className="mt-4 flex items-center justify-center gap-2 text-umber-dark hover:text-ink transition-colors underline underline-offset-4 decoration-umber/40"
         style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 13 }}
       >
@@ -653,9 +665,11 @@ function ActionRow({ product, className = "", onShare }: { product: DynamicProdu
 // Puts the piece on the visitor's quote list (the gold "Quote list" pill above the dock sends the whole list in one message).
 // compact = the round button on a grid card; otherwise the labelled button in the details popup.
 function ListButton({ product, compact = false }: { product: DynamicProduct; compact?: boolean }) {
-  const moq = (CATEGORY_MOQ[product.category] || "200 units minimum").match(/\d+/)?.[0] ?? "200";
-  const item = { id: enquiryId(product.name), name: product.name, category: CATEGORY_LABELS[product.category] || product.category, moq: `${moq}+ pcs`, url: productShareUrl(product.id) };
-  const on = useInEnquiry(item.id);
+  const moq = productMoq(product.id, product.category);
+  const item = { id: product.id, name: product.name, category: categoryLabel(product.category), moq: `${moq}+ pcs`, url: productShareUrl(product.id), productId: product.id };
+  const list = useEnquiryList();
+  const on = list.some((i) => i.id === item.id);
+  const full = !on && list.length >= LIST_MAX;
   const label = on ? `Remove ${product.name} from your quote list` : `Add ${product.name} to your quote list`;
   if (compact) {
     return (
@@ -663,12 +677,14 @@ function ListButton({ product, compact = false }: { product: DynamicProduct; com
         type="button"
         onClick={() => toggleEnquiry(item)}
         aria-pressed={on}
-        aria-label={label}
+        disabled={full}
+        title={full ? `Your quote list is full (${LIST_MAX} pieces)` : undefined}
+        aria-label={full ? "Your quote list is full" : label}
         className={`h-9 sm:h-10 flex-1 max-[399px]:flex-none max-[399px]:w-full min-w-0 px-2 sm:px-3 rounded-full inline-flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-95 transition-[background-color,color,transform] duration-200 text-[12px] [-webkit-tap-highlight-color:transparent] ${on ? "bg-ink text-gold" : "border border-umber/40 text-umber-dark hover:bg-umber hover:border-umber hover:text-cream"}`}
         style={{ fontFamily: "var(--font-body)", fontWeight: 600, letterSpacing: "0.02em" }}
       >
         {on ? <Check size={14} strokeWidth={2.4} /> : <Plus size={14} strokeWidth={2.2} />}
-        {on ? "Added" : <><span className="sm:hidden">Quote</span><span className="hidden sm:inline">Add to quote</span></>}
+        {on ? "Added" : full ? "List full" : <><span className="sm:hidden">Quote</span><span className="hidden sm:inline">Add to quote</span></>}
       </button>
     );
   }
@@ -677,20 +693,21 @@ function ListButton({ product, compact = false }: { product: DynamicProduct; com
       type="button"
       onClick={() => toggleEnquiry(item)}
       aria-pressed={on}
+      disabled={full}
       className={`flex-1 min-w-0 h-11 px-3 rounded-full inline-flex items-center justify-center gap-2 whitespace-nowrap active:scale-[0.98] transition-[background-color,color,transform] duration-200 ${on ? "bg-ink text-gold" : "border border-umber/40 text-umber-dark hover:bg-umber hover:border-umber hover:text-cream"}`}
       style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 13 }}
     >
-      {on ? <><Check size={16} strokeWidth={2.2} /> Added to quote list</> : <><Plus size={16} strokeWidth={2.2} /> Add to quote list</>}
+      {on ? <><Check size={16} strokeWidth={2.2} /> Added to quote list</> : full ? "Quote list is full" : <><Plus size={16} strokeWidth={2.2} /> Add to quote list</>}
     </button>
   );
 }
 
 // ── Enquire button ─────────────────────────────────────────────────────────────
 function enquiryHref(product: DynamicProduct) {
-  const categoryLabel = CATEGORY_LABELS[product.category] || product.category;
+  const categoryName = categoryLabel(product.category);
   const subject = encodeURIComponent(`Product Enquiry: ${product.name} — INS Overseas`);
   const body = encodeURIComponent(
-    `Hi INS Overseas Team,\n\nI am interested in the following product:\n\nProduct: ${product.name}\nCategory: ${categoryLabel}\nProduct link: ${productShareUrl(product.id)}\n\nPlease share:\n- Wholesale pricing\n- Available sizes and variants\n- MOQ details\n- Lead time for bulk order\n- Custom branding options (if any)\n\nCompany: \nCountry: \nEstimated Quantity: \n\nThank you,`
+    `Hi INS Overseas Team,\n\nI am interested in the following product:\n\nProduct: ${product.name}\nCategory: ${categoryName}\nProduct link: ${productShareUrl(product.id)}\n\nPlease share:\n- Wholesale pricing\n- Available sizes and variants\n- MOQ details\n- Lead time for bulk order\n- Custom branding options (if any)\n\nCompany: \nCountry: \nEstimated Quantity: \n\nThank you,`
   );
   return `mailto:Sezan@ins-overseas.com?subject=${subject}&body=${body}`;
 }
@@ -699,6 +716,7 @@ function EnquireButton({ product, large = false, compact = false }: { product: D
   return (
     <a
       href={enquiryHref(product)}
+      onClick={() => trackProduct(product.id, "enquire")}
       aria-label={`Enquire about ${product.name}`}
       className={`inline-flex items-center justify-center gap-2 transition-all duration-200 [-webkit-tap-highlight-color:transparent] ${
         large

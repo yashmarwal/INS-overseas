@@ -1,9 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ArrowUpRight, Mail, Menu, Phone, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, FileDown, Mail, Menu, Phone, X } from "lucide-react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { preloader } from "@/components/ui/Preloader";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
+import { openCatalogue, warmCatalogue } from "@/lib/catalogueUi";
 
 const links = [
   { to: "/", label: "Home" },
@@ -92,10 +93,11 @@ export default function Navigation() {
           <Link to="/" className="flex items-center gap-2.5 leading-none shrink-0">
             {/* the real INS Overseas crest (gold on transparent), taller than the text so it reads as the brand mark */}
             <img src="/logo-mark.png" alt="" aria-hidden width={39} height={52} className={`shrink-0 h-11 w-auto lg:h-14 -my-3 transition-[filter] duration-500 ${scrolled ? "brightness-[0.72] saturate-150" : ""}`} />
-            <div>
+            {/* from 1024 to 1279 px the nav links fill the bar, so the lettering steps aside (the crest carries the name) to make room for the PDF button */}
+            <div className="lg:max-xl:hidden">
               <div
                 style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}
-                className={`text-[15px] sm:text-lg lg:text-[15px] xl:text-lg tracking-[0.15em] lg:tracking-[0.1em] xl:tracking-[0.15em] whitespace-nowrap ${scrolled ? "text-ink" : "text-cream"}`}
+                className={`text-[15px] sm:text-lg lg:text-[15px] xl:text-lg tracking-[0.15em] lg:tracking-[0.1em] xl:tracking-[0.1em] min-[1600px]:tracking-[0.15em] whitespace-nowrap ${scrolled ? "text-ink" : "text-cream"}`}
               >
                 INS OVERSEAS
               </div>
@@ -148,7 +150,7 @@ export default function Navigation() {
                         to={l.to}
                         aria-current={active ? "page" : undefined}
                         onPointerEnter={(e) => { if (e.pointerType === "mouse") setHovered(l.to); }}
-                        className="relative z-10 block px-2 xl:px-3 2xl:px-3.5 py-2 rounded-full whitespace-nowrap uppercase text-[11px] xl:text-[12px] transition-colors duration-200"
+                        className="relative z-10 block px-2 xl:px-2 min-[1600px]:px-3 2xl:px-3.5 py-2 rounded-full whitespace-nowrap uppercase text-[11px] xl:text-[12px] transition-colors duration-200"
                         style={{
                           fontFamily: "var(--font-body)",
                           fontWeight: active ? 500 : 400,
@@ -165,6 +167,23 @@ export default function Navigation() {
             </LayoutGroup>
           </nav>
 
+          <div className="hidden lg:flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => openCatalogue()}
+            onPointerEnter={warmCatalogue}
+            onFocus={warmCatalogue}
+            aria-label="Download catalogue (PDF)"
+            title="Download catalogue (PDF)"
+            className={`shrink-0 h-11 pl-3.5 pr-4 gap-2 rounded-full inline-flex items-center justify-center whitespace-nowrap uppercase text-[12px] active:scale-95 transition-[background-color,color,transform] duration-300 ${
+              scrolled ? "text-ink shadow-[inset_0_0_0_1px_rgba(26,20,16,0.3)] hover:bg-ink/5" : "text-cream shadow-[inset_0_0_0_1px_rgba(250,247,240,0.5)] hover:bg-cream/15"
+            }`}
+            style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.1em" }}
+          >
+            <FileDown size={17} strokeWidth={1.7} />
+            <span className="min-[1600px]:hidden">PDF</span>
+            <span className="hidden min-[1600px]:inline">Catalogue PDF</span>
+          </button>
           <Link
             to="/wholesale"
             className="group relative overflow-hidden hidden min-[1440px]:inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap h-11 pl-5 pr-1.5 rounded-full uppercase text-[12px] bg-gold text-ink hover:bg-gold-light transition-[background-color,box-shadow] duration-300 hover:shadow-[0_6px_18px_rgba(201,151,58,0.38)]"
@@ -181,14 +200,30 @@ export default function Navigation() {
               <ArrowUpRight size={15} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </span>
           </Link>
+          </div>
 
-          <button
-            className={`lg:hidden ${scrolled ? "text-ink" : "text-cream"}`}
-            onClick={() => setOpen(true)}
-            aria-label="Open menu"
-          >
-            <Menu size={26} />
-          </button>
+          {/* phones and tablets: the PDF button sits next to the menu button, on every page (the menu has it too) */}
+          <div className="lg:hidden flex items-center gap-1 -my-2">
+            <button
+              type="button"
+              onClick={() => openCatalogue()}
+              onPointerEnter={warmCatalogue}
+              aria-label="Download catalogue (PDF)"
+              className={`max-[339px]:hidden h-9 pl-3 pr-3.5 gap-1.5 rounded-full inline-flex items-center active:scale-95 transition-transform uppercase text-[11px] ${scrolled ? "text-ink shadow-[inset_0_0_0_1px_rgba(26,20,16,0.3)]" : "text-cream shadow-[inset_0_0_0_1px_rgba(250,247,240,0.5)]"}`}
+              style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.1em" }}
+            >
+              <FileDown size={16} strokeWidth={1.7} />
+              <span className="min-[420px]:hidden">PDF</span>
+              <span className="hidden min-[420px]:inline">Catalogue PDF</span>
+            </button>
+            <button
+              className={`w-11 h-11 flex items-center justify-center ${scrolled ? "text-ink" : "text-cream"}`}
+              onClick={() => setOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={26} />
+            </button>
+          </div>
         </div>
       </motion.header>
 
@@ -279,6 +314,15 @@ export default function Navigation() {
                 Request Catalogue
                 <ArrowRight size={15} />
               </Link>
+              <button
+                type="button"
+                onClick={() => { setOpen(false); window.setTimeout(() => openCatalogue(), 160); }}
+                className="mt-3 flex items-center justify-center gap-2.5 w-full py-3.5 text-cream uppercase active:bg-cream/10 transition-colors"
+                style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12, letterSpacing: "0.16em", boxShadow: "inset 0 0 0 1px rgba(201,151,58,0.55)" }}
+              >
+                <FileDown size={16} />
+                Download catalogue (PDF)
+              </button>
               <div className="mt-5 flex items-center justify-center gap-3">
                 {[
                   { href: "https://wa.me/919680478483", label: "WhatsApp", icon: <WhatsAppGlyph size={20} />, ext: true },

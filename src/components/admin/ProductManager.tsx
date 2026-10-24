@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Copy, GripVertical, ListChecks, Pencil, Search, Star, Trash2, X, ArrowUpDown } from "lucide-react";
-import { PRODUCT_CATEGORIES, PRODUCT_TAGS, tagLabel, type ProductImage } from "@/hooks/useProductImages";
-import { buildSetupSql, deleteProducts, probeExtraColumns, updateRows } from "@/lib/adminData";
+import { PRODUCT_TAGS, tagLabel, type ProductImage } from "@/hooks/useProductImages";
+import { adminCategoryLabel, useCategories } from "@/hooks/useCategories";
+import { buildSetupSql, deleteProducts, probeExtraColumns, saveProductTerms, updateRows } from "@/lib/adminData";
+import { useProductTerms } from "@/hooks/useProductTerms";
+import { DEFAULT_LEAD_DAYS, moqNumber } from "@/data/catalogue";
 import { useDragReorder, useSavedOrder } from "@/components/admin/reorder";
 import { EmptyState, GhostButton, MUTED, Panel, PrimaryButton, type Confirm } from "@/components/admin/AdminUI";
 
 const HOME_SLOTS = 6; // how many featured products the homepage "Fresh From The Workshop" section can show
-const catLabelOf = (id: string) => PRODUCT_CATEGORIES.find((c) => c.id === id)?.label || id;
+const catLabelOf = adminCategoryLabel;
 const field = "w-full rounded-xl border border-black/20 bg-white text-[15px] placeholder:text-[#8A8076] focus:outline-none focus:border-[#6B4C2A] focus:ring-2 focus:ring-[#6B4C2A]/20";
 
 type Mode = "browse" | "select" | "arrange";
@@ -22,6 +25,8 @@ type Props = {
 };
 
 export default function ProductManager({ products, loading, refetch, showToast, setConfirm, adminEmail }: Props) {
+  const { all: allCats } = useCategories();
+  const { terms, refetch: refetchTerms } = useProductTerms();
   const [listFilter, setListFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState<Mode>("browse");
@@ -124,7 +129,7 @@ export default function ProductManager({ products, loading, refetch, showToast, 
       )}
 
       <div className="mt-4 flex gap-2 overflow-x-auto no-scrollbar pb-1" role="group" aria-label="Filter products by category">
-        {[{ id: "all", label: "All" }, ...(extras === "ok" ? [{ id: "featured", label: "★ On homepage" }] : []), ...PRODUCT_CATEGORIES].map((c) => {
+        {[{ id: "all", label: "All" }, ...(extras === "ok" ? [{ id: "featured", label: "★ On homepage" }] : []), ...allCats].map((c) => {
           const on = listFilter === c.id;
           const n = c.id === "all" ? products.length : c.id === "featured" ? featuredCount : products.filter((p) => p.category === c.id).length;
           return (
@@ -269,6 +274,11 @@ export default function ProductManager({ products, loading, refetch, showToast, 
                     <div className="p-3">
                       <p className="text-[14px] font-medium leading-snug line-clamp-2">{p.product_name || "Untitled"}</p>
                       <p className="mt-1 text-[12px]" style={{ color: MUTED }}>{catLabelOf(p.category)}</p>
+                      {(terms.get(p.id)?.moq || terms.get(p.id)?.lead) && (
+                        <p className="mt-1 text-[11.5px] font-medium tabular-nums" style={{ color: "#6B4C2A" }}>
+                          {[terms.get(p.id)?.moq ? `Min. ${terms.get(p.id)!.moq} pcs` : "", terms.get(p.id)?.lead ? `${terms.get(p.id)!.lead} days` : ""].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
                     </div>
                   </Panel>
                 </li>
@@ -290,7 +300,7 @@ export default function ProductManager({ products, loading, refetch, showToast, 
             className="h-10 rounded-xl bg-white text-[#1A1410] text-[14px] px-3 disabled:opacity-60"
           >
             <option value="">Move to category…</option>
-            {PRODUCT_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+            {allCats.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
           {extras === "ok" && (
             <>
@@ -317,13 +327,19 @@ export default function ProductManager({ products, loading, refetch, showToast, 
       {editing && (
         <EditDialog
           product={editing}
+          terms={terms.get(editing.id)}
           extras={extras}
           onClose={() => setEditing(null)}
           onDelete={() => askDelete([editing])}
           onOpenSetup={() => { setEditing(null); setShowSetup(true); }}
-          onSave={async (patch) => {
+          onSave={async (patch, own) => {
             const r = await updateRows([editing.id], patch);
-            if (r.ok) { await refetch(); showToast("success", "Saved. The website is updated."); setEditing(null); } else explain(r);
+            if (!r.ok) { explain(r); return; }
+            const t = await saveProductTerms(editing.id, terms.get(editing.id)?.rowId, own.moq, own.lead);
+            await Promise.all([refetch(), refetchTerms()]);
+            if (!t.ok) { showToast("error", `The product was saved, but its own minimum order / lead time couldn't be: ${t.message}`); return; }
+            showToast("success", "Saved. The website is updated.");
+            setEditing(null);
           }}
         />
       )}
@@ -332,14 +348,16 @@ export default function ProductManager({ products, loading, refetch, showToast, 
 }
 
 // ── Edit one product ─────────────────────────────────────────────────────────────
-function EditDialog({ product, extras, onClose, onSave, onDelete, onOpenSetup }: {
+function EditDialog({ product, terms, extras, onClose, onSave, onDelete, onOpenSetup }: {
   product: ProductImage;
+  terms?: { rowId: string; moq?: number; lead?: number };
   extras: Extras;
   onClose: () => void;
-  onSave: (patch: Record<string, unknown>) => Promise<void>;
+  onSave: (patch: Record<string, unknown>, own: { moq: number | null; lead: number | null }) => Promise<void>;
   onDelete: () => void;
   onOpenSetup: () => void;
 }) {
+  const { all: allCats } = useCategories();
   const [name, setName] = useState(product.product_name || "");
   const [category, setCategory] = useState(product.category);
   const [description, setDescription] = useState(
@@ -347,6 +365,9 @@ function EditDialog({ product, extras, onClose, onSave, onDelete, onOpenSetup }:
   );
   const [tag, setTag] = useState<string>(product.tag || "");
   const [featured, setFeatured] = useState(!!product.featured);
+  const [moq, setMoq] = useState(terms?.moq ? String(terms.moq) : "");
+  const [lead, setLead] = useState(terms?.lead ? String(terms.lead) : "");
+  const [termsError, setTermsError] = useState("");
   const [saving, setSaving] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -358,11 +379,17 @@ function EditDialog({ product, extras, onClose, onSave, onDelete, onOpenSetup }:
   }, [onClose]);
 
   const submit = async () => {
+    const m = moq.trim() ? Number(moq) : null, l = lead.trim() ? Number(lead) : null;
+    if ((m !== null && (!Number.isInteger(m) || m < 1 || m > 100000)) || (l !== null && (!Number.isInteger(l) || l < 1 || l > 365))) {
+      setTermsError("Minimum order must be a whole number (1 to 100000) and lead time whole days (1 to 365). Leave a box empty to use the category's default.");
+      return;
+    }
+    setTermsError("");
     setSaving(true);
     const finalName = name.trim() || catLabelOf(category);
     const patch: Record<string, unknown> = { product_name: finalName, label: finalName, category, alt_text: description.trim() || finalName };
     if (extras === "ok") { patch.tag = tag || null; patch.featured = featured; }
-    await onSave(patch);
+    await onSave(patch, { moq: m, lead: l });
     setSaving(false);
   };
 
@@ -394,7 +421,7 @@ function EditDialog({ product, extras, onClose, onSave, onDelete, onOpenSetup }:
           <div>
             <label htmlFor="edit-cat" className="text-[14px] font-semibold">Category</label>
             <select id="edit-cat" value={category} onChange={(e) => setCategory(e.target.value)} className={`${field} mt-2 h-12 px-3`}>
-              {PRODUCT_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+              {allCats.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </div>
 
@@ -402,6 +429,28 @@ function EditDialog({ product, extras, onClose, onSave, onDelete, onOpenSetup }:
             <label htmlFor="edit-desc" className="text-[14px] font-semibold">Short description <span className="font-normal" style={{ color: MUTED }}>(optional)</span></label>
             <textarea id="edit-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={`${field} mt-2 px-4 py-3`} placeholder="e.g. A5 · wrap-around strap · 240 deckle pages" />
           </div>
+
+          <fieldset>
+            <legend className="text-[14px] font-semibold">This product's own terms <span className="font-normal" style={{ color: MUTED }}>(optional)</span></legend>
+            <p className="mt-1 text-[13px]" style={{ color: MUTED }}>Leave empty to use the category's: minimum order {moqNumber(category)} pcs, lead time {DEFAULT_LEAD_DAYS} days.</p>
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="edit-moq" className="text-[13px] font-medium">Minimum order</label>
+                <div className="relative mt-1">
+                  <input id="edit-moq" inputMode="numeric" value={moq} onChange={(e) => { setMoq(e.target.value.replace(/[^0-9]/g, "")); setTermsError(""); }} placeholder={moqNumber(category)} className={`${field} h-12 pl-4 pr-12 tabular-nums`} />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px]" style={{ color: MUTED }}>pcs</span>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="edit-lead" className="text-[13px] font-medium">Lead time</label>
+                <div className="relative mt-1">
+                  <input id="edit-lead" inputMode="numeric" value={lead} onChange={(e) => { setLead(e.target.value.replace(/[^0-9]/g, "")); setTermsError(""); }} placeholder={String(DEFAULT_LEAD_DAYS)} className={`${field} h-12 pl-4 pr-14 tabular-nums`} />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px]" style={{ color: MUTED }}>days</span>
+                </div>
+              </div>
+            </div>
+            {termsError && <p role="alert" className="mt-2 text-[13px] font-medium text-[#B42318]">{termsError}</p>}
+          </fieldset>
 
           {extras === "ok" ? (
             <>

@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { IMAGE_SLOTS, type ImageSlot } from "@/data/imageSections";
 import { useGalleryImages, type GalleryImage } from "@/hooks/useGalleryImages";
-import { useProductImages, PRODUCT_CATEGORIES, type ProductCategory } from "@/hooks/useProductImages";
+import { useProductImages } from "@/hooks/useProductImages";
+import { adminCategoryLabel, useCategories } from "@/hooks/useCategories";
+import CategoryPicker from "@/components/admin/CategoryPicker";
 import { isVideoUrl } from "@/lib/utils";
 import { compressImage, compressImageDetailed, savingsSentence, type CompressResult } from "@/lib/compressImage";
 import ProductManager from "@/components/admin/ProductManager";
@@ -15,7 +17,8 @@ import {
   ConfirmDialog, DropZone, EmptyState, GhostButton, MediaCard, MUTED, Panel, SectionHeader, Tip, Toast,
   type Confirm, type ToastState,
 } from "@/components/admin/AdminUI";
-import { ExternalLink, Image as ImageIcon, Images, LayoutGrid, LogOut, Monitor, Package, X } from "lucide-react";
+import { ExternalLink, Image as ImageIcon, Images, LayoutGrid, LogOut, Monitor, Package, TrendingUp, X } from "lucide-react";
+import PopularityPanel from "@/components/admin/PopularityPanel";
 
 // Every upload gets a unique timestamped name, so browsers/CDN may cache it for a year.
 const IMMUTABLE_CACHE = "31536000";
@@ -40,7 +43,7 @@ function useNoIndex() {
 }
 
 type SiteImage = { id: string; section: string; url: string; storage_path: string };
-type Tab = "overview" | "banner" | "photos" | "products" | "gallery";
+type Tab = "overview" | "banner" | "photos" | "products" | "popular" | "gallery";
 
 const BANNER_SLOTS = IMAGE_SLOTS.filter((s) => s.allowGif);
 const PHOTO_SLOTS = IMAGE_SLOTS.filter((s) => !s.allowGif);
@@ -66,6 +69,8 @@ function AdminPage() {
     return () => { alive = false; sub.subscription.unsubscribe(); };
   }, []);
   const authed = !!session;
+  // a browser where the owner has signed in is not counted in the popularity stats (their own browsing is not buyer interest)
+  useEffect(() => { if (authed) { try { localStorage.setItem("ins_no_track", "1"); } catch { /* ignore */ } } }, [authed]);
   const adminEmail = session?.user.email ?? "";
   const [tab, setTab] = useState<Tab>(() => (typeof sessionStorage !== "undefined" && (sessionStorage.getItem("ins_admin_tab") as Tab)) || "overview");
   const selectTab = (t: Tab) => {
@@ -85,7 +90,7 @@ function AdminPage() {
   // Products
   const { images: productImages, loading: productLoading, refetch: refetchProducts } = useProductImages();
   const [productProgress, setProductProgress] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory>("leather-journals");
+  const [selectedCategory, setSelectedCategory] = useState<string>("leather-journals");
   const [productName, setProductName] = useState("");
 
   const [toast, setToast] = useState<ToastState>(null);
@@ -250,7 +255,9 @@ function AdminPage() {
     });
 
   // ── Product upload ────────────────────────────────────────────────────────────
-  const catLabelOf = (id: string) => PRODUCT_CATEGORIES.find((c) => c.id === id)?.label || id;
+  const { all: allCategories } = useCategories(); // keeps every category name below up to date (including the ones you add yourself)
+  const catLabelOf = adminCategoryLabel;
+  const productCounts = productImages.reduce<Record<string, number>>((m, p) => { m[p.category] = (m[p.category] ?? 0) + 1; return m; }, {});
 
   const handleProductUpload = async (files: File[]) => {
     let added = 0;
@@ -319,6 +326,7 @@ function AdminPage() {
     { id: "banner", label: "Homepage banner", icon: <Monitor size={18} /> },
     { id: "photos", label: "Homepage photos", icon: <Images size={18} /> },
     { id: "products", label: "Products", icon: <Package size={18} />, badge: String(productImages.length) },
+    { id: "popular", label: "What buyers like", icon: <TrendingUp size={18} /> },
     { id: "gallery", label: "Gallery", icon: <ImageIcon size={18} />, badge: String(galleryImages.length) },
   ];
 
@@ -407,7 +415,7 @@ function AdminPage() {
                 {[
                   { id: "banner" as Tab, icon: <Monitor size={20} />, title: "Homepage banner", big: `${bannerCustom} of ${BANNER_SLOTS.length}`, sub: "banners are your own photos", cta: "Change banner" },
                   { id: "photos" as Tab, icon: <Images size={20} />, title: "Homepage photos", big: `${photosCustom} of ${MAIN_PHOTO_SLOTS.length}`, sub: "photos are your own", cta: "Change photos" },
-                  { id: "products" as Tab, icon: <Package size={20} />, title: "Products", big: String(productImages.length), sub: `products in ${PRODUCT_CATEGORIES.length} categories`, cta: "Add or remove products" },
+                  { id: "products" as Tab, icon: <Package size={20} />, title: "Products", big: String(productImages.length), sub: `products in ${allCategories.length} categories`, cta: "Add or remove products" },
                   { id: "gallery" as Tab, icon: <ImageIcon size={20} />, title: "Gallery", big: String(galleryImages.length), sub: videoCount ? `items (${videoCount} video${videoCount > 1 ? "s" : ""})` : "photos and videos", cta: "Manage gallery" },
                 ].map((c) => (
                   <button key={c.id} onClick={() => selectTab(c.id)} className="group text-left">
@@ -499,22 +507,7 @@ function AdminPage() {
                     <legend className="flex items-center gap-2.5 text-[14px] font-semibold">
                       <span className="w-6 h-6 rounded-full bg-[#6B4C2A] text-white text-[12px] flex items-center justify-center">1</span> Choose a category
                     </legend>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {PRODUCT_CATEGORIES.map((c) => {
-                        const on = selectedCategory === c.id;
-                        return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            aria-pressed={on}
-                            onClick={() => setSelectedCategory(c.id as ProductCategory)}
-                            className={`inline-flex items-center gap-2 h-11 px-4 rounded-full border text-[14px] font-medium transition-colors ${on ? "bg-[#6B4C2A] text-white border-[#6B4C2A] shadow-sm" : "bg-white text-[#1A1410] border-black/20 hover:border-[#6B4C2A] hover:bg-[#FBF9F4]"}`}
-                          >
-                            <span aria-hidden>{c.icon}</span> {c.label}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <CategoryPicker selected={selectedCategory} onSelect={setSelectedCategory} counts={productCounts} showToast={showToast} setConfirm={setConfirm} />
                   </fieldset>
 
                   <div>
@@ -550,6 +543,14 @@ function AdminPage() {
               </Panel>
 
               <ProductManager products={productImages} loading={productLoading} refetch={refetchProducts} showToast={showToast} setConfirm={setConfirm} adminEmail={adminEmail} />
+            </>
+          )}
+
+          {/* ── What buyers like ─────────────────────────────────────── */}
+          {tab === "popular" && (
+            <>
+              <SectionHeader title="What buyers like" description="Which products your visitors open, share, add to a quote and enquire about, so you can see what is popular." />
+              <PopularityPanel products={productImages} email={adminEmail} showToast={showToast} />
             </>
           )}
 

@@ -94,13 +94,16 @@ export type StackedCardProps = {
   /** when given, a labelled "Add to quote" button sits on the photo and puts this piece on the visitor's quote list */
   listItem?: EnquiryItem;
   moqValue: string; // e.g. "200+ pcs"
+  leadValue?: string; // e.g. "30 days" (the default)
+  /** called when the visitor presses Enquire or the WhatsApp button (for the popularity stats) */
+  onEnquire?: () => void;
   chatHref: string;
   chatLabel: string;
   secondary: { to: string; label: string; icon: ReactNode };
   primary: { label: string; to?: string; href?: string };
 };
 
-export function StackedCard({ index, total, photo, photoTo, pill, tag, title, desc, moqLabel = "MOQ", listItem, moqValue, chatHref, chatLabel, secondary, primary }: StackedCardProps) {
+export function StackedCard({ index, total, photo, photoTo, pill, tag, title, desc, moqLabel = "MOQ", listItem, moqValue, leadValue = "30 days", onEnquire, chatHref, chatLabel, secondary, primary }: StackedCardProps) {
   const pillCls = "rounded-full px-3 py-1.5";
   const photoCls = "group relative block aspect-[4/3] md:aspect-auto md:min-h-[420px] rounded-[20px] overflow-hidden img-shimmer";
   const photoInner = (
@@ -145,8 +148,8 @@ export function StackedCard({ index, total, photo, photoTo, pill, tag, title, de
         <div className="@container mt-4 md:mt-auto md:pt-6">
           <div className="flex items-stretch gap-1.5 @[296px]:gap-2">
             <InfoTile label={moqLabel} value={moqValue} grow />
-            <InfoTile label="Lead" value="30 days" />
-            <a href={chatHref} target="_blank" rel="noreferrer" aria-label={chatLabel} className={cardSquareBtn}>
+            <InfoTile label="Lead" value={leadValue} />
+            <a href={chatHref} target="_blank" rel="noreferrer" aria-label={chatLabel} onClick={onEnquire} className={cardSquareBtn}>
               <WhatsAppGlyph size={20} />
             </a>
             <Link to={secondary.to} aria-label={secondary.label} className={`${cardSquareBtn} hidden sm:flex`}>
@@ -156,7 +159,7 @@ export function StackedCard({ index, total, photo, photoTo, pill, tag, title, de
           {primary.to ? (
             <Link to={primary.to} className={primaryCls} style={primaryStyle}>{primaryInner}</Link>
           ) : (
-            <a href={primary.href} className={primaryCls} style={primaryStyle} aria-label={primary.label}>{primaryInner}</a>
+            <a href={primary.href} onClick={onEnquire} className={primaryCls} style={primaryStyle} aria-label={primary.label}>{primaryInner}</a>
           )}
         </div>
       </div>

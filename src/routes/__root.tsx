@@ -5,7 +5,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef } from "react";
 import { MotionConfig } from "framer-motion";
 
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -15,6 +15,11 @@ import Preloader from "@/components/ui/Preloader";
 import FloatingDock from "@/components/ui/FloatingDock";
 import EnquiryList from "@/components/ui/EnquiryList";
 import VideoBubble from "@/components/ui/VideoBubble";
+import { useCatalogueUi } from "@/lib/catalogueUi";
+
+// The catalogue dialog and the product data behind it load only after the first click on a "Download catalogue" button.
+const CatalogueHost = lazy(() => import("@/components/ui/CatalogueHost"));
+import "@/lib/track"; // popularity stats: hears about every "added to quote"
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 import { historyKey, saveScroll, savedScroll } from "@/lib/scrollMemory";
 
@@ -104,6 +109,7 @@ function ScrollToTop() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useSmoothScroll();
+  const catalogueUi = useCatalogueUi();
   return (
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user">
@@ -117,6 +123,7 @@ function RootComponent() {
         <FloatingDock />
         <EnquiryList />
         <VideoBubble />
+        {catalogueUi.everOpened && <Suspense fallback={null}><CatalogueHost /></Suspense>}
       </MotionConfig>
     </QueryClientProvider>
   );

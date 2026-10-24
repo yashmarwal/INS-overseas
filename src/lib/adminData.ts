@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabaseConfig";
+import { CATEGORY_SECTION } from "@/hooks/useCategories";
+import { TERMS_SECTION } from "@/hooks/useProductTerms";
 
 /**
  * The one-time database setup, written for the signed-in admin so it can be pasted straight into Supabase.
@@ -74,7 +76,9 @@ export async function updateRows(ids: string[], patch: Record<string, unknown>):
 export async function deleteProducts(items: { id: string; storage_path: string }[]) {
   const paths = items.map((i) => i.storage_path).filter(Boolean);
   if (paths.length) await supabase.storage.from("website-images").remove(paths);
-  return supabase.from("site_images").delete().in("id", items.map((i) => i.id));
+  const ids = items.map((i) => i.id);
+  await supabase.from("site_images").delete().eq("section", TERMS_SECTION).in("storage_path", ids); // their own terms go with them
+  return supabase.from("site_images").delete().in("id", ids);
 }
 
 /** Do the optional tag/featured columns exist yet? */
@@ -102,4 +106,105 @@ export async function probeLockdown(): Promise<Lockdown> {
   if (error.code === "42501" || /row-level security|permission denied/i.test(error.message)) return "locked";
   if (["23502", "23503", "23514", "22P02", "22023"].includes(error.code)) return "open";
   return "unknown";
+}
+
+// ── Custom product categories (one row each in site_images, section "product_category"; see hooks/useCategories) ──
+export const slugifyCategory = (name: string) =>
+  name.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+
+const categoryRow = (label: string, moq: number, icon: string) => ({
+  label,
+  product_name: label,
+  alt_text: JSON.stringify({ moq, icon }),
+});
+
+/** Adds a category. Its id comes from the name and never clashes with an existing one. */
+export async function addCategory(label: string, moq: number, icon: string, takenIds: string[], sortOrder: number): Promise<{ ok: true; id: string } | { ok: false; message: string }> {
+  const base = slugifyCategory(label) || "category";
+  let id = base;
+  for (let n = 2; takenIds.includes(id); n++) id = `${base}-${n}`;
+  const { error } = await supabase.from("site_images").insert({ section: CATEGORY_SECTION, url: "", storage_path: "", category: id, sort_order: sortOrder, ...categoryRow(label, moq, icon) });
+  return error ? { ok: false, message: error.message || "unknown error" } : { ok: true, id };
+}
+
+/** Renames a category or changes its minimum order / icon. Products keep belonging to it. */
+export const updateCategory = (rowId: string, label: string, moq: number, icon: string) => updateRows([rowId], categoryRow(label, moq, icon));
+
+/** Removes a category (only call it when no product uses it). */
+export async function deleteCategory(rowId: string): Promise<DbResult> {
+  const { data, error } = await supabase.from("site_images").delete().eq("id", rowId).select("id");
+  if (error) return describe(error);
+  if (!data || data.length === 0) return { ok: false, kind: "permission", message: "Supabase didn't allow the change." };
+  return { ok: true };
+}
+
+// ── Per-product minimum order / lead time (one row each in site_images, section "product_terms"; see hooks/useProductTerms) ──
+/** Saves a product's own terms. Both empty = back to the category's defaults (the row is removed). */
+export async function saveProductTerms(productId: string, existingRowId: string | undefined, moq: number | null, lead: number | null): Promise<DbResult> {
+  if (!moq && !lead) {
+    if (!existingRowId) return { ok: true };
+    return deleteCategory(existingRowId); // (same "delete one row and check it happened" helper)
+  }
+  const alt = JSON.stringify({ ...(moq ? { moq } : {}), ...(lead ? { lead } : {}) });
+  if (existingRowId) return updateRows([existingRowId], { alt_text: alt });
+  const { error } = await supabase.from("site_images").insert({ section: TERMS_SECTION, label: "Product terms", url: "", storage_path: productId, category: "", product_name: "", alt_text: alt, sort_order: 0 });
+  return error ? describe(error) : { ok: true };
+}
+
+// ── Popularity stats (the product_events table; see lib/track) ────────────────────────────────────────────────
+/** The one-time setup for popularity stats, written for the signed-in admin. Visitors may only ADD an event; only this login can read or delete them. */
+export function buildEventsSql(adminEmail: string): string {
+  const email = (adminEmail || "YOUR-ADMIN-EMAIL").replace(/'/g, "''");
+  const isAdmin = `lower(auth.jwt() ->> 'email') = lower('${email}')`;
+  return `-- INS Overseas: popularity stats (run once; safe to run again)
+create table if not exists public.product_events (
+  id uuid primary key default gen_random_uuid(),
+  product_id text not null check (char_length(product_id) between 1 and 80),
+  event text not null check (event in ('view', 'share', 'quote', 'enquire')),
+  created_at timestamptz not null default now()
+);
+create index if not exists product_events_created_at_idx on public.product_events (created_at);
+
+alter table public.product_events enable row level security;
+
+do $$ declare p record; begin
+  for p in select policyname from pg_policies where schemaname = 'public' and tablename = 'product_events' loop
+    execute format('drop policy %I on public.product_events', p.policyname);
+  end loop;
+end $$;
+
+-- visitors can only ADD a row (nothing else); only this admin login can read or delete them
+create policy "Visitors can record an event" on public.product_events for insert to anon, authenticated with check (true);
+create policy "Only the admin can read events" on public.product_events for select to authenticated using (${isAdmin});
+create policy "Only the admin can delete events" on public.product_events for delete to authenticated using (${isAdmin});
+
+grant insert on public.product_events to anon, authenticated;
+grant select, delete on public.product_events to authenticated;
+
+-- Optional tidy-up, now and then: keep only the last 180 days
+-- delete from public.product_events where created_at < now() - interval '180 days';`;
+}
+
+/** Does the product_events table exist (and can the admin read it)? */
+export async function probeEventsTable(): Promise<"ready" | "missing"> {
+  const { error } = await supabase.from("product_events").select("id").limit(1);
+  return error ? "missing" : "ready";
+}
+
+export type EventRow = { product_id: string; event: string; created_at: string };
+/** Events since a date, fetched in pages (the database returns at most 1000 rows at a time). */
+export async function fetchEventsSince(sinceIso: string): Promise<EventRow[]> {
+  const rows: EventRow[] = [];
+  for (let from = 0; from < 30000; from += 1000) {
+    const { data, error } = await supabase
+      .from("product_events")
+      .select("product_id,event,created_at")
+      .gte("created_at", sinceIso)
+      .order("created_at", { ascending: true })
+      .range(from, from + 999);
+    if (error) throw error;
+    rows.push(...((data ?? []) as EventRow[]));
+    if (!data || data.length < 1000) break;
+  }
+  return rows;
 }
