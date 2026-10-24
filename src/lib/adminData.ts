@@ -3,6 +3,9 @@ import { supabase } from "@/lib/supabase";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabaseConfig";
 import { CATEGORY_SECTION } from "@/hooks/useCategories";
 import { TERMS_SECTION } from "@/hooks/useProductTerms";
+import { DETAILS_SECTION, hasAnyDetail, parseDetails, serializeDetails } from "@/hooks/useProductDetails";
+import { compressImageDetailed } from "@/lib/compressImage";
+import type { ProductDetails, ProductPhoto } from "@/data/productDetails";
 
 /**
  * The one-time database setup, written for the signed-in admin so it can be pasted straight into Supabase.
@@ -78,6 +81,11 @@ export async function deleteProducts(items: { id: string; storage_path: string }
   if (paths.length) await supabase.storage.from("website-images").remove(paths);
   const ids = items.map((i) => i.id);
   await supabase.from("site_images").delete().eq("section", TERMS_SECTION).in("storage_path", ids); // their own terms go with them
+  // their details go with them too, and so do the extra photos those details point to
+  const { data: detailRows } = await supabase.from("site_images").select("alt_text").eq("section", DETAILS_SECTION).in("storage_path", ids);
+  const extraPaths = ((detailRows ?? []) as { alt_text: string }[]).flatMap((r) => parseDetails(r.alt_text).photos.map((p) => p.path)).filter(Boolean);
+  if (extraPaths.length) await supabase.storage.from("website-images").remove(extraPaths);
+  await supabase.from("site_images").delete().eq("section", DETAILS_SECTION).in("storage_path", ids);
   return supabase.from("site_images").delete().in("id", ids);
 }
 
@@ -149,6 +157,54 @@ export async function saveProductTerms(productId: string, existingRowId: string 
   if (existingRowId) return updateRows([existingRowId], { alt_text: alt });
   const { error } = await supabase.from("site_images").insert({ section: TERMS_SECTION, label: "Product terms", url: "", storage_path: productId, category: "", product_name: "", alt_text: alt, sort_order: 0 });
   return error ? describe(error) : { ok: true };
+}
+
+// ── Per-product details: item code, size, material, colours, customisation, extra photos (section "product_details"; see hooks/useProductDetails) ──
+/** Saves a product's details. Nothing filled in = the row is removed. */
+export async function saveProductDetails(productId: string, existingRowId: string | undefined, d: Omit<ProductDetails, "rowId">): Promise<DbResult> {
+  if (!hasAnyDetail(d)) {
+    if (!existingRowId) return { ok: true };
+    return deleteCategory(existingRowId); // (the same "delete one row and check it happened" helper)
+  }
+  const alt = serializeDetails(d);
+  if (existingRowId) return updateRows([existingRowId], { alt_text: alt });
+  const { error } = await supabase.from("site_images").insert({ section: DETAILS_SECTION, label: "Product details", url: "", storage_path: productId, category: "", product_name: "", alt_text: alt, sort_order: 0 });
+  return error ? describe(error) : { ok: true };
+}
+
+/** Shrinks one extra photo and uploads it (the same way product photos are). Throws a plain-English reason if it cannot. */
+export async function uploadProductPhoto(file: File, productId: string): Promise<ProductPhoto> {
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("photos must be JPG, PNG or WebP");
+  if (file.size > 25 * 1024 * 1024) throw new Error("that photo is over 25 MB");
+  const res = await compressImageDetailed(file);
+  if (res.unreadable) throw new Error("that file isn't a readable photo");
+  const ext = res.file.name.split(".").pop() || "jpg";
+  const path = `product_extra_${productId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 12)}_${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`;
+  const { error } = await supabase.storage.from("website-images").upload(path, res.file, { upsert: true, cacheControl: "31536000", contentType: res.file.type });
+  if (error) throw new Error(error.message || "the upload failed");
+  return { url: supabase.storage.from("website-images").getPublicUrl(path).data.publicUrl, path };
+}
+
+/** Deletes photo files from storage (ones the admin removed, or uploaded and then did not keep). */
+export async function removePhotoFiles(paths: string[]) {
+  const list = paths.filter(Boolean);
+  if (list.length) await supabase.storage.from("website-images").remove(list);
+}
+
+/** Gives codes to the pieces that have none (one batch of new rows, plus an update for those that already have a details row). */
+export async function assignCodes(plan: { productId: string; rowId?: string; code: string; current: Omit<ProductDetails, "rowId"> }[]): Promise<DbResult> {
+  const inserts = plan
+    .filter((p) => !p.rowId)
+    .map((p) => ({ section: DETAILS_SECTION, label: "Product details", url: "", storage_path: p.productId, category: "", product_name: "", alt_text: serializeDetails({ ...p.current, code: p.code }), sort_order: 0 }));
+  if (inserts.length) {
+    const { error } = await supabase.from("site_images").insert(inserts);
+    if (error) return describe(error);
+  }
+  for (const p of plan.filter((x) => x.rowId)) {
+    const r = await updateRows([p.rowId!], { alt_text: serializeDetails({ ...p.current, code: p.code }) });
+    if (!r.ok) return r;
+  }
+  return { ok: true };
 }
 
 // ── Popularity stats (the product_events table; see lib/track) ────────────────────────────────────────────────

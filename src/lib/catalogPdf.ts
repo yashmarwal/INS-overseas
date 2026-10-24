@@ -18,11 +18,12 @@ export type CatalogItem = {
   lead: number; // days
   url: string; // the product's own link
   tag?: string | null; // "Best seller" / "New"
+  code?: string; // the item code, e.g. "LJ-014"
+  specs?: string; // size and material in one line, e.g. "A5 - Buffalo leather"
 };
 
 export type BuildOptions = {
   filterLabel: string;
-  includePhotos: boolean;
   onProgress: (status: string, fraction: number) => void;
   signal?: AbortSignal;
 };
@@ -40,13 +41,12 @@ const CW = (W - 2 * M - GX) / 2; // a card's width
 const PAD = 2.5; // the white margin round a photo inside its card
 const PH = 40; // a photo's height (its width is the card's minus the margins)
 const PW = CW - 2 * PAD;
-const CARD_PHOTO = 77; // a card's height with a photo
-const CARD_TEXT = 38; // and without
+const CARD_H = 77; // a card's height
 const BANNER = 14; // a category heading
 const IMG_DPI = 120; // a photo printed 82 mm wide needs about 390 px, not a phone camera's 4000: this keeps the file small
 const JPEG_QUALITY = 0.62;
 const IMG_TIMEOUT = 8000;
-const POOL = 10;
+const POOL = 24; // photos prepared at once (they come over one connection, so many at a time is fine)
 
 const INK: RGB = [26, 20, 16];
 const GOLD: RGB = [201, 151, 58];
@@ -115,6 +115,23 @@ async function pool<T>(items: T[], size: number, worker: (item: T, i: number) =>
   }));
 }
 
+// Every photo is fetched and shrunk once, then kept: the dialog starts on them while the visitor is still choosing what to
+// include (see warmPhotos), so by the time "Download" is pressed most are ready and the PDF is built almost at once.
+const photoCache = new Map<string, Promise<string | null>>();
+const photoFor = (url: string): Promise<string | null> => {
+  if (!url) return Promise.resolve(null);
+  let p = photoCache.get(url);
+  if (!p) {
+    p = loadScaled(url, PW, PH, "#ffffff").then((v) => { if (!v) photoCache.delete(url); return v; }); // a failed one is tried again next time
+    photoCache.set(url, p);
+  }
+  return p;
+};
+/** Starts preparing these products' photos in the background. Safe to call again and again. */
+export function warmPhotos(items: { image: string }[]) {
+  void pool(items, POOL, async (it) => { await photoFor(it.image); });
+}
+
 export async function buildCatalogPdf(items: CatalogItem[], opts: BuildOptions): Promise<{ blob: Blob; filename: string; pages: number; photos: number }> {
   const { onProgress, signal } = opts;
   const stop = () => { if (signal?.aborted) throw new DOMException("Cancelled", "AbortError"); };
@@ -125,11 +142,12 @@ export async function buildCatalogPdf(items: CatalogItem[], opts: BuildOptions):
 
   // 1. the pictures (one slow or broken one never holds up the rest)
   const photos = new Map<string, string | null>();
-  if (opts.includePhotos && items.length) {
+  if (items.length) {
     let got = 0;
     onProgress(`Fetching photos 0 of ${items.length}...`, 0.05);
     await pool(items, POOL, async (it) => {
-      photos.set(it.id, await loadScaled(it.image, PW, PH, "#ffffff", signal));
+      if (signal?.aborted) return;
+      photos.set(it.id, await photoFor(it.image));
       got++;
       onProgress(`Fetching photos ${got} of ${items.length}...`, 0.05 + 0.6 * (got / items.length));
     });
@@ -272,8 +290,7 @@ export async function buildCatalogPdf(items: CatalogItem[], opts: BuildOptions):
   });
 
   // ── the products
-  const withPhotos = opts.includePhotos;
-  const cardH = withPhotos ? CARD_PHOTO : CARD_TEXT;
+  const cardH = CARD_H;
   const running = `${label} - ${count} ${noun}`;
   let y = TOP;
   const nextPage = () => { innerPage(running); y = TOP; };
@@ -290,47 +307,58 @@ export async function buildCatalogPdf(items: CatalogItem[], opts: BuildOptions):
   const drawCard = (it: CatalogItem, x: number) => {
     fill(EDGE); doc.roundedRect(x + 0.4, y + 0.7, CW, cardH, 2.5, 2.5, "F"); // a hair of shadow
     fill(WHITE); line(RULE, 0.2); doc.roundedRect(x, y, CW, cardH, 2.5, 2.5, "FD");
-    let ty = y + PAD;
-    if (withPhotos) {
-      const data = photos.get(it.id);
-      const px = x + PAD, py = y + PAD;
-      if (data) {
-        doc.saveGraphicsState();
-        doc.roundedRect(px, py, PW, PH, 1.6, 1.6, null as unknown as string); // the picture's rounded corners (a clip)
-        doc.clip(); doc.discardPath();
-        doc.addImage(data, "JPEG", px, py, PW, PH, undefined, "FAST");
-        doc.restoreGraphicsState();
-      } else {
-        fill(PLACEHOLDER); doc.roundedRect(px, py, PW, PH, 1.6, 1.6, "F");
-        ink(GREY); font("helvetica", "normal", 7.5); doc.text("Photo not available", px + PW / 2, py + PH / 2 + 1, { align: "center" });
-      }
-      if (it.tag) {
-        font("helvetica", "bold", 6.6);
-        const t = pdfText(it.tag).toUpperCase(), tw = doc.getTextWidth(t) + t.length * 0.3 + 5;
-        fill(GOLD); doc.roundedRect(px + 2.4, py + 2.4, tw, 5, 2.5, 2.5, "F");
-        ink(INK); spaced(t, px + 2.4 + 2.5, py + 5.9, 0.3);
-      }
-      ty = y + PAD + PH;
+    const data = photos.get(it.id);
+    const px = x + PAD, py = y + PAD;
+    if (data) {
+      doc.saveGraphicsState();
+      doc.roundedRect(px, py, PW, PH, 1.6, 1.6, null as unknown as string); // the picture's rounded corners (a clip)
+      doc.clip(); doc.discardPath();
+      doc.addImage(data, "JPEG", px, py, PW, PH, undefined, "FAST");
+      doc.restoreGraphicsState();
     } else {
-      ty = y + 2;
+      fill(PLACEHOLDER); doc.roundedRect(px, py, PW, PH, 1.6, 1.6, "F");
+      ink(GREY); font("helvetica", "normal", 7.5); doc.text("Photo not available", px + PW / 2, py + PH / 2 + 1, { align: "center" });
     }
+    if (it.tag) {
+      font("helvetica", "bold", 6.6);
+      const t = pdfText(it.tag).toUpperCase(), tw = doc.getTextWidth(t) + t.length * 0.3 + 5;
+      fill(GOLD); doc.roundedRect(px + 2.4, py + 2.4, tw, 5, 2.5, 2.5, "F");
+      ink(INK); spaced(t, px + 2.4 + 2.5, py + 5.9, 0.3);
+    }
+    const ty = y + PAD + PH;
     const tx = x + PAD + 1.5, tw = CW - 2 * PAD - 3;
 
-    ink(GOLD_DEEP); font("helvetica", "bold", 6.8); spaced(pdfText(it.category).toUpperCase(), tx, ty + 5.6, 0.7);
-    if (!withPhotos && it.tag) { ink(GOLD_DEEP); font("helvetica", "bold", 6.8); spaced(pdfText(it.tag).toUpperCase(), x + CW - PAD - 1.5, ty + 5.6, 0.5, "right"); }
+    // the category on the left, the item code on the right (the category is shortened if the two would meet)
+    const codeText = pdfText(it.code || "");
+    let codeW = 0;
+    if (codeText) { ink(INK); font("helvetica", "bold", 7); codeW = spaced(codeText, x + CW - PAD - 1.5, ty + 5.6, 0.4, "right"); }
+    font("helvetica", "bold", 6.8);
+    let cat = pdfText(it.category).toUpperCase();
+    const catRoom = tw - (codeW ? codeW + 3 : 0);
+    while (cat.length > 3 && doc.getTextWidth(cat) + 0.7 * (cat.length - 1) > catRoom) cat = cat.slice(0, -4) + "...";
+    ink(GOLD_DEEP); spaced(cat, tx, ty + 5.6, 0.7);
+
     ink(INK); font("times", "bold", 12.6);
     const nameLines = (doc.splitTextToSize(pdfText(it.name) || "Handmade product", tw) as string[]).slice(0, 2);
     nameLines.forEach((l, i) => doc.text(l, tx, ty + 11.4 + i * 5));
     const afterName = ty + 11.4 + (nameLines.length - 1) * 5;
 
+    // size and material, then as much of the description as fits
+    const specs = pdfText(it.specs || "");
+    if (specs) {
+      ink(INK); font("helvetica", "bold", 7.6);
+      doc.text((doc.splitTextToSize(specs, tw) as string[])[0], tx, afterName + 4.6);
+    }
     const desc = pdfText(it.description);
     if (desc && desc.toLowerCase() !== pdfText(it.name).toLowerCase()) {
       ink(GREY); font("helvetica", "normal", 7.9);
-      const room = withPhotos ? (nameLines.length === 1 ? 2 : 1) : (nameLines.length === 1 ? 3 : 1);
-      const all = doc.splitTextToSize(desc, tw) as string[];
-      const dl = all.slice(0, room);
-      if (all.length > room) dl[room - 1] = dl[room - 1].replace(/\s*\S{0,3}$/, "") + "...";
-      dl.forEach((l, i) => doc.text(l, tx, afterName + 4.6 + i * 3.7));
+      const room = specs ? (nameLines.length === 1 ? 1 : 0) : (nameLines.length === 1 ? 2 : 1);
+      if (room > 0) {
+        const all = doc.splitTextToSize(desc, tw) as string[];
+        const dl = all.slice(0, room);
+        if (all.length > room) dl[room - 1] = dl[room - 1].replace(/\s*\S{0,3}$/, "") + "...";
+        dl.forEach((l, i) => doc.text(l, tx, afterName + (specs ? 8.6 : 4.6) + i * 3.7));
+      }
     }
 
     // the facts, and the product's own link

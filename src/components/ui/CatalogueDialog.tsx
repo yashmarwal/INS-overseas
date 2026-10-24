@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AlertCircle, Check, FileDown, Loader2, X } from "lucide-react";
-import type { CatalogItem } from "@/lib/catalogPdf";
+import { warmPhotos, type CatalogItem } from "@/lib/catalogPdf";
 
 export type CatalogOption = { key: string; label: string; items: CatalogItem[] };
 
-const pagesFor = (n: number) => (n <= 5 ? 1 : 1 + Math.ceil((n - 5) / 6));
+const pagesFor = (n: number) => 3 + Math.ceil(n / 6); // cover, our story, the products (6 to a page) and the contact page
 
 // "Download catalogue (PDF)": pick what to include (everything, one category, or your quote list), see how many products that is,
 // and build the PDF on the spot from the products loaded right now. The PDF tools are only fetched when "Download" is pressed.
 export default function CatalogueDialog({ open, onClose, options, initialKey, loading = false }: { open: boolean; onClose: () => void; options: CatalogOption[]; initialKey: string; loading?: boolean }) {
   const [choice, setChoice] = useState(initialKey);
-  const [photos, setPhotos] = useState(true);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [fraction, setFraction] = useState(0);
@@ -34,6 +33,13 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
   const current = useMemo(() => options.find((o) => o.key === choice) ?? options[0], [options, choice]);
   const count = current?.items.length ?? 0;
 
+  // the photos for the chosen set are prepared right away, in the background: by the time Download is pressed they are ready
+  useEffect(() => {
+    if (!open || !current) return;
+    const t = window.setTimeout(() => warmPhotos(current.items), 200);
+    return () => window.clearTimeout(t);
+  }, [open, current]);
+
   const close = () => { abort.current?.abort(); setBusy(false); onClose(); };
 
   const generate = async () => {
@@ -45,7 +51,6 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
       const { buildCatalogPdf, downloadBlob } = await import("@/lib/catalogPdf");
       const r = await buildCatalogPdf(current.items, {
         filterLabel: current.label,
-        includePhotos: photos,
         signal: ctl.signal,
         onProgress: (s, f) => { setStatus(s); setFraction(f); },
       });
@@ -98,11 +103,6 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
                 );
               })}
             </div>
-
-            <label className="mt-4 mx-2 flex items-center gap-3 cursor-pointer select-none" style={{ fontFamily: "var(--font-body)", fontSize: 14 }}>
-              <input type="checkbox" checked={photos} disabled={busy} onChange={(e) => setPhotos(e.target.checked)} className="w-5 h-5 accent-[#6B4C2A]" />
-              <span><span className="text-ink font-medium">Include product photos</span> <span className="text-grey-ink">(a smaller, faster file without them)</span></span>
-            </label>
           </div>
 
           <div className="px-4 pt-3 pb-5">

@@ -11,6 +11,8 @@ import { EASE } from "@/components/shared/Reveal";
 import { productShareUrl } from "@/lib/share";
 import { categoryLabel, productLead, productMoq } from "@/data/catalogue";
 import { useProductTerms } from "@/hooks/useProductTerms";
+import { useProductDetails } from "@/hooks/useProductDetails";
+import { codeSuffix, productCode } from "@/data/productDetails";
 import { trackProduct } from "@/lib/track";
 import { productsQuery, tagLabel, type ProductImage } from "@/hooks/useProductImages";
 import { useCategories } from "@/hooks/useCategories";
@@ -97,6 +99,7 @@ export default function FeaturedCollection() {
   const q = useQuery(productsQuery());
   useCategories(); // the admin's own category names, for the chip on each card
   useProductTerms(); // a product's own minimum order / lead time
+  useProductDetails(); // its item code, for the quote and enquiry messages
   const reduce = useReducedMotion();
 
   const all = (q.data ?? []).filter((p) => p.featured).slice(0, MAX);
@@ -247,9 +250,9 @@ export default function FeaturedCollection() {
             <div className="@container mt-5 flex flex-wrap items-stretch justify-center gap-2">
               <InfoTile label="MOQ" value={moq} />
               <InfoTile label="Lead" value={`${productLead(p.id)} days`} />
-              <QuoteToggle item={{ id: p.id, name, category: categoryLabel(p.category), moq, url: productShareUrl(p.id), productId: p.id }} className="self-center" />
+              <QuoteToggle item={{ id: p.id, name, code: productCode(p.id) || undefined, category: categoryLabel(p.category), moq, url: productShareUrl(p.id), productId: p.id }} className="self-center" />
               <a
-                href={`${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${name}". Please share wholesale pricing and MOQ.\n${productShareUrl(p.id)}`)}`}
+                href={`${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${name}"${codeSuffix(p.id)}. Please share wholesale pricing and MOQ.\n${productShareUrl(p.id)}`)}`}
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`Chat on WhatsApp about ${name}`}
@@ -259,7 +262,7 @@ export default function FeaturedCollection() {
                 <WhatsAppGlyph size={20} />
               </a>
               <a
-                href={`mailto:Sezan@ins-overseas.com?subject=${encodeURIComponent(`Enquiry: ${name}`)}&body=${encodeURIComponent(`Hi INS Overseas team,\r\n\r\nI am interested in ${name}. Please share more details including pricing and MOQ.\r\n\r\nProduct link: ${productShareUrl(p.id)}\r\n\r\nThank you`)}`}
+                href={`mailto:Sezan@ins-overseas.com?subject=${encodeURIComponent(`Enquiry: ${name}${codeSuffix(p.id)}`)}&body=${encodeURIComponent(`Hi INS Overseas team,\r\n\r\nI am interested in ${name}${codeSuffix(p.id)}. Please share more details including pricing and MOQ.\r\n\r\nProduct link: ${productShareUrl(p.id)}\r\n\r\nThank you`)}`}
                 onClick={() => trackProduct(p.id, "enquire")}
                 aria-label={`Enquire about ${name}`}
                 className="shrink-0 inline-flex items-center gap-2 h-11 pl-5 pr-1.5 rounded-full bg-ink text-white hover:bg-umber-dark active:scale-95 transition-[background-color,transform] duration-200 self-center"

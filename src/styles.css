@@ -324,6 +324,7 @@ section > div > img {
 }
 /* open: the card grows out of the corner into the middle of the screen */
 .reel[data-open="true"] {
+  touch-action: none; /* a finger on the open player is a swipe for it, never a scroll of the page behind */
   --reel-r: 28px;
   z-index: 85;
   width: var(--reel-w);

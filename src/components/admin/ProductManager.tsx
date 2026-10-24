@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Copy, GripVertical, ListChecks, Pencil, Search, Star, Trash2, X, ArrowUpDown } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy, Download, GripVertical, Hash, ImagePlus, ListChecks, Pencil, Search, Star, Trash2, X, ArrowUpDown } from "lucide-react";
 import { PRODUCT_TAGS, tagLabel, type ProductImage } from "@/hooks/useProductImages";
 import { adminCategoryLabel, useCategories } from "@/hooks/useCategories";
-import { buildSetupSql, deleteProducts, probeExtraColumns, saveProductTerms, updateRows } from "@/lib/adminData";
+import { assignCodes, buildSetupSql, deleteProducts, probeExtraColumns, removePhotoFiles, saveProductDetails, saveProductTerms, updateRows, uploadProductPhoto } from "@/lib/adminData";
 import { useProductTerms } from "@/hooks/useProductTerms";
-import { DEFAULT_LEAD_DAYS, moqNumber } from "@/data/catalogue";
+import { useProductDetails } from "@/hooks/useProductDetails";
+import { DETAIL_LIMITS, type ProductDetails, type ProductPhoto } from "@/data/productDetails";
+import { planCodes } from "@/lib/productCodes";
+import { buildProductsCsv, downloadCsv, type CsvProduct } from "@/lib/exportCsv";
+import { productPageUrl } from "@/lib/productUrl";
+import { DEFAULT_LEAD_DAYS, moqNumber, productLead, productMoq } from "@/data/catalogue";
 import { useDragReorder, useSavedOrder } from "@/components/admin/reorder";
 import { EmptyState, GhostButton, MUTED, Panel, PrimaryButton, type Confirm } from "@/components/admin/AdminUI";
 
@@ -27,6 +32,7 @@ type Props = {
 export default function ProductManager({ products, loading, refetch, showToast, setConfirm, adminEmail }: Props) {
   const { all: allCats } = useCategories();
   const { terms, refetch: refetchTerms } = useProductTerms();
+  const { details, refetch: refetchDetails } = useProductDetails();
   const [listFilter, setListFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState<Mode>("browse");
@@ -60,9 +66,18 @@ export default function ProductManager({ products, loading, refetch, showToast, 
     const q = search.trim().toLowerCase();
     return ordered.filter((p) => {
       const inList = listFilter === "all" ? true : listFilter === "featured" ? !!p.featured : p.category === listFilter;
-      return inList && (!q || (p.product_name || "").toLowerCase().includes(q));
+      return inList && (!q || (p.product_name || "").toLowerCase().includes(q) || (details.get(p.id)?.code ?? "").toLowerCase().includes(q));
     });
-  }, [ordered, listFilter, search]);
+  }, [ordered, listFilter, search, details]);
+
+  // pieces that share a name (buyers cannot tell them apart without a code), and the pieces that still have no code
+  const nameCount = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of products) { const k = (p.product_name || "").trim().toLowerCase(); m.set(k, (m.get(k) ?? 0) + 1); }
+    return m;
+  }, [products]);
+  const missingCodes = ordered.filter((p) => !details.get(p.id)?.code).length;
+  const bare = (d?: ProductDetails): Omit<ProductDetails, "rowId"> => { if (!d) return { photos: [] }; const { rowId: _rowId, ...rest } = d; return rest; };
 
   const switchMode = (m: Mode) => { setMode((cur) => (cur === m ? "browse" : m)); setSelected(new Set()); };
   const toggle = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -96,7 +111,7 @@ export default function ProductManager({ products, loading, refetch, showToast, 
         void (async () => {
           setBusy(true);
           const { error } = await deleteProducts(items);
-          await refetch();
+          await Promise.all([refetch(), refetchDetails()]);
           setBusy(false);
           if (error) showToast("error", `Couldn't remove: ${error.message}`);
           else { showToast("success", items.length > 1 ? `${items.length} products removed.` : "Product removed."); setSelected(new Set()); setEditing(null); }
@@ -105,6 +120,43 @@ export default function ProductManager({ products, loading, refetch, showToast, 
     });
 
   const featuredOverflow = featuredCount > HOME_SLOTS;
+
+  const askAssignCodes = () =>
+    setConfirm({
+      title: `Give item codes to ${missingCodes} product${missingCodes === 1 ? "" : "s"}?`,
+      message: "Each gets a code like LJ-001, numbered in the order shown here (LJ for leather journals, LB for leather bags, and so on). Codes you have already set are kept, and you can change any code afterwards.",
+      confirmLabel: "Give codes",
+      onConfirm: () => {
+        void (async () => {
+          setBusy(true);
+          const plan = planCodes(ordered, (id) => details.get(id)?.code ?? "", (c) => catLabelOf(c));
+          const r = await assignCodes([...plan].map(([productId, code]) => ({ productId, rowId: details.get(productId)?.rowId, code, current: bare(details.get(productId)) })));
+          await refetchDetails();
+          setBusy(false);
+          if (r.ok) showToast("success", `${plan.size} item code${plan.size === 1 ? "" : "s"} added.`);
+          else explain(r);
+        })();
+      },
+    });
+
+  const exportCsv = () => {
+    const rows: CsvProduct[] = ordered.map((p) => {
+      const d = details.get(p.id);
+      const name = p.product_name || "Handmade Product";
+      const desc = p.alt_text && p.alt_text.trim().toLowerCase() !== name.trim().toLowerCase() ? p.alt_text : "";
+      return {
+        code: d?.code ?? "", name, category: catLabelOf(p.category), description: desc,
+        moq: productMoq(p.id, p.category), lead: productLead(p.id),
+        size: d?.size ?? "", material: d?.material ?? "", colours: d?.colours ?? "", custom: d?.custom ?? "",
+        label: tagLabel(p.tag) ?? "", onHomepage: !!p.featured, photo: p.url, morePhotos: (d?.photos ?? []).map((x) => x.url),
+        page: productPageUrl(p.id, name, d?.code), id: p.id,
+      };
+    });
+    const n = new Date();
+    const ymd = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+    downloadCsv(buildProductsCsv(rows), `INS-Overseas-products-${ymd}.csv`);
+    showToast("success", `Exported ${rows.length} product${rows.length === 1 ? "" : "s"} to a spreadsheet file.`);
+  };
 
   return (
     <div className="mt-8">
@@ -163,6 +215,14 @@ export default function ProductManager({ products, loading, refetch, showToast, 
           className={`inline-flex items-center gap-2 h-10 px-4 rounded-xl border text-[14px] font-medium transition-colors ${mode === "arrange" ? "bg-[#1A1410] text-white border-[#1A1410]" : "bg-white border-black/20 hover:border-[#6B4C2A]"}`}
         >
           <ArrowUpDown size={16} /> Arrange order
+        </button>
+        {missingCodes > 0 && !loading && (
+          <button type="button" disabled={busy} onClick={askAssignCodes} className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border text-[14px] font-medium bg-white border-black/20 hover:border-[#6B4C2A] disabled:opacity-60 transition-colors">
+            <Hash size={16} /> Give item codes <span className="tabular-nums" style={{ color: MUTED }}>({missingCodes})</span>
+          </button>
+        )}
+        <button type="button" onClick={exportCsv} disabled={products.length === 0} className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border text-[14px] font-medium bg-white border-black/20 hover:border-[#6B4C2A] disabled:opacity-60 transition-colors">
+          <Download size={16} /> Export CSV
         </button>
         {mode === "select" && filtered.length > 0 && (
           <button type="button" onClick={() => setSelected(selected.size === filtered.length ? new Set() : new Set(filtered.map((p) => p.id)))} className="h-10 px-3 text-[14px] font-medium underline underline-offset-4" style={{ color: "#4A3219" }}>
@@ -274,6 +334,11 @@ export default function ProductManager({ products, loading, refetch, showToast, 
                     <div className="p-3">
                       <p className="text-[14px] font-medium leading-snug line-clamp-2">{p.product_name || "Untitled"}</p>
                       <p className="mt-1 text-[12px]" style={{ color: MUTED }}>{catLabelOf(p.category)}</p>
+                      {details.get(p.id)?.code ? (
+                        <p className="mt-1 text-[11.5px] font-semibold tabular-nums tracking-wide" style={{ color: "#4A3219" }}>{details.get(p.id)!.code}</p>
+                      ) : (nameCount.get((p.product_name || "").trim().toLowerCase()) ?? 0) > 1 ? (
+                        <p className="mt-1 text-[11.5px] font-medium text-[#B54708]">Same name as another product</p>
+                      ) : null}
                       {(terms.get(p.id)?.moq || terms.get(p.id)?.lead) && (
                         <p className="mt-1 text-[11.5px] font-medium tabular-nums" style={{ color: "#6B4C2A" }}>
                           {[terms.get(p.id)?.moq ? `Min. ${terms.get(p.id)!.moq} pcs` : "", terms.get(p.id)?.lead ? `${terms.get(p.id)!.lead} days` : ""].filter(Boolean).join(" · ")}
@@ -328,16 +393,22 @@ export default function ProductManager({ products, loading, refetch, showToast, 
         <EditDialog
           product={editing}
           terms={terms.get(editing.id)}
+          details={details.get(editing.id)}
+          otherNames={new Set(products.filter((p) => p.id !== editing.id).map((p) => (p.product_name || "").trim().toLowerCase()))}
+          otherCodes={new Set(products.filter((p) => p.id !== editing.id).map((p) => (details.get(p.id)?.code ?? "").toLowerCase()).filter(Boolean))}
           extras={extras}
           onClose={() => setEditing(null)}
           onDelete={() => askDelete([editing])}
           onOpenSetup={() => { setEditing(null); setShowSetup(true); }}
-          onSave={async (patch, own) => {
+          onSave={async (patch, own, extra) => {
             const r = await updateRows([editing.id], patch);
             if (!r.ok) { explain(r); return; }
             const t = await saveProductTerms(editing.id, terms.get(editing.id)?.rowId, own.moq, own.lead);
-            await Promise.all([refetch(), refetchTerms()]);
+            const dr = await saveProductDetails(editing.id, details.get(editing.id)?.rowId, extra.details);
+            await Promise.all([refetch(), refetchTerms(), refetchDetails()]);
+            if (dr.ok) await removePhotoFiles(extra.removedPaths); // photos taken off the product are deleted from storage
             if (!t.ok) { showToast("error", `The product was saved, but its own minimum order / lead time couldn't be: ${t.message}`); return; }
+            if (!dr.ok) { showToast("error", `The product was saved, but its details couldn't be: ${dr.message}`); return; }
             showToast("success", "Saved. The website is updated.");
             setEditing(null);
           }}
@@ -348,12 +419,15 @@ export default function ProductManager({ products, loading, refetch, showToast, 
 }
 
 // ── Edit one product ─────────────────────────────────────────────────────────────
-function EditDialog({ product, terms, extras, onClose, onSave, onDelete, onOpenSetup }: {
+function EditDialog({ product, terms, details, otherNames, otherCodes, extras, onClose, onSave, onDelete, onOpenSetup }: {
   product: ProductImage;
   terms?: { rowId: string; moq?: number; lead?: number };
+  details?: ProductDetails;
+  otherNames: Set<string>;
+  otherCodes: Set<string>;
   extras: Extras;
   onClose: () => void;
-  onSave: (patch: Record<string, unknown>, own: { moq: number | null; lead: number | null }) => Promise<void>;
+  onSave: (patch: Record<string, unknown>, own: { moq: number | null; lead: number | null }, extra: { details: Omit<ProductDetails, "rowId">; removedPaths: string[] }) => Promise<void>;
   onDelete: () => void;
   onOpenSetup: () => void;
 }) {
@@ -368,15 +442,52 @@ function EditDialog({ product, terms, extras, onClose, onSave, onDelete, onOpenS
   const [moq, setMoq] = useState(terms?.moq ? String(terms.moq) : "");
   const [lead, setLead] = useState(terms?.lead ? String(terms.lead) : "");
   const [termsError, setTermsError] = useState("");
+  const [code, setCode] = useState(details?.code ?? "");
+  const [size, setSize] = useState(details?.size ?? "");
+  const [material, setMaterial] = useState(details?.material ?? "");
+  const [colours, setColours] = useState(details?.colours ?? "");
+  const [custom, setCustom] = useState(details?.custom ?? "");
+  const [photos, setPhotos] = useState<ProductPhoto[]>(details?.photos ?? []);
+  const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const [codeError, setCodeError] = useState("");
   const [saving, setSaving] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const uploaded = useRef(new Set<string>()); // files uploaded in this dialog and not saved yet
+  const removedOld = useRef(new Set<string>()); // saved photos taken off, deleted from storage once the save goes through
 
+  // closing without saving throws away the photos uploaded meanwhile (they would otherwise sit unused in storage)
+  const close = () => { void removePhotoFiles([...uploaded.current]); onClose(); };
+  const closeRef = useRef(close);
+  closeRef.current = close;
   useEffect(() => {
     nameRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeRef.current(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, []);
+
+  const addPhotos = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    setPhotoError(""); setUploading(true);
+    let room = DETAIL_LIMITS.photos - photos.length;
+    const problems: string[] = [];
+    for (const file of Array.from(files)) {
+      if (room <= 0) { problems.push(`${file.name}: only ${DETAIL_LIMITS.photos} extra photos fit`); continue; }
+      try {
+        const p = await uploadProductPhoto(file, product.id);
+        uploaded.current.add(p.path);
+        setPhotos((cur) => [...cur, p]);
+        room--;
+      } catch (e) { problems.push(`${file.name}: ${e instanceof Error ? e.message : "the upload failed"}`); }
+    }
+    if (problems.length) setPhotoError(problems.join(" · "));
+    setUploading(false);
+  };
+  const removePhoto = (p: ProductPhoto) => {
+    setPhotos((cur) => cur.filter((x) => x.path !== p.path || x.url !== p.url));
+    if (uploaded.current.has(p.path)) { uploaded.current.delete(p.path); void removePhotoFiles([p.path]); } else if (p.path) removedOld.current.add(p.path);
+  };
 
   const submit = async () => {
     const m = moq.trim() ? Number(moq) : null, l = lead.trim() ? Number(lead) : null;
@@ -385,16 +496,20 @@ function EditDialog({ product, terms, extras, onClose, onSave, onDelete, onOpenS
       return;
     }
     setTermsError("");
+    const cleanCode = code.replace(/\s+/g, " ").trim();
+    if (cleanCode && otherCodes.has(cleanCode.toLowerCase())) { setCodeError("Another product already uses this code. Each piece needs its own."); return; }
+    setCodeError("");
     setSaving(true);
     const finalName = name.trim() || catLabelOf(category);
     const patch: Record<string, unknown> = { product_name: finalName, label: finalName, category, alt_text: description.trim() || finalName };
     if (extras === "ok") { patch.tag = tag || null; patch.featured = featured; }
-    await onSave(patch, { moq: m, lead: l });
+    await onSave(patch, { moq: m, lead: l }, { details: { code: cleanCode || undefined, size: size.trim() || undefined, material: material.trim() || undefined, colours: colours.trim() || undefined, custom: custom.trim() || undefined, photos }, removedPaths: [...removedOld.current] });
+    uploaded.current.clear(); // saved: they belong to the product now
     setSaving(false);
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-[#1A1410]/50 p-0 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-[#1A1410]/50 p-0 sm:p-4" onClick={close}>
       <form
         role="dialog"
         aria-modal="true"
@@ -409,13 +524,16 @@ function EditDialog({ product, terms, extras, onClose, onSave, onDelete, onOpenS
             <h2 id="edit-title" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 24 }}>Edit product</h2>
             <p className="mt-1 text-[13px]" style={{ color: MUTED }}>Changes appear on your website right after you save.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="w-10 h-10 rounded-full hover:bg-black/[0.05] flex items-center justify-center shrink-0"><X size={18} /></button>
+          <button type="button" onClick={close} aria-label="Close" className="w-10 h-10 rounded-full hover:bg-black/[0.05] flex items-center justify-center shrink-0"><X size={18} /></button>
         </div>
 
         <div className="mt-5 space-y-4">
           <div>
             <label htmlFor="edit-name" className="text-[14px] font-semibold">Product name</label>
             <input id="edit-name" ref={nameRef} value={name} onChange={(e) => setName(e.target.value)} className={`${field} mt-2 h-12 px-4`} placeholder="e.g. Vintage Buffalo Leather Journal, A5" />
+            {name.trim() && otherNames.has(name.trim().toLowerCase()) && (
+              <p className="mt-1.5 text-[13px] font-medium text-[#B54708]">Another product has exactly this name. Give each one an item code below (or a more specific name) so buyers can tell them apart.</p>
+            )}
           </div>
 
           <div>
@@ -450,6 +568,54 @@ function EditDialog({ product, terms, extras, onClose, onSave, onDelete, onOpenS
               </div>
             </div>
             {termsError && <p role="alert" className="mt-2 text-[13px] font-medium text-[#B42318]">{termsError}</p>}
+          </fieldset>
+
+          <fieldset>
+            <legend className="text-[14px] font-semibold">Details for buyers <span className="font-normal" style={{ color: MUTED }}>(optional)</span></legend>
+            <p className="mt-1 text-[13px]" style={{ color: MUTED }}>Shown on the product's own page and in the PDF catalogue. The item code is also added to every quote message.</p>
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="edit-code" className="text-[13px] font-medium">Item code</label>
+                <input id="edit-code" value={code} maxLength={DETAIL_LIMITS.code} onChange={(e) => { setCode(e.target.value); setCodeError(""); }} placeholder="e.g. LJ-014" className={`${field} mt-1 h-12 px-4`} />
+              </div>
+              <div>
+                <label htmlFor="edit-size" className="text-[13px] font-medium">Size</label>
+                <input id="edit-size" value={size} maxLength={DETAIL_LIMITS.size} onChange={(e) => setSize(e.target.value)} placeholder="e.g. A5, 21 x 15 cm" className={`${field} mt-1 h-12 px-4`} />
+              </div>
+              <div className="col-span-2">
+                <label htmlFor="edit-material" className="text-[13px] font-medium">Material</label>
+                <input id="edit-material" value={material} maxLength={DETAIL_LIMITS.material} onChange={(e) => setMaterial(e.target.value)} placeholder="e.g. Buffalo leather, 100% cotton rag paper" className={`${field} mt-1 h-12 px-4`} />
+              </div>
+              <div className="col-span-2">
+                <label htmlFor="edit-colours" className="text-[13px] font-medium">Colours</label>
+                <input id="edit-colours" value={colours} maxLength={DETAIL_LIMITS.colours} onChange={(e) => setColours(e.target.value)} placeholder="e.g. Brown, black, tan" className={`${field} mt-1 h-12 px-4`} />
+              </div>
+              <div className="col-span-2">
+                <label htmlFor="edit-custom" className="text-[13px] font-medium">Customisation</label>
+                <input id="edit-custom" value={custom} maxLength={DETAIL_LIMITS.custom} onChange={(e) => setCustom(e.target.value)} placeholder="e.g. Logo embossing, custom sizes, branded packaging" className={`${field} mt-1 h-12 px-4`} />
+              </div>
+            </div>
+            {codeError && <p role="alert" className="mt-2 text-[13px] font-medium text-[#B42318]">{codeError}</p>}
+
+            <div className="mt-4">
+              <p className="text-[13px] font-medium">More photos <span className="font-normal tabular-nums" style={{ color: MUTED }}>({photos.length} of {DETAIL_LIMITS.photos})</span></p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {photos.map((p) => (
+                  <div key={p.path || p.url} className="relative w-[72px] h-[72px] rounded-xl overflow-hidden bg-[#EFEBE3]">
+                    <img src={p.url} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => removePhoto(p)} aria-label="Remove this photo" className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/95 shadow flex items-center justify-center hover:bg-white"><X size={13} /></button>
+                  </div>
+                ))}
+                {photos.length < DETAIL_LIMITS.photos && (
+                  <label className={`w-[72px] h-[72px] rounded-xl border-2 border-dashed border-black/25 flex flex-col items-center justify-center gap-0.5 text-[11.5px] font-medium cursor-pointer hover:border-[#6B4C2A] ${uploading ? "opacity-60 pointer-events-none" : ""}`}>
+                    <ImagePlus size={18} />
+                    {uploading ? "Adding…" : "Add"}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" multiple aria-label="Add more photos of this product" className="sr-only" onChange={(e) => { void addPhotos(e.target.files); e.target.value = ""; }} />
+                  </label>
+                )}
+              </div>
+              {photoError && <p role="alert" className="mt-2 text-[13px] font-medium text-[#B42318]">{photoError}</p>}
+            </div>
           </fieldset>
 
           {extras === "ok" ? (
@@ -489,7 +655,7 @@ function EditDialog({ product, terms, extras, onClose, onSave, onDelete, onOpenS
         <div className="mt-6 flex flex-col-reverse sm:flex-row sm:items-center gap-3">
           <button type="button" onClick={onDelete} className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl text-[14px] font-medium text-[#B42318] hover:bg-[#B42318]/5"><Trash2 size={15} /> Remove product</button>
           <div className="sm:ml-auto flex gap-3">
-            <GhostButton onClick={onClose} className="flex-1 sm:flex-none">Cancel</GhostButton>
+            <GhostButton onClick={close} className="flex-1 sm:flex-none">Cancel</GhostButton>
             <PrimaryButton type="submit" busy={saving} className="flex-1 sm:flex-none">Save changes</PrimaryButton>
           </div>
         </div>

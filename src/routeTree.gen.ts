@@ -28,6 +28,7 @@ import { Route as ProductsStationeryRouteImport } from './routes/products.statio
 import { Route as ProductsLeatherJournalsRouteImport } from './routes/products.leather-journals'
 import { Route as ProductsLeatherAccessoriesRouteImport } from './routes/products.leather-accessories'
 import { Route as ProductsHandmadePaperRouteImport } from './routes/products.handmade-paper'
+import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as PCodeRouteImport } from './routes/p.$code'
 import { Route as JournalSlugRouteImport } from './routes/journal.$slug'
 
@@ -127,6 +128,11 @@ const ProductsHandmadePaperRoute = ProductsHandmadePaperRouteImport.update({
   path: '/handmade-paper',
   getParentRoute: () => ProductsRoute,
 } as any)
+const ProductSlugRoute = ProductSlugRouteImport.update({
+  id: '/product/$slug',
+  path: '/product/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PCodeRoute = PCodeRouteImport.update({
   id: '/p/$code',
   path: '/p/$code',
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/wholesale': typeof WholesaleRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/p/$code': typeof PCodeRoute
+  '/product/$slug': typeof ProductSlugRoute
   '/products/handmade-paper': typeof ProductsHandmadePaperRoute
   '/products/leather-accessories': typeof ProductsLeatherAccessoriesRoute
   '/products/leather-journals': typeof ProductsLeatherJournalsRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/wholesale': typeof WholesaleRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/p/$code': typeof PCodeRoute
+  '/product/$slug': typeof ProductSlugRoute
   '/products/handmade-paper': typeof ProductsHandmadePaperRoute
   '/products/leather-accessories': typeof ProductsLeatherAccessoriesRoute
   '/products/leather-journals': typeof ProductsLeatherJournalsRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/wholesale': typeof WholesaleRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/p/$code': typeof PCodeRoute
+  '/product/$slug': typeof ProductSlugRoute
   '/products/handmade-paper': typeof ProductsHandmadePaperRoute
   '/products/leather-accessories': typeof ProductsLeatherAccessoriesRoute
   '/products/leather-journals': typeof ProductsLeatherJournalsRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/wholesale'
     | '/journal/$slug'
     | '/p/$code'
+    | '/product/$slug'
     | '/products/handmade-paper'
     | '/products/leather-accessories'
     | '/products/leather-journals'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/wholesale'
     | '/journal/$slug'
     | '/p/$code'
+    | '/product/$slug'
     | '/products/handmade-paper'
     | '/products/leather-accessories'
     | '/products/leather-journals'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/wholesale'
     | '/journal/$slug'
     | '/p/$code'
+    | '/product/$slug'
     | '/products/handmade-paper'
     | '/products/leather-accessories'
     | '/products/leather-journals'
@@ -294,6 +306,7 @@ export interface RootRouteChildren {
   TermsOfUseRoute: typeof TermsOfUseRoute
   WholesaleRoute: typeof WholesaleRoute
   PCodeRoute: typeof PCodeRoute
+  ProductSlugRoute: typeof ProductSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -431,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsHandmadePaperRouteImport
       parentRoute: typeof ProductsRoute
     }
+    '/product/$slug': {
+      id: '/product/$slug'
+      path: '/product/$slug'
+      fullPath: '/product/$slug'
+      preLoaderRoute: typeof ProductSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/p/$code': {
       id: '/p/$code'
       path: '/p/$code'
@@ -495,6 +515,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsOfUseRoute: TermsOfUseRoute,
   WholesaleRoute: WholesaleRoute,
   PCodeRoute: PCodeRoute,
+  ProductSlugRoute: ProductSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

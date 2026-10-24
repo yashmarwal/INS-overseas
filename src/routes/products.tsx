@@ -1,4 +1,4 @@
-import { createFileRoute, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PageHero from "@/components/shared/PageHero";
@@ -17,6 +17,9 @@ import { CATEGORY_PILLS, categoryLabel, productLead, productMoq } from "@/data/c
 import { staticProducts } from "@/data/staticProducts";
 import { useProductTerms } from "@/hooks/useProductTerms";
 import { useCategories } from "@/hooks/useCategories";
+import { useProductDetails } from "@/hooks/useProductDetails";
+import { codeSuffix, getProductDetails, productCode, specLine } from "@/data/productDetails";
+import { productSlug } from "@/lib/productUrl";
 
 // ── Filter definitions ────────────────────────────────────────────────────────
 const filters = [{ key: "all", label: "All" }, ...CATEGORY_PILLS] as const;
@@ -150,6 +153,7 @@ function Products() {
   const { images: productRows, loading: productsLoading } = useProductImages();
   const { custom: customCats, loading: catsLoading } = useCategories(); // the admin's own categories (names, minimum orders)
   const { loading: termsLoading } = useProductTerms(); // each product's own minimum order / lead time, when it has one
+  useProductDetails(); // each product's item code, size, material and so on (cards and popup read them; nothing waits for them)
   const loading = productsLoading || catsLoading || termsLoading;
   const [preview, setPreview] = useState<DynamicProduct | null>(null);
   const [shareFor, setShareFor] = useState<DynamicProduct | null>(null);
@@ -447,10 +451,16 @@ function Products() {
                       >
                         {p.name}
                       </h3>
+                      {productCode(p.id) && (
+                        <p className="mt-1 tabular-nums uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 10.5, letterSpacing: "0.14em", color: "var(--umber-dark, #4A3219)" }}>{productCode(p.id)}</p>
+                      )}
                       {showDesc && (
                         <p className="mt-1 line-clamp-2" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 12.5, lineHeight: 1.5, color: "var(--grey-ink)" }}>
                           {p.description}
                         </p>
+                      )}
+                      {specLine(getProductDetails(p.id)) && (
+                        <p className="mt-1 line-clamp-1" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12, color: "var(--grey-ink)" }}>{specLine(getProductDetails(p.id))}</p>
                       )}
                       <div className="mt-auto pt-3.5 flex flex-col gap-2.5">
                         <span className="uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10, letterSpacing: "0.14em", color: "var(--grey-ink)" }}>
@@ -503,13 +513,16 @@ function Products() {
                     {preview.name}
                   </h2>
                   <p className="mt-1.5" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 15, color: "var(--grey-ink)" }}>
-                    {categoryLabel(preview.category)}
+                    {categoryLabel(preview.category)}{productCode(preview.id) ? ` · ${productCode(preview.id)}` : ""}
                   </p>
                   <p className="mt-2 leading-snug" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 13.5, color: "var(--grey-ink)" }}>
                     {preview.description && preview.description.trim().toLowerCase() !== preview.name.trim().toLowerCase()
                       ? preview.description
                       : `Handmade in Sanganer, Jaipur. Lead time ${productLead(preview.id)} days · custom branding available · ships by air or sea.`}
                   </p>
+                  {specLine(getProductDetails(preview.id)) && (
+                    <p className="mt-1.5" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 13, color: "var(--grey-ink)" }}>{specLine(getProductDetails(preview.id))}</p>
+                  )}
                   <ActionRow product={preview} className="mt-5" onShare={() => setShareFor(preview)} />
                 </div>
               </motion.div>
@@ -534,7 +547,7 @@ function Products() {
                       {preview.name}
                     </h2>
                     <p className="mt-2" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 15, color: "var(--grey-ink)" }}>
-                      {categoryLabel(preview.category)}
+                      {categoryLabel(preview.category)}{productCode(preview.id) ? ` · ${productCode(preview.id)}` : ""}
                     </p>
                     {preview.description && preview.description.trim().toLowerCase() !== preview.name.trim().toLowerCase() && (
                       <p className="mt-3 leading-relaxed" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 14.5, color: "var(--grey-ink)" }}>
@@ -543,12 +556,7 @@ function Products() {
                     )}
 
                     <dl className="mt-6 flex flex-col gap-2">
-                      {([
-                        ["MOQ",       `${productMoq(preview.id, preview.category)} units minimum`],
-                        ["Lead Time", `${productLead(preview.id)} days after order confirmation`],
-                        ["Custom",    "Logo debossing, embossing, foil available"],
-                        ["Shipping",  "Air 7–10 days · Sea 35–40 days"],
-                      ] as [string, string][]).map(([k, v]) => (
+                      {detailRows(preview.id, preview.category).map(([k, v]) => (
                         <div key={k} className="flex items-baseline gap-4 rounded-2xl bg-[#F6F3EC] px-4 py-3">
                           <dt className="shrink-0 w-[78px] uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10.5, letterSpacing: "0.14em", color: "var(--grey-ink)" }}>
                             {k}
@@ -650,7 +658,7 @@ function ActionRow({ product, className = "", onShare }: { product: DynamicProdu
         </button>
       </div>
       <a
-        href={`https://wa.me/919680478483?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${product.name}". Please share wholesale pricing and MOQ.\n${productShareUrl(product.id)}`)}`}
+        href={`https://wa.me/919680478483?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${product.name}"${codeSuffix(product.id)}. Please share wholesale pricing and MOQ.\n${productShareUrl(product.id)}`)}`}
         target="_blank"
         rel="noreferrer"
         onClick={() => trackProduct(product.id, "enquire")}
@@ -660,6 +668,14 @@ function ActionRow({ product, className = "", onShare }: { product: DynamicProdu
         <WhatsAppGlyph size={16} />
         Prefer chat? Message us on WhatsApp
       </a>
+      <Link
+        to="/product/$slug"
+        params={{ slug: productSlug(product.id, product.name, productCode(product.id)) }}
+        className="mt-3 flex items-center justify-center gap-1.5 text-umber-dark hover:text-ink transition-colors underline underline-offset-4 decoration-umber/40"
+        style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 13 }}
+      >
+        See the full product page <ArrowUpRight size={14} />
+      </Link>
     </div>
   );
 }
@@ -669,7 +685,7 @@ function ActionRow({ product, className = "", onShare }: { product: DynamicProdu
 // compact = the round button on a grid card; otherwise the labelled button in the details popup.
 function ListButton({ product, compact = false }: { product: DynamicProduct; compact?: boolean }) {
   const moq = productMoq(product.id, product.category);
-  const item = { id: product.id, name: product.name, category: categoryLabel(product.category), moq: `${moq}+ pcs`, url: productShareUrl(product.id), productId: product.id };
+  const item = { id: product.id, name: product.name, code: productCode(product.id) || undefined, category: categoryLabel(product.category), moq: `${moq}+ pcs`, url: productShareUrl(product.id), productId: product.id };
   const list = useEnquiryList();
   const on = list.some((i) => i.id === item.id);
   const full = !on && list.length >= LIST_MAX;
@@ -708,9 +724,9 @@ function ListButton({ product, compact = false }: { product: DynamicProduct; com
 // ── Enquire button ─────────────────────────────────────────────────────────────
 function enquiryHref(product: DynamicProduct) {
   const categoryName = categoryLabel(product.category);
-  const subject = encodeURIComponent(`Product Enquiry: ${product.name} — INS Overseas`);
+  const subject = encodeURIComponent(`Product Enquiry: ${product.name}${codeSuffix(product.id)} — INS Overseas`);
   const body = encodeURIComponent(
-    `Hi INS Overseas Team,\n\nI am interested in the following product:\n\nProduct: ${product.name}\nCategory: ${categoryName}\nProduct link: ${productShareUrl(product.id)}\n\nPlease share:\n- Wholesale pricing\n- Available sizes and variants\n- MOQ details\n- Lead time for bulk order\n- Custom branding options (if any)\n\nCompany: \nCountry: \nEstimated Quantity: \n\nThank you,`
+    `Hi INS Overseas Team,\n\nI am interested in the following product:\n\nProduct: ${product.name}\n${productCode(product.id) ? `Item code: ${productCode(product.id)}\n` : ""}Category: ${categoryName}\nProduct link: ${productShareUrl(product.id)}\n\nPlease share:\n- Wholesale pricing\n- Available sizes and variants\n- MOQ details\n- Lead time for bulk order\n- Custom branding options (if any)\n\nCompany: \nCountry: \nEstimated Quantity: \n\nThank you,`
   );
   return `mailto:Sezan@ins-overseas.com?subject=${subject}&body=${body}`;
 }
@@ -734,4 +750,19 @@ function EnquireButton({ product, large = false, compact = false }: { product: D
       {compact ? "Enquire" : "Enquire about this product"}
     </a>
   );
+}
+
+/** The facts shown for a piece: its code, size, material and colours (when the admin filled them in), then the terms. */
+function detailRows(id: string, category: string): [string, string][] {
+  const d = getProductDetails(id);
+  return [
+    ...(d?.code ? [["Item code", d.code] as [string, string]] : []),
+    ...(d?.size ? [["Size", d.size] as [string, string]] : []),
+    ...(d?.material ? [["Material", d.material] as [string, string]] : []),
+    ...(d?.colours ? [["Colours", d.colours] as [string, string]] : []),
+    ["MOQ", `${productMoq(id, category)} units minimum`],
+    ["Lead Time", `${productLead(id)} days after order confirmation`],
+    ["Custom", d?.custom || "Logo debossing, embossing, foil available"],
+    ["Shipping", "Air 7–10 days · Sea 35–40 days"],
+  ];
 }

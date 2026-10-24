@@ -29,6 +29,8 @@ export default function VideoBubble() {
   const bubbleBtn = useRef<HTMLButtonElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
   const root = useRef<HTMLDivElement>(null);
+  const clip = useRef<HTMLDivElement>(null);
+  const swipe = useRef<{ id: number; x0: number; y0: number; t0: number; dy: number; on: boolean } | null>(null);
 
   // data saver: the circle shows the still poster and nothing downloads until it is opened
   const [calm] = useState(() => {
@@ -98,6 +100,57 @@ export default function VideoBubble() {
 
   const dismiss = () => setGone(true);
 
+  // The player is open: the page behind it must not move (wheel, finger or keys). The smooth-scroll library is told to leave
+  // these events alone (data-lenis-prevent on the backdrop and the player), and the browser's own scrolling is switched off.
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const prev = { overflow: html.style.overflow, pad: html.style.paddingRight };
+    const bar = window.innerWidth - html.clientWidth; // the scrollbar's width, held so the page does not shift sideways
+    html.style.overflow = "hidden";
+    if (bar > 0) html.style.paddingRight = bar + "px";
+    const stop = (e: Event) => { if (e.cancelable) e.preventDefault(); };
+    window.addEventListener("wheel", stop, { passive: false });
+    window.addEventListener("touchmove", stop, { passive: false });
+    return () => {
+      html.style.overflow = prev.overflow;
+      html.style.paddingRight = prev.pad;
+      window.removeEventListener("wheel", stop);
+      window.removeEventListener("touchmove", stop);
+    };
+  }, [open]);
+
+  // Swipe down on the player to close it (finger or pen; a mouse keeps its buttons): the card follows the finger, and lets go
+  // of the page when it has been pulled far enough (or flicked). A short pull, or a sideways / upward one, springs back.
+  const onSwipeDown = (e: React.PointerEvent) => {
+    if (!open || e.pointerType === "mouse") return;
+    swipe.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, t0: performance.now(), dy: 0, on: false };
+  };
+  const onSwipeMove = (e: React.PointerEvent) => {
+    const s = swipe.current, c = clip.current;
+    if (!s || !c || s.id !== e.pointerId) return;
+    const dy = e.clientY - s.y0, dx = e.clientX - s.x0;
+    if (!s.on) {
+      if (Math.abs(dx) > 14 && Math.abs(dx) > Math.abs(dy)) { swipe.current = null; return; } // a sideways move is not a swipe down
+      if (dy < 10) return;
+      s.on = true;
+      c.style.transition = "none";
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* it still follows while the finger stays on the player */ }
+    }
+    s.dy = Math.max(0, dy);
+    c.style.transform = `translateY(${s.dy}px) scale(${1 - Math.min(s.dy, 400) / 3200})`;
+  };
+  const onSwipeEnd = (e: React.PointerEvent, cancelled = false) => {
+    const s = swipe.current, c = clip.current;
+    swipe.current = null;
+    if (!s || !c || !s.on) return;
+    const speed = s.dy / Math.max(1, performance.now() - s.t0); // px per ms
+    c.style.transition = "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
+    c.style.transform = "";
+    if (!cancelled && (s.dy > 100 || (s.dy > 40 && speed > 0.5))) collapse();
+    void e;
+  };
+
   // Escape closes the player; Tab stays inside it while it is open
   useEffect(() => {
     if (!open) return;
@@ -149,7 +202,8 @@ export default function VideoBubble() {
             transition={{ duration: 0.3 }}
             onClick={collapse}
             aria-hidden
-            className="fixed inset-0 z-[84] bg-ink/60"
+            data-lenis-prevent
+            className="fixed inset-0 z-[84] bg-ink/60 touch-none"
           />
         )}
       </AnimatePresence>
@@ -160,15 +214,20 @@ export default function VideoBubble() {
         animate={visible ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 24, scale: 0.85 }}
         transition={{ duration: tucked && !open ? 0.3 : 0.5, ease: EASE }}
         onFocusCapture={() => setTucked(false)}
+        onPointerDown={onSwipeDown}
+        onPointerMove={onSwipeMove}
+        onPointerUp={onSwipeEnd}
+        onPointerCancel={(e) => onSwipeEnd(e, true)}
         className="reel"
         data-open={open}
+        data-lenis-prevent={open ? "" : undefined}
         role={open ? "dialog" : undefined}
         aria-modal={open ? true : undefined}
         aria-label={open ? "INS Overseas video" : undefined}
         style={{ pointerEvents: visible ? "auto" : "none", transformOrigin: "0% 100%" }}
       >
         {/* everything that must be clipped to the circle / rounded card lives in here; the ✕ sits outside it, on the edge */}
-        <div className="reel-clip">
+        <div ref={clip} className="reel-clip">
           <video
             ref={preview}
             src={calm || !shown ? undefined : PREVIEW}

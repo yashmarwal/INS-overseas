@@ -93,6 +93,18 @@
       "destination": "/journal/wholesale-guide-sourcing-handmade-paper-india/index.html"
     },
     {
+      "source": "/product/:slug",
+      "destination": "/api/product?slug=:slug"
+    },
+    {
+      "source": "/p/:code",
+      "destination": "/api/product?code=:code"
+    },
+    {
+      "source": "/sitemap-products.xml",
+      "destination": "/api/sitemap-products"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

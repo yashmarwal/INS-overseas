@@ -113,7 +113,7 @@ Disallow: /
 User-agent: *
 Disallow: /admin
 Disallow: /admin/
-Disallow: /p/
 Allow: /
 
 Sitemap: https://ins-overseas.com/sitemap.xml
+Sitemap: https://ins-overseas.com/sitemap-products.xml

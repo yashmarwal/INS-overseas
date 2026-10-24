@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { productsQuery, tagLabel } from "@/hooks/useProductImages";
 import { useCategories } from "@/hooks/useCategories";
 import { useProductTerms } from "@/hooks/useProductTerms";
+import { useProductDetails } from "@/hooks/useProductDetails";
+import { getProductDetails, specLine } from "@/data/productDetails";
 import { CATEGORY_PILLS, categoryLabel, productLead, productMoq } from "@/data/catalogue";
 import { staticProducts } from "@/data/staticProducts";
 import { useEnquiryList } from "@/lib/enquiryList";
@@ -16,6 +18,7 @@ export function useCatalogueOptions(enabled: boolean): { options: CatalogOption[
   const q = useQuery({ ...productsQuery(), enabled });
   const { custom, loading: catsLoading } = useCategories();
   const { terms, loading: termsLoading } = useProductTerms();
+  const { details } = useProductDetails(); // (the code and size are read as the PDF is built; nothing here waits for them)
   const quote = useEnquiryList();
 
   const options = useMemo(() => {
@@ -33,6 +36,8 @@ export function useCatalogueOptions(enabled: boolean): { options: CatalogOption[
       lead: productLead(p.id),
       url: productShareUrl(p.id),
       tag: tagLabel(p.tag),
+      code: getProductDetails(p.id)?.code,
+      specs: specLine(getProductDetails(p.id)),
     });
     const opts: CatalogOption[] = [{ key: "all", label: "All products", items: products.map(toItem) }];
     const groups = [...CATEGORY_PILLS.map((c) => ({ key: c.key as string, label: c.label as string })), ...custom.map((c) => ({ key: c.id, label: c.label }))];
@@ -46,7 +51,7 @@ export function useCatalogueOptions(enabled: boolean): { options: CatalogOption[
     return opts;
     // terms and custom are read inside productMoq / categoryLabel; listing them re-computes the options when they load
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q.data, q.isSuccess, q.isError, custom, terms, quote]);
+  }, [q.data, q.isSuccess, q.isError, custom, terms, details, quote]);
 
   return { options, loading: enabled && (q.isPending || catsLoading || termsLoading) };
 }

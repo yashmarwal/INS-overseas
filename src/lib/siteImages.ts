@@ -26,7 +26,7 @@ function load(): Promise<void> {
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
 
   inflight = fetch(
-    `${SUPABASE_URL}/rest/v1/site_images?select=section,url&section=not.in.(gallery,product,product_category,product_terms)&order=created_at.desc`,
+    `${SUPABASE_URL}/rest/v1/site_images?select=section,url&section=not.in.(gallery,product,product_category,product_terms,product_details)&order=created_at.desc`,
     { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, signal: ctrl.signal },
   )
     .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))

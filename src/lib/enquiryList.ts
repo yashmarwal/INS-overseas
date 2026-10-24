@@ -10,6 +10,8 @@ export type EnquiryItem = {
   url?: string;
   /** the catalogue product's own id, when there is one (used for the popularity stats) */
   productId?: string;
+  /** the item code the admin gave the piece, e.g. "LJ-014" (named in the message so the buyer and we mean the same piece) */
+  code?: string;
   /** how many pieces the buyer wants (optional, digits only) */
   qty?: string;
 };
@@ -110,7 +112,7 @@ const lines = (list: EnquiryItem[]) =>
   list
     .map((i, n) => {
       const qty = i.qty && Number(i.qty) > 0 ? `\n   Quantity: ${Number(i.qty)} pcs` : "";
-      return `${n + 1}. ${i.name} (${i.category}, MOQ from ${i.moq})${qty}${i.url ? `\n   ${i.url}` : ""}`;
+      return `${n + 1}. ${i.name}${i.code ? ` [${clean(i.code, 24)}]` : ""} (${i.category}, MOQ from ${i.moq})${qty}${i.url ? `\n   ${i.url}` : ""}`;
     })
     .join("\n");
 
