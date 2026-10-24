@@ -29,8 +29,8 @@ import { useCategories } from "@/hooks/useCategories";
 // motion get the same turning without the gliding (the pieces just swap). Only transform and opacity are animated.
 // With nothing ticked the section does not exist.
 const MAX = 6;
-const AUTO_MS = 4500; // from the start of one turn to the start of the next
-const TURN_S = 2; // how long a turn takes (seconds)
+const AUTO_MS = 3500; // from the start of one turn to the start of the next
+const TURN_S = 1.8; // how long a turn takes (seconds)
 // (the automated tests slow the rhythm down by setting window.__insCarouselMs; visitors never touch it)
 const autoMs = () => (typeof window !== "undefined" && Number((window as unknown as { __insCarouselMs?: number }).__insCarouselMs)) || AUTO_MS;
 const RING_MIN = 6; // cards on the ring, at the least
@@ -171,7 +171,7 @@ export default function FeaturedCollection() {
 
       {/* the carousel: drag it, tap a side card, or use the arrow keys; it also turns by itself */}
       <div
-        className="relative mt-8 md:mt-12 py-8 outline-none cursor-grab active:cursor-grabbing select-none"
+        className="relative isolate mt-8 md:mt-12 py-8 outline-none cursor-grab active:cursor-grabbing select-none"
         style={{ touchAction: "pan-y" }}
         role="group"
         aria-roledescription="carousel"
