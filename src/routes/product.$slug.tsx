@@ -104,12 +104,16 @@ function useProductHead(h: ReturnType<typeof productHead> | null) {
     set("meta[property='og:description']", meta("property", "og:description"), "content", h.description.slice(0, 160));
     set("meta[property='og:url']", meta("property", "og:url"), "content", h.canonical);
     set("meta[property='og:image']", meta("property", "og:image"), "content", h.images[0]);
-    const ld = document.createElement("script");
-    ld.type = "application/ld+json";
-    ld.dataset.product = "1";
-    ld.textContent = JSON.stringify({ "@context": "https://schema.org", "@graph": h.schema }).replace(/</g, "\u003c");
-    document.head.appendChild(ld);
-    undo.push(() => ld.remove());
+    // (arriving from a search engine or a link, the server has already put this product's data in the page: no second copy)
+    const have = [...document.head.querySelectorAll('script[type="application/ld+json"]')].some((s) => s.textContent?.includes(`${h.canonical}#product`));
+    if (!have) {
+      const ld = document.createElement("script");
+      ld.type = "application/ld+json";
+      ld.dataset.product = "1";
+      ld.textContent = JSON.stringify({ "@context": "https://schema.org", "@graph": h.schema });
+      document.head.appendChild(ld);
+      undo.push(() => ld.remove());
+    }
     return () => { undo.reverse().forEach((f) => f()); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);

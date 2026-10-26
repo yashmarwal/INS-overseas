@@ -163,6 +163,8 @@ export function injectProduct(template, p) {
     .replace(/<link\s+rel="canonical"[^>]*>/i, "")
     .replace(/<meta\s+property="og:(?:type|url|title|description|image|image:width|image:height|image:alt)"[^>]*>/gi, "")
     .replace(/<meta\s+name="twitter:(?:title|description|image|image:alt|url)"[^>]*>/gi, "");
+  // (the template's own Product block describes the homepage, not this product)
+  html = html.replace(/\s*<script type="application\/ld\+json">\s*\{\s*"@context": "https:\/\/schema\.org",\s*"@type": "Product",[\s\S]*?<\/script>/, "");
   html = html.replace(/<\/head>/i, () => `    ${head}\n  </head>`);
   html = html.replace(/<div id="root">\s*<\/div>/i, () => `<div id="root">${body}</div>`);
   return html;

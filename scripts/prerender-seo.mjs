@@ -336,6 +336,14 @@ function run() {
     writeFileSync(join(dir, "index.html"), html, "utf8");
   }
   console.log(`prerender-seo: wrote ${routes.length} route HTML files`);
+
+  // Unknown addresses get a real 404 (not the homepage with a 200). This is the page Vercel shows for them: the same app, which
+  // opens its own "Page not found" screen, with a noindex tag and without the homepage's canonical address.
+  const notFound = base
+    .replace(/<meta name="robots" content="[^"]*" \/>/, '<meta name="robots" content="noindex, nofollow" />')
+    .replace(/\s*<link rel="canonical" href="[^"]*" \/>/, "");
+  writeFileSync(join(DIST, "404.html"), notFound, "utf8");
+  console.log("prerender-seo: wrote 404.html");
 }
 
 run();

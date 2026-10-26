@@ -105,7 +105,11 @@
       "destination": "/api/sitemap-products"
     },
     {
-      "source": "/(.*)",
+      "source": "/admin",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin/",
       "destination": "/index.html"
     }
   ],
