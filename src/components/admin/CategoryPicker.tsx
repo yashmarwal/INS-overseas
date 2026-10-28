@@ -100,7 +100,7 @@ export default function CategoryPicker({ selected, onSelect, counts, showToast, 
                 {c.custom && <span className={`text-[12px] tabular-nums ${on ? "text-white/80" : ""}`} style={on ? undefined : { color: MUTED }}>{counts[c.id] ?? 0}</span>}
               </button>
               {c.custom && (
-                <button type="button" onClick={() => open(c)} aria-label={`Edit the category ${c.label}`} className="w-9 h-9 rounded-full border border-black/15 bg-white text-[#1A1410] flex items-center justify-center hover:bg-[#FBF9F4] hover:border-[#6B4C2A]">
+                <button type="button" onClick={() => open(c)} aria-label={`Edit the category ${c.label}`} className="w-10 h-10 rounded-full border border-black/15 bg-white text-[#1A1410] flex items-center justify-center hover:bg-[#FBF9F4] hover:border-[#6B4C2A]">
                   <Pencil size={14} />
                 </button>
               )}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Copy, Download, GripVertical, Hash, ImagePlus, ListChecks, Pencil, Search, Star, Trash2, X, ArrowUpDown } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy, Download, Gauge, GripVertical, Hash, ImagePlus, ListChecks, Pencil, Search, Star, Trash2, X, ArrowUpDown } from "lucide-react";
 import { PRODUCT_TAGS, tagLabel, type ProductImage } from "@/hooks/useProductImages";
 import { adminCategoryLabel, useCategories } from "@/hooks/useCategories";
 import { assignCodes, buildSetupSql, deleteProducts, probeExtraColumns, removePhotoFiles, saveProductDetails, saveProductTerms, updateRows, uploadProductPhoto } from "@/lib/adminData";
@@ -9,6 +9,7 @@ import { DETAIL_LIMITS, type ProductDetails, type ProductPhoto } from "@/data/pr
 import { planCodes } from "@/lib/productCodes";
 import { buildProductsCsv, downloadCsv, type CsvProduct } from "@/lib/exportCsv";
 import { productPageUrl } from "@/lib/productUrl";
+import PhotoOptimizer from "@/components/admin/PhotoOptimizer";
 import { DEFAULT_LEAD_DAYS, moqNumber, productLead, productMoq } from "@/data/catalogue";
 import { useDragReorder, useSavedOrder } from "@/components/admin/reorder";
 import { EmptyState, GhostButton, MUTED, Panel, PrimaryButton, type Confirm } from "@/components/admin/AdminUI";
@@ -41,6 +42,7 @@ export default function ProductManager({ products, loading, refetch, showToast, 
   const [extras, setExtras] = useState<Extras>("unknown");
   const [showSetup, setShowSetup] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
 
   // Is the one-time Supabase setup (tag / featured columns) done?
   const checkExtras = async () => setExtras((await probeExtraColumns()) ? "ok" : "missing");
@@ -224,6 +226,9 @@ export default function ProductManager({ products, loading, refetch, showToast, 
         <button type="button" onClick={exportCsv} disabled={products.length === 0} className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border text-[14px] font-medium bg-white border-black/20 hover:border-[#6B4C2A] disabled:opacity-60 transition-colors">
           <Download size={16} /> Export CSV
         </button>
+        <button type="button" onClick={() => setOptimizing(true)} disabled={products.length === 0} className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border text-[14px] font-medium bg-white border-black/20 hover:border-[#6B4C2A] disabled:opacity-60 transition-colors">
+          <Gauge size={16} /> Make photos lighter
+        </button>
         {mode === "select" && filtered.length > 0 && (
           <button type="button" onClick={() => setSelected(selected.size === filtered.length ? new Set() : new Set(filtered.map((p) => p.id)))} className="h-10 px-3 text-[14px] font-medium underline underline-offset-4" style={{ color: "#4A3219" }}>
             {selected.size === filtered.length ? "Clear selection" : `Select all ${filtered.length} shown`}
@@ -387,6 +392,14 @@ export default function ProductManager({ products, loading, refetch, showToast, 
           <button disabled={busy} onClick={() => askDelete(selectedItems)} className="h-10 px-3.5 rounded-xl bg-[#B42318] hover:bg-[#8F1C12] text-[14px] font-medium disabled:opacity-60 inline-flex items-center gap-1.5"><Trash2 size={15} /> Remove</button>
           <button onClick={() => setSelected(new Set())} aria-label="Clear selection" className="ml-auto w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center"><X size={18} /></button>
         </div>
+      )}
+
+      {optimizing && (
+        <PhotoOptimizer
+          photos={ordered.filter((p) => p.url && p.storage_path).map((p) => ({ id: p.id, url: p.url, storage_path: p.storage_path, name: p.product_name || "Product" }))}
+          onClose={() => setOptimizing(false)}
+          showToast={showToast}
+        />
       )}
 
       {editing && (
