@@ -63,5 +63,5 @@ export function useProductDetails() {
   const q = useQuery(productDetailsQuery());
   const details = useProductDetailsStore();
   useEffect(() => { if (q.data) setProductDetails(q.data); }, [q.data]);
-  return { details, loading: q.isPending, refetch: q.refetch };
+  return { details, loading: q.isPending, ready: q.isSuccess, refetch: q.refetch };
 }

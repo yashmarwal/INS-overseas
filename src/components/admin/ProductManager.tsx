@@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Copy, Download, Gauge, GripVertical, Hash, ImagePlus, ListChecks, Pencil, Search, Star, Trash2, X, ArrowUpDown } from "lucide-react";
 import { PRODUCT_TAGS, tagLabel, type ProductImage } from "@/hooks/useProductImages";
 import { adminCategoryLabel, useCategories } from "@/hooks/useCategories";
-import { assignCodes, buildSetupSql, deleteProducts, probeExtraColumns, removePhotoFiles, saveProductDetails, saveProductTerms, updateRows, uploadProductPhoto } from "@/lib/adminData";
+import { buildSetupSql, deleteProducts, probeExtraColumns, removePhotoFiles, saveProductDetails, saveProductTerms, updateRows, uploadProductPhoto } from "@/lib/adminData";
 import { useProductTerms } from "@/hooks/useProductTerms";
 import { useProductDetails } from "@/hooks/useProductDetails";
 import { DETAIL_LIMITS, type ProductDetails, type ProductPhoto } from "@/data/productDetails";
 import { planCodes } from "@/lib/productCodes";
 import { buildProductsCsv, downloadCsv, type CsvProduct } from "@/lib/exportCsv";
 import { productPageUrl } from "@/lib/productUrl";
+import { assignMissingCodes } from "@/lib/autoCodes";
 import PhotoOptimizer from "@/components/admin/PhotoOptimizer";
 import { DEFAULT_LEAD_DAYS, moqNumber, productLead, productMoq } from "@/data/catalogue";
 import { useDragReorder, useSavedOrder } from "@/components/admin/reorder";
@@ -33,7 +34,8 @@ type Props = {
 export default function ProductManager({ products, loading, refetch, showToast, setConfirm, adminEmail }: Props) {
   const { all: allCats } = useCategories();
   const { terms, refetch: refetchTerms } = useProductTerms();
-  const { details, refetch: refetchDetails } = useProductDetails();
+  const { details, ready: detailsReady, refetch: refetchDetails } = useProductDetails();
+  const autoCodesTried = useRef(false);
   const [listFilter, setListFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState<Mode>("browse");
@@ -79,7 +81,6 @@ export default function ProductManager({ products, loading, refetch, showToast, 
     return m;
   }, [products]);
   const missingCodes = ordered.filter((p) => !details.get(p.id)?.code).length;
-  const bare = (d?: ProductDetails): Omit<ProductDetails, "rowId"> => { if (!d) return { photos: [] }; const { rowId: _rowId, ...rest } = d; return rest; };
 
   const switchMode = (m: Mode) => { setMode((cur) => (cur === m ? "browse" : m)); setSelected(new Set()); };
   const toggle = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -123,6 +124,21 @@ export default function ProductManager({ products, loading, refetch, showToast, 
 
   const featuredOverflow = featuredCount > HOME_SLOTS;
 
+  // Item codes come by themselves: any product that has none gets the next code when this screen opens (once per visit), after
+  // reading the codes fresh from the database. (Only when that read really worked: a failed read must never look like "no codes".)
+  useEffect(() => {
+    if (autoCodesTried.current || loading || !detailsReady || products.length === 0) return;
+    autoCodesTried.current = true;
+    void (async () => {
+      const [pr, dr] = await Promise.all([refetch() as Promise<{ isSuccess?: boolean; data?: ProductImage[] }>, refetchDetails()]);
+      if (!pr?.isSuccess || !pr.data || !dr.isSuccess || !dr.data) return;
+      const r = await assignMissingCodes(pr.data, dr.data, catLabelOf);
+      if (r.count) { await refetchDetails(); showToast("success", `${r.count} product${r.count === 1 ? "" : "s"} got an item code automatically.`); }
+      else if (r.error) showToast("error", `Item codes could not be added yet: ${r.error}`);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, detailsReady, products.length]);
+
   const askAssignCodes = () =>
     setConfirm({
       title: `Give item codes to ${missingCodes} product${missingCodes === 1 ? "" : "s"}?`,
@@ -131,12 +147,13 @@ export default function ProductManager({ products, loading, refetch, showToast, 
       onConfirm: () => {
         void (async () => {
           setBusy(true);
-          const plan = planCodes(ordered, (id) => details.get(id)?.code ?? "", (c) => catLabelOf(c));
-          const r = await assignCodes([...plan].map(([productId, code]) => ({ productId, rowId: details.get(productId)?.rowId, code, current: bare(details.get(productId)) })));
+          const [pr, dr] = await Promise.all([refetch() as Promise<{ isSuccess?: boolean; data?: ProductImage[] }>, refetchDetails()]);
+          if (!pr?.isSuccess || !pr.data || !dr.isSuccess || !dr.data) { setBusy(false); showToast("error", "The current item codes could not be read, so nothing was changed. Please try again."); return; }
+          const r = await assignMissingCodes(pr.data, dr.data, catLabelOf);
           await refetchDetails();
           setBusy(false);
-          if (r.ok) showToast("success", `${plan.size} item code${plan.size === 1 ? "" : "s"} added.`);
-          else explain(r);
+          if (r.error) showToast("error", `Item codes could not be added: ${r.error}`);
+          else showToast("success", `${r.count} item code${r.count === 1 ? "" : "s"} added.`);
         })();
       },
     });
@@ -218,7 +235,7 @@ export default function ProductManager({ products, loading, refetch, showToast, 
         >
           <ArrowUpDown size={16} /> Arrange order
         </button>
-        {missingCodes > 0 && !loading && (
+        {missingCodes > 0 && !loading && detailsReady && (
           <button type="button" disabled={busy} onClick={askAssignCodes} className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border text-[14px] font-medium bg-white border-black/20 hover:border-[#6B4C2A] disabled:opacity-60 transition-colors">
             <Hash size={16} /> Give item codes <span className="tabular-nums" style={{ color: MUTED }}>({missingCodes})</span>
           </button>
@@ -417,6 +434,10 @@ export default function ProductManager({ products, loading, refetch, showToast, 
             const r = await updateRows([editing.id], patch);
             if (!r.ok) { explain(r); return; }
             const t = await saveProductTerms(editing.id, terms.get(editing.id)?.rowId, own.moq, own.lead);
+            if (!extra.details.code) {
+              const moved = ordered.map((p) => (p.id === editing.id ? { ...p, category: String(patch.category ?? p.category) } : p));
+              extra.details.code = planCodes(moved, (id) => (id === editing.id ? "" : details.get(id)?.code ?? ""), catLabelOf).get(editing.id) || undefined;
+            }
             const dr = await saveProductDetails(editing.id, details.get(editing.id)?.rowId, extra.details);
             await Promise.all([refetch(), refetchTerms(), refetchDetails()]);
             if (dr.ok) await removePhotoFiles(extra.removedPaths); // photos taken off the product are deleted from storage
@@ -589,7 +610,7 @@ function EditDialog({ product, terms, details, otherNames, otherCodes, extras, o
             <div className="mt-2 grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="edit-code" className="text-[13px] font-medium">Item code</label>
-                <input id="edit-code" value={code} maxLength={DETAIL_LIMITS.code} onChange={(e) => { setCode(e.target.value); setCodeError(""); }} placeholder="e.g. LJ-014" className={`${field} mt-1 h-12 px-4`} />
+                <input id="edit-code" value={code} maxLength={DETAIL_LIMITS.code} onChange={(e) => { setCode(e.target.value); setCodeError(""); }} placeholder="Automatic if left empty" className={`${field} mt-1 h-12 px-4`} />
               </div>
               <div>
                 <label htmlFor="edit-size" className="text-[13px] font-medium">Size</label>

@@ -124,7 +124,7 @@ export default function VideoBubble() {
   // of the page when it has been pulled far enough (or flicked). A short pull, or a sideways / upward one, springs back.
   const onSwipeDown = (e: React.PointerEvent) => {
     if (!open || e.pointerType === "mouse") return;
-    swipe.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, t0: performance.now(), dy: 0, on: false };
+    swipe.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, t0: e.timeStamp, dy: 0, on: false }; // (the touch's own time stamp: how fast the finger moved, not how fast the page got to hear about it)
   };
   const onSwipeMove = (e: React.PointerEvent) => {
     const s = swipe.current, c = clip.current;
@@ -144,11 +144,10 @@ export default function VideoBubble() {
     const s = swipe.current, c = clip.current;
     swipe.current = null;
     if (!s || !c || !s.on) return;
-    const speed = s.dy / Math.max(1, performance.now() - s.t0); // px per ms
+    const speed = s.dy / Math.max(1, e.timeStamp - s.t0); // px per ms
     c.style.transition = "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
     c.style.transform = "";
-    if (!cancelled && (s.dy > 100 || (s.dy > 40 && speed > 0.5))) collapse();
-    void e;
+    if (!cancelled && (s.dy > 100 || (s.dy > 40 && speed > 0.35))) collapse();
   };
 
   // Escape closes the player; Tab stays inside it while it is open

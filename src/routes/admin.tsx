@@ -6,6 +6,8 @@ import { IMAGE_SLOTS, type ImageSlot } from "@/data/imageSections";
 import { useGalleryImages, type GalleryImage } from "@/hooks/useGalleryImages";
 import { useProductImages } from "@/hooks/useProductImages";
 import { adminCategoryLabel, useCategories } from "@/hooks/useCategories";
+import { useProductDetails } from "@/hooks/useProductDetails";
+import { assignMissingCodes } from "@/lib/autoCodes";
 import CategoryPicker from "@/components/admin/CategoryPicker";
 import { isVideoUrl } from "@/lib/utils";
 import { compressImage, compressImageDetailed, savingsSentence, type CompressResult } from "@/lib/compressImage";
@@ -256,6 +258,7 @@ function AdminPage() {
 
   // ── Product upload ────────────────────────────────────────────────────────────
   const { all: allCategories } = useCategories(); // keeps every category name below up to date (including the ones you add yourself)
+  const { refetch: refetchDetails } = useProductDetails();
   const catLabelOf = adminCategoryLabel;
   const productCounts = productImages.reduce<Record<string, number>>((m, p) => { m[p.category] = (m[p.category] ?? 0) + 1; return m; }, {});
 
@@ -297,9 +300,18 @@ function AdminPage() {
         }
         added++;
       }
-      await refetchProducts();
+      // every new product gets its item code right away (read fresh from the database first, so no code is ever handed out twice)
+      let codeNote = "";
+      if (added > 0) try {
+        const [pr, dr] = await Promise.all([refetchProducts(), refetchDetails()]);
+        if (pr.isSuccess && dr.isSuccess && dr.data) {
+          const r = await assignMissingCodes(pr.data, dr.data, catLabelOf);
+          if (r.count) { await refetchDetails(); codeNote = r.count === 1 ? "Item code added automatically." : `${r.count} item codes added automatically.`; }
+          else if (r.error) codeNote = "The item code could not be added yet; it will be added when you open Products.";
+        }
+      } catch { codeNote = "The item code could not be added yet; it will be added when you open Products."; }
       setProductName("");
-      const extra = [savingsSentence(results), small.length ? `${small.length === 1 ? "One photo is" : `${small.length} photos are`} quite small (${small.join(", ")}) and may look soft on large screens.` : ""].filter(Boolean).join(" ");
+      const extra = [savingsSentence(results), codeNote, small.length ? `${small.length === 1 ? "One photo is" : `${small.length} photos are`} quite small (${small.join(", ")}) and may look soft on large screens.` : ""].filter(Boolean).join(" ");
       if (skipped.length) {
         showToast("error", `${added ? `${added} added. ` : ""}Skipped ${skipped.length} file${skipped.length > 1 ? "s" : ""} (${skipped.join(", ")}) — photos must be JPG, PNG or WebP under ${MAX_PHOTO_MB} MB. ${extra}`.trim());
       } else {
