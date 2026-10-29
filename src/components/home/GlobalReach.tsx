@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ComposableMap, Geographies, Geography, Marker, Line } from "react-simple-maps";
 import { geoEqualEarth } from "d3-geo";
@@ -137,6 +137,87 @@ function ShipIcon({ size = 1 }: { size?: number }) {
   );
 }
 
+const ORIGIN = projection(JAIPUR) as [number, number];
+const TRAILS = [
+  { dt: 0.012, op: 0.55, rr: 2.5 },
+  { dt: 0.025, op: 0.30, rr: 1.8 },
+  { dt: 0.040, op: 0.12, rr: 1.2 },
+];
+
+// where one vehicle is, `tick` ms after the page started: spread across routes with startOffset, there and back again
+function pose(r: Route, tick: number) {
+  const dest = projection(r.coords) as [number, number];
+  const cycle = ((tick / r.duration) + r.startOffset) % 2;
+  const t = cycle <= 1 ? cycle : 2 - cycle;
+  const isReturning = cycle > 1;
+  const [fromX, fromY] = isReturning ? dest : ORIGIN;
+  const [toX, toY] = isReturning ? ORIGIN : dest;
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  const dist = Math.hypot(dx, dy);
+  const arcHeight = r.type === "plane" ? Math.min(70, Math.max(25, dist * 0.2)) : Math.min(18, Math.max(8, dist * 0.04));
+  const compute = (tt: number): [number, number] => [fromX + dx * tt, fromY + dy * tt - Math.sin(tt * Math.PI) * arcHeight];
+  const [x, y] = compute(t);
+  const ahead = compute(Math.min(1, t + 0.01));
+  const angle = (Math.atan2(ahead[1] - y, ahead[0] - x) * 180) / Math.PI;
+  return {
+    transform: `translate(${x} ${y}) rotate(${angle}) scale(${r.type === "plane" ? 0.7 : 0.55})`,
+    trail: TRAILS.map((tr) => compute(Math.max(0, t - tr.dt))),
+  };
+}
+
+// The planes and ships are moved by changing a few SVG attributes each frame, outside React, and only while the map is on screen
+// (they used to re-render the whole section, every country included, on every frame, even when it was far off screen).
+function Vehicles() {
+  const root = useRef<SVGGElement>(null);
+
+  useEffect(() => {
+    const g = root.current;
+    if (!g) return;
+    const nodes = activeRoutes.map((_, i) => {
+      const el = g.children[i] as SVGGElement;
+      return { trail: Array.from(el.children).slice(0, TRAILS.length) as SVGCircleElement[], icon: el.children[TRAILS.length] as SVGGElement };
+    });
+    let raf = 0;
+    let start = 0;
+    const frame = (ts: number) => {
+      if (!start) start = ts;
+      const tick = ts - start;
+      activeRoutes.forEach((r, i) => {
+        const p = pose(r, tick);
+        const n = nodes[i];
+        n.icon.setAttribute("transform", p.transform);
+        p.trail.forEach(([x, y], ti) => { n.trail[ti].setAttribute("cx", String(x)); n.trail[ti].setAttribute("cy", String(y)); });
+      });
+      raf = requestAnimationFrame(frame);
+    };
+    const svg = (g.ownerSVGElement ?? g) as SVGSVGElement;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { if (!raf) raf = requestAnimationFrame(frame); svg.removeAttribute("data-idle"); svg.unpauseAnimations?.(); }
+      else { cancelAnimationFrame(raf); raf = 0; svg.setAttribute("data-idle", ""); svg.pauseAnimations?.(); }
+    });
+    io.observe(svg);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, []);
+
+  return (
+    <g ref={root}>
+      {activeRoutes.map((r, idx) => {
+        const p = pose(r, 0);
+        const trailColor = r.type === "plane" ? "#C9973A" : "#6B9EC9";
+        return (
+          <g key={`v-${idx}`}>
+            {TRAILS.map((tr, ti) => (
+              <circle key={ti} cx={p.trail[ti][0]} cy={p.trail[ti][1]} r={tr.rr} fill={trailColor} opacity={tr.op} />
+            ))}
+            <g transform={p.transform}>{r.type === "plane" ? <PlaneIcon /> : <ShipIcon />}</g>
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
 function Stat({ value, suffix = "", label, group = true }: { value: number; suffix?: string; label: string; group?: boolean }) {
   const { value: v, ref } = useCounter(value);
   return (
@@ -159,22 +240,6 @@ function Stat({ value, suffix = "", label, group = true }: { value: number; suff
 }
 
 export default function GlobalReach() {
-  const [tick, setTick] = useState(0);
-  const startRef = useRef<number | null>(null);
-  const rafRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const animate = (ts: number) => {
-      if (startRef.current === null) startRef.current = ts;
-      setTick(ts - startRef.current);
-      rafRef.current = requestAnimationFrame(animate);
-    };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, []);
-
-  const origin = projection(JAIPUR) as [number, number];
-
   return (
     <section className="bg-ink text-cream py-20 md:py-28 lg:py-32 overflow-hidden" style={{ background: "#0F0B08" }}>
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
@@ -211,7 +276,18 @@ export default function GlobalReach() {
                 ))
               }
             </Geographies>
+          </ComposableMap>
 
+          {/* Everything that moves sits in its own transparent map laid exactly over the countries (same size, same projection), so the
+              countries are drawn once instead of being redrawn under every pulse, dash and plane on every frame. */}
+          <ComposableMap
+            projection={projection as never}
+            width={MAP_WIDTH}
+            height={MAP_HEIGHT}
+            viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+            className="absolute inset-0 pointer-events-none will-change-transform max-sm:scale-[1.3] max-sm:origin-[56%_50%]"
+            style={{ width: "100%", height: "100%" }}
+          >
             {/* Route lines */}
             {activeRoutes.map((r, i) => (
               <Line
@@ -269,53 +345,7 @@ export default function GlobalReach() {
               </text>
             </Marker>
 
-            {/* Moving vehicles — spread across routes using startOffset + ping-pong */}
-            {activeRoutes.map((r, idx) => {
-              const dest = projection(r.coords) as [number, number] | null;
-              if (!dest || !origin) return null;
-
-              const cycle = ((tick / r.duration) + r.startOffset) % 2;
-              const t = cycle <= 1 ? cycle : 2 - cycle;
-              const isReturning = cycle > 1;
-
-              const [fromX, fromY]: [number, number] = isReturning ? dest : origin;
-              const [toX, toY]: [number, number]     = isReturning ? origin : dest;
-
-              const dx = toX - fromX;
-              const dy = toY - fromY;
-              const dist = Math.hypot(dx, dy);
-              const arcHeight = r.type === "plane"
-                ? Math.min(70, Math.max(25, dist * 0.2))
-                : Math.min(18, Math.max(8,  dist * 0.04));
-
-              const compute = (tt: number): [number, number] => [
-                fromX + dx * tt,
-                fromY + dy * tt - Math.sin(tt * Math.PI) * arcHeight,
-              ];
-
-              const [x, y] = compute(t);
-              const ahead  = compute(Math.min(1, t + 0.01));
-              const angle  = Math.atan2(ahead[1] - y, ahead[0] - x) * 180 / Math.PI;
-
-              const trailColor = r.type === "plane" ? "#C9973A" : "#6B9EC9";
-              const trails = [
-                { dt: 0.012, op: 0.55, rr: 2.5 },
-                { dt: 0.025, op: 0.30, rr: 1.8 },
-                { dt: 0.040, op: 0.12, rr: 1.2 },
-              ];
-
-              return (
-                <g key={`v-${idx}`}>
-                  {trails.map((tr, ti) => {
-                    const [tx, ty] = compute(Math.max(0, t - tr.dt));
-                    return <circle key={ti} cx={tx} cy={ty} r={tr.rr} fill={trailColor} opacity={tr.op} />;
-                  })}
-                  <g transform={`translate(${x} ${y}) rotate(${angle}) scale(${r.type === "plane" ? 0.7 : 0.55})`}>
-                    {r.type === "plane" ? <PlaneIcon /> : <ShipIcon />}
-                  </g>
-                </g>
-              );
-            })}
+            <Vehicles />
           </ComposableMap>
         </div>
 

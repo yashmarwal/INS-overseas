@@ -7,6 +7,15 @@ import "./styles.css";
 
 const queryClient = new QueryClient();
 
+// A photo's loading shimmer (.img-shimmer) is hidden behind the photo once it has faded in; switch it off then, so finished cards
+// stop animating (it would otherwise keep every card on the page redrawing for as long as the page is open).
+// "load" does not bubble, so listen in the capture phase. (A data attribute, so React re-rendering the class list never wipes it.)
+document.addEventListener("load", (e) => {
+  if (!(e.target instanceof HTMLImageElement)) return;
+  const frame = e.target.closest(".img-shimmer");
+  if (frame) setTimeout(() => frame.setAttribute("data-loaded", ""), 700); // after the 0.5s fade-in
+}, true);
+
 const router = createRouter({
   routeTree,
   context: { queryClient },

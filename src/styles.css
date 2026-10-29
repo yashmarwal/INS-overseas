@@ -239,6 +239,7 @@
 .route-line {
   animation: dashFlow 1.5s linear infinite;
 }
+svg[data-idle] .route-line { animation-play-state: paused; } /* map is off screen */
 
 /* Global image rounded corners */
 img {
@@ -287,18 +288,33 @@ section > div > img {
 }
 
 
-/* Soft shimmer behind photos that are still loading (put it on the photo's frame) */
+/* Soft shimmer behind photos that are still loading (put it on the photo's frame).
+   The moving highlight is a strip that SLIDES (transform), so it runs on the graphics card. Animating background-position instead
+   repainted every card on every frame, all the time, even after the photos had loaded. The strip is 5 frame-widths wide, made of
+   tiles 2 frame-widths wide, and slides exactly 2 tiles, so the loop is seamless. It sits under the photo (z-index -1 inside the frame). */
 @keyframes imgShimmer {
-  from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
+  from { transform: translateX(0); }
+  to { transform: translateX(80%); }
 }
 .img-shimmer {
   background-color: #EFEBE3;
-  background-image: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.65) 50%, transparent 70%);
-  background-size: 200% 100%;
-  animation: imgShimmer 1.8s linear infinite;
+  isolation: isolate;
 }
-@media (prefers-reduced-motion: reduce) { .img-shimmer { animation: none; } }
+.img-shimmer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -400%;
+  width: 500%;
+  z-index: -1;
+  pointer-events: none;
+  background-image: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.65) 50%, transparent 70%);
+  background-size: 40% 100%;
+  animation: imgShimmer 1.8s linear 5; /* a few sweeps, not forever: photos far down the page have not started loading yet, and an endless animation keeps them all ticking */
+}
+.img-shimmer[data-loaded]::before { display: none; }
+@media (prefers-reduced-motion: reduce) { .img-shimmer::before { animation: none; } }
 
 /* ── Video bubble: a small round reel in the bottom-left corner that grows into a player ── */
 .reel {
