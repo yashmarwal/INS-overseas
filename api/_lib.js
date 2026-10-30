@@ -1,10 +1,23 @@
 // Shared by the two server functions in this folder (the product pages and the products sitemap).
 // It reads the same public data the website itself reads (the anon key below is the public one that is already in the
 // site's own JavaScript; it can only read). Nothing here can change anything.
+import { SITE_URL } from "../site.config.mjs";
+
 export const SUPABASE_URL = "https://ebmhkylrkcrhxyzclevz.supabase.co";
 export const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVibWhreWxya2NyaHh5emNsZXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTYwNDQsImV4cCI6MjA5NjMzMjA0NH0.x7VXmmMYmUCRrlGpTDqvy2aWiFLVhgD1FkzaVN8fyAQ";
-export const SITE = "https://ins-overseas.com";
+export const SITE = SITE_URL;
+
+// The collection page each category belongs to (the same grouping the Products page uses); anything else goes to the full range.
+const COLLECTION_OF = {
+  "leather-journals": "/products/leather-journals",
+  "handmade-deckle-edge-paper": "/products/handmade-paper",
+  "handmade-seed-paper": "/products/handmade-paper",
+  "handmade-paper-gift-box": "/products/stationery",
+  "handmade-paper-gift-bag": "/products/stationery",
+  "leather-bags": "/products/leather-accessories",
+};
+export const collectionPath = (category) => COLLECTION_OF[category] || "/products";
 
 const CATEGORY_LABELS = {
   "leather-journals": "Leather Journal",
@@ -15,15 +28,20 @@ const CATEGORY_LABELS = {
   "handmade-deckle-edge-paper": "Deckle Edge Paper",
   "handblock-print-fabric": "Handblock Print Fabric",
 };
+// The client's minimum orders (keep in step with src/data/moq.ts; a test compares the two). Deckle edge and handblock fabric are NOT in the
+// client's list: no number, the pages say "confirmed in your quote".
 const CATEGORY_MOQ = {
-  "leather-journals": 200,
-  "leather-bags": 150,
+  "leather-journals": 250,
+  "handmade-paper": 500,
   "handmade-paper-gift-box": 200,
-  "handmade-paper-gift-bag": 800,
-  "handmade-seed-paper": 1500,
-  "handmade-deckle-edge-paper": 200,
-  "handblock-print-fabric": 200,
+  "handmade-paper-gift-bag": 400,
+  "greeting-cards": 500,
+  "handmade-seed-paper": 1000,
+  "leather-bags": 150,
 };
+export const DEFAULT_LEAD_DAYS = 25;
+export { CATEGORY_MOQ };
+const termsText = (p) => `${p.moq == null ? "Minimum order confirmed in your quote" : `Minimum order ${p.moq} pcs`}, lead time ${p.lead} days`;
 
 // ── the same address rules as src/lib/share.ts and src/lib/productUrl.ts (keep them in step)
 export const shortCode = (id) => (id.length > 12 ? id.replace(/-/g, "").slice(0, 8) : id);
@@ -48,7 +66,7 @@ export async function loadCatalogue(fetchFn = fetch) {
   for (const row of rows) {
     if (row.section === "product_details" && row.storage_path) details.set(row.storage_path, json(row.alt_text));
     else if (row.section === "product_terms" && row.storage_path) terms.set(row.storage_path, json(row.alt_text));
-    else if (row.section === "product_category" && row.category && row.product_name) customCats.set(row.category, { label: row.product_name, moq: Math.max(1, Math.round(Number(json(row.alt_text).moq)) || 200) });
+    else if (row.section === "product_category" && row.category && row.product_name) customCats.set(row.category, { label: row.product_name, moq: Math.round(Number(json(row.alt_text).moq)) >= 1 ? Math.round(Number(json(row.alt_text).moq)) : null });
   }
   const products = rows
     .filter((row) => row.section === "product" && row.id && row.url)
@@ -72,8 +90,8 @@ export async function loadCatalogue(fetchFn = fetch) {
         material: clean(d.material, 80),
         colours: clean(d.colours, 80),
         custom: clean(d.custom, 200),
-        moq: Math.max(1, Math.round(Number(t.moq)) || CATEGORY_MOQ[cat] || customCats.get(cat)?.moq || 200),
-        lead: Math.max(1, Math.round(Number(t.lead)) || 30),
+        moq: Math.round(Number(t.moq)) >= 1 ? Math.round(Number(t.moq)) : CATEGORY_MOQ[cat] || customCats.get(cat)?.moq || null,
+        lead: Math.max(1, Math.round(Number(t.lead)) || DEFAULT_LEAD_DAYS),
         tag: row.tag === "best" ? "Best seller" : row.tag === "new" ? "New" : "",
         created: row.created_at,
       };
@@ -97,10 +115,10 @@ export function productMarkup(p) {
   const canonical = SITE + pathOf(p);
   const title = `${p.name}${p.code ? ` (${p.code})` : ""} | ${p.categoryLabel} | INS Overseas`;
   const spec = [p.size, p.material].filter(Boolean).join(" · ");
-  const description = [p.description, spec, `Wholesale ${p.categoryLabel.toLowerCase()} from Jaipur, India. Minimum order ${p.moq} pcs, lead time ${p.lead} days. Custom branding available.`]
+  const description = [p.description, spec, `Wholesale ${p.categoryLabel.toLowerCase()} from Jaipur, India. ${termsText(p)}. Custom branding available.`]
     .filter(Boolean).join(" ").replace(/\s+/g, " ").slice(0, 160);
   const images = [p.image, ...p.photos];
-  const crumbs = [["Home", SITE], ["Products", `${SITE}/products`], [p.categoryLabel, `${SITE}/products`], [p.name, canonical]];
+  const crumbs = [["Home", SITE], ["Products", `${SITE}/products`], [p.categoryLabel, `${SITE}${collectionPath(p.category)}`], [p.name, canonical]];
   const ld = [
     {
       "@type": "Product",
@@ -108,7 +126,7 @@ export function productMarkup(p) {
       name: p.name,
       url: canonical,
       image: images,
-      description: [p.description, spec, `Wholesale ${p.categoryLabel.toLowerCase()} from Jaipur, India. Minimum order ${p.moq} pcs, lead time ${p.lead} days. Custom branding available.`].filter(Boolean).join(" ").slice(0, 300),
+      description: [p.description, spec, `Wholesale ${p.categoryLabel.toLowerCase()} from Jaipur, India. ${termsText(p)}. Custom branding available.`].filter(Boolean).join(" ").slice(0, 300),
       ...(p.code ? { sku: p.code, mpn: p.code } : {}),
       brand: { "@type": "Brand", name: "INS Overseas" },
       manufacturer: { "@id": `${SITE}/#organization` },
@@ -117,7 +135,7 @@ export function productMarkup(p) {
       ...(p.colours ? { color: p.colours } : {}),
       ...(p.size ? { size: p.size } : {}),
       additionalProperty: [
-        { "@type": "PropertyValue", name: "Minimum order quantity", value: `${p.moq} pcs` },
+        ...(p.moq == null ? [] : [{ "@type": "PropertyValue", name: "Minimum order quantity", value: `${p.moq} pcs` }]),
         { "@type": "PropertyValue", name: "Lead time", value: `${p.lead} days` },
         ...(p.custom ? [{ "@type": "PropertyValue", name: "Customisation", value: p.custom }] : []),
       ],
@@ -143,14 +161,18 @@ export function productMarkup(p) {
   ].join("\n    ");
   const facts = [
     p.code && `Item code: ${p.code}`, p.size && `Size: ${p.size}`, p.material && `Material: ${p.material}`, p.colours && `Colours: ${p.colours}`,
-    `Minimum order: ${p.moq} pcs`, `Lead time: ${p.lead} days`, p.custom && `Customisation: ${p.custom}`,
+    p.moq == null ? "Minimum order: confirmed in your quote" : `Minimum order: ${p.moq} pcs`, `Lead time: ${p.lead} days`, p.custom && `Customisation: ${p.custom}`,
   ].filter(Boolean);
+  const trail =
+    `<nav aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/products">Products</a></li>` +
+    `<li><a href="${collectionPath(p.category)}">${esc(p.categoryLabel)}</a></li><li>${esc(p.name)}</li></ol></nav>`;
   const body =
-    `<main data-product-prerender style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">` +
+    `<main data-product-prerender>` + trail +
     `<h1>${esc(p.name)}</h1><p>${esc(p.categoryLabel)}${p.tag ? ` - ${esc(p.tag)}` : ""}</p>${p.description ? `<p>${esc(p.description)}</p>` : ""}` +
     `<ul>${facts.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>` +
     images.map((u) => `<img src="${esc(u)}" alt="${esc(p.name)}" />`).join("") +
-    `<p>Wholesale from INS Overseas, Sanganer, Jaipur, India. Ask for pricing and samples.</p></main>`;
+    `<p>Wholesale from INS Overseas, Sanganer, Jaipur, India. Ask for pricing and samples.</p>` +
+    `<ul><li><a href="/contact">Contact INS Overseas</a></li><li><a href="/wholesale">Wholesale and private label</a></li><li><a href="${collectionPath(p.category)}">More ${esc(p.categoryLabel.toLowerCase())} products</a></li></ul></main>`;
   return { head, body, title, canonical };
 }
 
@@ -166,9 +188,15 @@ export function injectProduct(template, p) {
   // (the template's own Product block describes the homepage, not this product)
   html = html.replace(/\s*<script type="application\/ld\+json">\s*\{\s*"@context": "https:\/\/schema\.org",\s*"@type": "Product",[\s\S]*?<\/script>/, "");
   html = html.replace(/<\/head>/i, () => `    ${head}\n  </head>`);
-  html = html.replace(/<div id="root">\s*<\/div>/i, () => `<div id="root">${body}</div>`);
+  // the page's own header and footer links come from the template (the prerender script writes them there from siteNav.ts)
+  const header = (template.match(/<header data-shell="header">[\s\S]*?<\/header>/i) || [""])[0];
+  const footer = (template.match(/<footer data-shell="footer">[\s\S]*?<\/footer>/i) || [""])[0];
+  html = html.replace(/<div id="root">(?:<!--seo-shell-start-->[\s\S]*?<!--seo-shell-end-->)?\s*<\/div>/i, () => `<div id="root"><div class="seo-shell">${header}${body}${footer}</div></div>`);
   return html;
 }
+
+/** The template without the home page's crawler body: used wherever the page is NOT about the homepage (an unknown product, a database that is down). */
+export const withoutShell = (t) => t.replace(/<!--seo-shell-start-->[\s\S]*?<!--seo-shell-end-->/, "");
 
 export async function loadTemplate(req, fetchFn = fetch) {
   const r = await fetchFn(`${originOf(req)}/index.html`, { headers: { "user-agent": "ins-overseas-product-page" } });

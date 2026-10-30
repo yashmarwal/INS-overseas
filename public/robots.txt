@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # INS Overseas — robots.txt
-# https://ins-overseas.com
-# Last updated: 2026-07-12
+# __SITE_URL__
+# Last updated: 2026-10-29
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Core search engines — always allow ───────────────────────────────────────
@@ -115,5 +115,5 @@ Disallow: /admin
 Disallow: /admin/
 Allow: /
 
-Sitemap: https://ins-overseas.com/sitemap.xml
-Sitemap: https://ins-overseas.com/sitemap-products.xml
+Sitemap: __SITE_URL__/sitemap.xml
+Sitemap: __SITE_URL__/sitemap-products.xml

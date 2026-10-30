@@ -14,8 +14,10 @@
  *   });
  */
 
+import { SITE_URL } from "../../site.config.mjs";
+
 export const SITE_NAME = "INS Overseas";
-export const SITE_URL = "https://ins-overseas.com";
+export { SITE_URL };
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 export const DEFAULT_OG_IMAGE_ALT =
   "INS Overseas — Handmade leather journals and eco-friendly paper from Sanganer, Jaipur";

@@ -15,7 +15,7 @@ export const faqCategories = [
       },
       {
         q: "How is your handmade paper made?",
-        a: "Our paper is made entirely by hand using a traditional process passed down through four generations of our family in Sanganer, Jaipur. We use 100% recycled cotton — sourced from textile industry offcuts from Tirupur, Bengaluru, and Punjab — to create tree-free, chemical-free paper sheets. We can produce any GSM weight and any size as per buyer requirement."
+        a: "Our paper is made entirely by hand using a traditional process passed down through four generations of our family in Sanganer, Jaipur. We use 100% recycled cotton — sourced from textile industry offcuts from Tirupur, Bengaluru, and Punjab — to create tree-free paper sheets. We can produce any GSM weight and any size as per buyer requirement."
       },
       {
         q: "Is your paper suitable for fountain pens and watercolour?",
@@ -27,7 +27,7 @@ export const faqCategories = [
       },
       {
         q: "What makes INS Overseas different from other Jaipur manufacturers?",
-        a: "Our craft has a 400-year heritage rooted in Sanganer, Jaipur — the historic centre of Indian papermaking. Every sheet of paper is pulled by hand from a cotton vat, and every journal is hand-stitched using traditional techniques. We are four generations into this craft, which means our quality, consistency, and craftsmanship is not something that can be replicated quickly. We are also one of India's largest manufacturers of eco-friendly handmade paper, giving us the production capacity to handle large global orders while maintaining the quality of handmade goods."
+        a: "Our craft is rooted in Sanganer, Jaipur, a papermaking town for centuries — the historic centre of Indian papermaking. Every sheet of paper is pulled by hand from a cotton vat, and every journal is hand-stitched using traditional techniques. We are four generations into this craft, which means our quality, consistency, and craftsmanship is not something that can be replicated quickly. We also work at wholesale scale, exporting to 40+ countries, while keeping the quality of handmade goods."
       },
       {
         q: "What customisation options are available?",
@@ -41,11 +41,11 @@ export const faqCategories = [
     faqs: [
       {
         q: "What is the minimum order quantity (MOQ)?",
-        a: "Our MOQ for standard wholesale orders is 300 pieces per design. For custom/OEM orders (with your logo, custom size, or custom design), the MOQ is 500 pieces."
+        a: "Minimum order depends on the product, from 150 units. See the list on our Wholesale page. Custom and private-label orders are confirmed in your quote."
       },
       {
         q: "Can I mix different products to reach the MOQ?",
-        a: "Yes. You are welcome to mix different products across our catalogue to reach the minimum order quantity. For example, you can combine leather journals, paper notebooks, and bags in one order."
+        a: "Minimums apply per product. If you want to combine products, tell us and we will confirm in your quote."
       },
       {
         q: "How is pricing structured?",
@@ -71,7 +71,7 @@ export const faqCategories = [
     faqs: [
       {
         q: "How does the custom order process work?",
-        a: "Our custom order process is straightforward:\n1. You share your brief — product type, size, leather color, paper type, logo files, and any other requirements\n2. We confirm specifications and send you a quotation\n3. We produce a custom sample (approximately 10 days)\n4. You approve the sample\n5. We raise the proforma invoice and collect 50% advance\n6. Production begins — typically 30 days after payment confirmation\n7. We send step-by-step photos and videos during production\n8. Balance 50% payment before shipment\n9. We dispatch and share tracking details"
+        a: "Our custom order process is straightforward:\n1. You share your brief — product type, size, leather color, paper type, logo files, and any other requirements\n2. We confirm specifications and send you a quotation\n3. We produce a custom sample (approximately 10 days)\n4. You approve the sample\n5. We raise the proforma invoice and collect 30% advance\n6. Production takes 25 days after payment confirmation\n7. We send step-by-step photos and videos during production\n8. Balance 50% payment before shipment\n9. We dispatch and share tracking details"
       },
       {
         q: "How long does a custom sample take?",
@@ -97,7 +97,7 @@ export const faqCategories = [
     faqs: [
       {
         q: "What are your payment terms?",
-        a: "Our standard payment terms are 50% advance payment on order confirmation, and 50% balance payment when the goods are ready for shipment. For repeat buyers, we offer a 5% discount on orders."
+        a: "Our standard payment terms are 30% advance payment on order confirmation, and 70% balance payment when the goods are ready for shipment. For repeat buyers, we offer a 5% discount on orders."
       },
       {
         q: "What payment methods do you accept?",
@@ -119,7 +119,7 @@ export const faqCategories = [
     faqs: [
       {
         q: "How long does production and delivery take?",
-        a: "Production begins 30 days after order confirmation and payment. Delivery time after dispatch depends on shipping method: by air (DHL, FedEx, UPS) — 7 to 10 days to most destinations worldwide. By sea freight (LCL or FCL) — 35 to 40 days."
+        a: "Production takes 25 days after order confirmation and payment. Delivery time after dispatch depends on shipping method: by air (DHL, FedEx, UPS) — 7 to 10 days to most destinations worldwide. By sea freight (LCL or FCL) — 35 to 40 days."
       },
       {
         q: "Which shipping methods do you use?",
@@ -171,7 +171,7 @@ export const faqCategories = [
     faqs: [
       {
         q: "Is your paper really eco-friendly?",
-        a: "Yes — 100%. Our handmade paper is made entirely from recycled cotton rags sourced from textile industry offcuts from Tirupur, Bengaluru, and Punjab. No trees are cut. No harsh chemicals are used in the process. Every sheet is pulled by hand in our Sanganer workshop, the same way our great-grandfather did it four generations ago."
+        a: "Yes — 100%. Our handmade paper is made entirely from recycled cotton rags sourced from textile industry offcuts from Tirupur, Bengaluru, and Punjab. No trees are cut and no wood pulp is used. Every sheet is pulled by hand in our Sanganer workshop, the same way our great-grandfather did it four generations ago."
       },
       {
         q: "Where is your leather sourced?",
@@ -179,11 +179,11 @@ export const faqCategories = [
       },
       {
         q: "Do you have any certifications?",
-        a: "We hold an IEC (Import Export Code) as a registered Indian exporter, and are registered under MSME/Udyam. Our entire paper-making process is aligned with eco-friendly and fair trade principles. We are committed to responsible sourcing and sustainable manufacturing."
+        a: "We hold an IEC (Import Export Code) as a registered Indian exporter, and are registered under MSME/Udyam. Our paper is made from recycled cotton rag, not wood pulp."
       },
       {
         q: "How long has your family been making paper?",
-        a: "Our family has been practising the craft of handmade paper-making in Sanganer, Jaipur for over 400 years. INS Overseas, as a company, was formally established and has been exporting globally for the past 30 years. We are a four-generation family business."
+        a: "Sanganer has been a papermaking town for centuries, and our family has practised handmade paper-making there for four generations. INS Overseas was founded in 1995 and has been exporting since then. We are a four-generation family business."
       }
     ]
   }

@@ -2,6 +2,8 @@
 export const posts = [
   {
     slug: "art-of-deckle-edges",
+    seoTitle: "Deckle Edges: Why Handmade Paper Feels Different", // <= 60 characters, for search results
+    seoDescription: "Why the irregular edge of handmade paper is a sign of quality, how deckle edges form in the mould, and why paper lovers prize them.", // <= 155 characters
     cat: "Craft Stories",
     date: "May 2025",
     datePublished: "2025-05-01",
@@ -35,15 +37,17 @@ A deckle edge is fragile. That is part of what makes it precious.`,
   },
   {
     slug: "sanganer-village-papers-world",
+    seoTitle: "Sanganer: The Village That Papers the World", // <= 60 characters, for search results
+    seoDescription: "A community near Jaipur has made paper by hand for centuries. The story of Sanganer's papermakers, and of INS Overseas.", // <= 155 characters
     cat: "Jaipur Heritage",
     date: "Apr 2025",
     datePublished: "2025-04-01",
-    dateModified: "2025-04-01",
+    dateModified: "2026-10-30",
     readTime: "5 min read",
     img: "/blog/sanganer-village.jpg",
     title: "Sanganer: The Ancient Village That Papers the World",
     excerpt:
-      "Fifteen kilometres from Jaipur's old city, on the banks of the Sâmbhar river, a community has been making paper by hand for over 400 years. This is their story — and ours.",
+      "Fifteen kilometres from Jaipur's old city, on the banks of the Sâmbhar river, a community has been making paper by hand for centuries. This is their story — and ours.",
     content: `If you have ever received a handmade paper journal from India, there is a good chance it passed through Sanganer.
 
 The village — now technically a township absorbed into the sprawl of Jaipur — has been a centre of paper and textile craft since the Mughal era. The Kagzi community (kagaz means paper in Hindi) settled here generations ago and built an industry that has survived industrialisation, partition, and globalisation through sheer quality.
@@ -58,16 +62,18 @@ The cotton rag process
 
 What makes Sanganer paper different from most Indian handmade paper is the raw material. The Kagzi families of Sanganer have always used cotton rags rather than plant fibre. Cotton rags — sourced today from the textile mills of Tirupur, Bengaluru, and Punjab — produce a paper that is stronger, more bleed-resistant, and more archival than anything made from wood pulp.
 
-The rags are cleaned, beaten into pulp, and pulled by hand into individual sheets on molds. The entire process uses no harsh chemicals. The paper is dried in the Rajasthan sun.
+The rags are cleaned, beaten into pulp, and pulled by hand into individual sheets on molds. No wood pulp is used. The paper is dried in the Rajasthan sun.
 
 What we are protecting
 
-When you buy a journal from INS Overseas, you are sustaining a craft that 25 families in Sanganer depend on. You are also buying into 400 years of accumulated knowledge about how to make paper that lasts.
+When you buy a journal from INS Overseas, you are sustaining a craft that 25 families in Sanganer depend on. You are also buying into centuries of accumulated knowledge about how to make paper that lasts.
 
 We do not take that lightly.`,
   },
   {
     slug: "leather-journal-care-guide",
+    seoTitle: "How to Care for a Leather Journal: Complete Guide", // <= 60 characters, for search results
+    seoDescription: "Buffalo leather improves with age if you treat it right. How to condition, store and use a leather journal.", // <= 155 characters
     cat: "Product Care",
     date: "Mar 2025",
     datePublished: "2025-03-01",
@@ -111,6 +117,8 @@ That is the point.`,
   },
   {
     slug: "paper-fountain-pen-vs-watercolour",
+    seoTitle: "Paper for Fountain Pens vs Watercolour: What Matters", // <= 60 characters, for search results
+    seoDescription: "Weight, surface texture and sizing decide whether a pen glides or catches and colours bleed or bloom. A practical guide to choosing handmade paper.", // <= 155 characters
     cat: "How-To Guides",
     date: "Feb 2025",
     datePublished: "2025-02-01",
@@ -146,6 +154,8 @@ If you are stocking for serious artists: specify our loose sheet packs in 200+ g
   },
   {
     slug: "hand-stitched-bindings",
+    seoTitle: "Hand-Stitched Bindings: Coptic, Long and Saddle Stitch", // <= 60 characters, for search results
+    seoDescription: "The three traditional stitch methods we use to bind journals (Coptic, long stitch and saddle stitch), what each does and why it matters.", // <= 155 characters
     cat: "Craft Stories",
     date: "Jan 2025",
     datePublished: "2025-01-01",
@@ -185,10 +195,12 @@ Our binding team stitches by feel as much as by sight. Every journal passes thro
   },
   {
     slug: "wholesale-guide-sourcing-handmade-paper-india",
+    seoTitle: "Sourcing Handmade Paper Products from India: A Guide", // <= 60 characters, for search results
+    seoDescription: "A guide for boutique retailers, gift shops and stationery brands sourcing from India: what to look for, what to avoid, and how to build supply.", // <= 155 characters
     cat: "Wholesale Guide",
     date: "Dec 2024",
     datePublished: "2024-12-01",
-    dateModified: "2024-12-01",
+    dateModified: "2026-10-30",
     readTime: "5 min read",
     img: "/blog/wholesale-sourcing.jpg",
     title: "The Complete Guide to Sourcing Handmade Paper Products from India",
@@ -206,7 +218,7 @@ Ask about raw material sourcing. Cotton rag paper is only as good as the cotton 
 
 Minimum order quantities
 
-Most serious manufacturers in Sanganer require a minimum of 200 units per design for wholesale orders. Be wary of manufacturers who accept orders of 20 or 50 units — they are likely middlemen, not manufacturers, and their pricing will not allow you to build a sustainable retail margin.
+Most serious manufacturers in Sanganer require a minimum of 250 units per design for wholesale orders. Be wary of manufacturers who accept orders of 20 or 50 units — they are likely middlemen, not manufacturers, and their pricing will not allow you to build a sustainable retail margin.
 
 Lead times
 
@@ -214,7 +226,7 @@ Standard production takes 25–35 days after order confirmation and payment of a
 
 Payment terms
 
-The standard in the industry is 50% advance on order confirmation, 50% before shipment. Established manufacturers may offer 30/70 terms after a track record of 3–5 orders. Avoid manufacturers who ask for 100% advance on first orders — this is a red flag.
+Terms vary by manufacturer. Ours are 30% advance and 70% when goods are ready. Avoid manufacturers who ask for 100% advance on first orders — this is a red flag.
 
 Building a long-term relationship
 
