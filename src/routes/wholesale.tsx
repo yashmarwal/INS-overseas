@@ -3,14 +3,18 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import SectionHeading from "@/components/shared/SectionHeading";
+import InfoSection from "@/components/shared/InfoSection";
 import { Globe, Award, Package, Layers, Leaf, Clock } from "lucide-react";
 import { useFormSubmit } from "@/hooks/useFormSubmit";
+import { LOWEST_MOQ, MOQ_TABLE, moqValue } from "@/data/moq";
+import { wholesaleCopy, fillTokens } from "@/data/copy";
 import { SITE_URL } from "@/lib/seo";
+import { seoPages } from "@/data/seoPages";
 
+const PAGE = seoPages["/wholesale"];
 const CANONICAL = `${SITE_URL}/wholesale`;
-const TITLE = "Wholesale Partner Program — INS Overseas | B2B Handmade Paper & Journals";
-const DESCRIPTION =
-  "Partner with INS Overseas for wholesale handmade leather journals, cotton rag paper and artisan gift products. MOQ 200 units. Export to 40+ countries. Request our B2B catalogue.";
+const TITLE = PAGE.title;
+const DESCRIPTION = PAGE.description;
 
 export const Route = createFileRoute("/wholesale")({
   head: () => ({
@@ -20,7 +24,7 @@ export const Route = createFileRoute("/wholesale")({
       { name: "keywords", content: "handmade paper wholesale India, leather journal wholesale MOQ, B2B handmade journal exporter, artisan paper wholesale Jaipur, handmade gift product wholesale India" },
       { property: "og:type", content: "website" },
       { property: "og:url", content: CANONICAL },
-      { property: "og:title", content: "Wholesale — Partner With INS Overseas" },
+      { property: "og:title", content: PAGE.ogTitle ?? PAGE.title },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
       { property: "og:image:width", content: "1200" },
@@ -30,7 +34,7 @@ export const Route = createFileRoute("/wholesale")({
       { property: "og:locale", content: "en_IN" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@ins_overseas" },
-      { name: "twitter:title", content: "Wholesale Partner Program — INS Overseas" },
+      { name: "twitter:title", content: PAGE.ogTitle ?? PAGE.title },
       { name: "twitter:description", content: DESCRIPTION },
       { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
       { name: "twitter:image:alt", content: "INS Overseas wholesale partner programme" },
@@ -65,7 +69,7 @@ export const Route = createFileRoute("/wholesale")({
                 "priceCurrency": "USD",
                 "eligibleQuantity": {
                   "@type": "QuantitativeValue",
-                  "minValue": 200,
+                  "minValue": LOWEST_MOQ,
                   "unitText": "units",
                 },
               },
@@ -86,22 +90,9 @@ export const Route = createFileRoute("/wholesale")({
 });
 
 
-const usps = [
-  { icon: Award, title: "30 Years Experience" },
-  { icon: Globe, title: "Export to 40+ Countries" },
-  { icon: Package, title: "MOQ from 200 Units" },
-  { icon: Layers, title: "Custom OEM Available" },
-  { icon: Leaf, title: "Eco-Certified Materials" },
-  { icon: Clock, title: "Fast Lead Times" },
-];
-
-const steps = [
-  "Send Enquiry",
-  "Receive Catalogue & Pricing",
-  "Sample Approval",
-  "Place Order (50% advance)",
-  "Production & Delivery (3–4 weeks)",
-];
+const uspIcons = [Award, Globe, Package, Layers, Leaf, Clock];
+const usps = wholesaleCopy.usps.map((title, i) => ({ icon: uspIcons[i], title: fillTokens(title, { MOQ: LOWEST_MOQ }) }));
+const steps = wholesaleCopy.steps;
 
 function WholesaleForm() {
   const { submit, status } = useFormSubmit();
@@ -219,7 +210,7 @@ function Wholesale() {
                 className="text-gold uppercase"
                 style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 11, letterSpacing: "0.25em" }}
               >
-                For Wholesale Buyers
+                {wholesaleCopy.eyebrow}
               </span>
             </div>
             <h1
@@ -233,23 +224,18 @@ function Wholesale() {
                 maxWidth: "14ch",
               }}
             >
-              Partner With{" "}
-              <em className="italic font-light text-gold-light">INS Overseas</em>
+              {wholesaleCopy.h1.plain}{" "}
+              <em className="italic font-light text-gold-light">{wholesaleCopy.h1.em}</em>
             </h1>
             <p
               className="text-warm-grey max-w-xl leading-relaxed"
               style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 17, lineHeight: 1.8 }}
             >
-              India's leading manufacturer of handmade leather journals, cotton rag paper and artisan gift products. MOQ 200 units. Export to 40+ countries since 1995.
+              {fillTokens(wholesaleCopy.lead, { MOQ: LOWEST_MOQ })}
             </p>
             {/* Quick stats */}
             <div className="flex flex-wrap gap-10 mt-12 pt-10 border-t border-white/10">
-              {([
-                ["200", "Units MOQ"],
-                ["30",  "Years exporting"],
-                ["40+", "Countries served"],
-                ["25+", "Artisans"],
-              ] as [string, string][]).map(([n, l]) => (
+              {wholesaleCopy.stats.map(([n0, l]) => { const n = fillTokens(n0, { MOQ: LOWEST_MOQ }); return (
                 <div key={l}>
                   <p
                     className="text-gold"
@@ -264,7 +250,7 @@ function Wholesale() {
                     {l}
                   </p>
                 </div>
-              ))}
+              ); })}
             </div>
           </motion.div>
         </div>
@@ -272,7 +258,7 @@ function Wholesale() {
 
       <section className="bg-parchment py-24">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-          <SectionHeading eyebrow="Why Us" title={<>Why Source From <em className="italic font-light">INS Overseas</em></>} />
+          <SectionHeading eyebrow={wholesaleCopy.why.eyebrow} title={<>{wholesaleCopy.why.h2.plain} <em className="italic font-light">{wholesaleCopy.why.h2.em}</em></>} />
           <div className="mt-14 grid grid-cols-2 md:grid-cols-3 gap-8">
             {usps.map((u, i) => (
               <motion.div key={u.title}
@@ -289,7 +275,7 @@ function Wholesale() {
 
       <section className="bg-cream py-24">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-          <SectionHeading eyebrow="The Process" title={<>How It <em className="italic font-light">Works</em></>} />
+          <SectionHeading eyebrow={wholesaleCopy.process.eyebrow} title={<>{wholesaleCopy.process.h2.plain} <em className="italic font-light">{wholesaleCopy.process.h2.em}</em></>} />
           <ol className="mt-14 grid grid-cols-1 md:grid-cols-5 gap-4 lg:gap-2">
             {steps.map((s, i) => (
               <motion.li key={s}
@@ -304,9 +290,41 @@ function Wholesale() {
         </div>
       </section>
 
+      <section className="bg-parchment py-24">
+        <div className="max-w-3xl mx-auto px-5 sm:px-8">
+          <SectionHeading eyebrow={wholesaleCopy.moqTable.eyebrow} title={<>{wholesaleCopy.moqTable.h2.plain} <em className="italic font-light">{wholesaleCopy.moqTable.h2.em}</em></>}>
+            {wholesaleCopy.moqTable.intro}
+          </SectionHeading>
+          <table className="mt-12 w-full border-collapse text-left">
+            <caption className="sr-only">{wholesaleCopy.moqTable.intro}</caption>
+            <thead>
+              <tr className="text-warm-grey uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 11, letterSpacing: "0.2em" }}>
+                <th scope="col" className="pb-4 font-normal">{wholesaleCopy.moqTable.head[0]}</th>
+                <th scope="col" className="pb-4 font-normal text-right">{wholesaleCopy.moqTable.head[1]}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOQ_TABLE.map(([label, key]) => (
+                <tr key={key} className="border-t border-ink/10">
+                  <th scope="row" className="py-4 text-ink font-normal" style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 20 }}>{label}</th>
+                  <td className="py-4 text-right text-ink tabular-nums lining-nums" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 16 }}>{moqValue(key).toLocaleString("en-US")} units</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <InfoSection
+        eyebrow={wholesaleCopy.expect.eyebrow}
+        title={wholesaleCopy.expect.h2}
+        level={3}
+        blocks={wholesaleCopy.expect.blocks.map((b) => ({ ...b, p: b.p?.map((t) => fillTokens(t, { MOQ: LOWEST_MOQ })) }))}
+      />
+
       <section className="bg-parchment-dark linen py-24">
         <div className="max-w-3xl mx-auto px-5 sm:px-8">
-          <SectionHeading eyebrow="Register" title={<>Wholesale <em className="italic font-light">Registration</em></>} />
+          <SectionHeading eyebrow={wholesaleCopy.register.eyebrow} title={<>{wholesaleCopy.register.h2.plain} <em className="italic font-light">{wholesaleCopy.register.h2.em}</em></>} />
           <WholesaleForm />
         </div>
       </section>

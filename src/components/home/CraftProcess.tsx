@@ -1,50 +1,21 @@
 import { motion } from "framer-motion";
 import EditorialHeading from "@/components/shared/EditorialHeading";
 import { Sprout, Droplet, Sun, BookOpen, Truck } from "lucide-react";
+import { craftProcessCopy } from "@/data/copy";
 
-const steps = [
-  {
-    n: "01",
-    icon: Sprout,
-    title: "Cotton Rag Sourcing",
-    text: "Leftover cotton rags from Jaipur's textile mills are collected, sorted, and cleaned — no trees, no chemicals.",
-  },
-  {
-    n: "02",
-    icon: Droplet,
-    title: "Manual Vat Pulling",
-    text: "Artisans dip molds into cotton pulp vats, lifting each sheet by hand. Every page is unique — the deckle edges are natural, never cut.",
-  },
-  {
-    n: "03",
-    icon: Sun,
-    title: "Sun Drying",
-    text: "Freshly pulled sheets are laid on raised frames under the Rajasthan sun. Natural light and heat give the paper its warmth and texture.",
-  },
-  {
-    n: "04",
-    icon: BookOpen,
-    title: "Leather Binding",
-    text: "Full-grain buffalo leather is cut, burnished, and hand-stitched around signatures of dried paper. Brass hardware is hand-fitted.",
-  },
-  {
-    n: "05",
-    icon: Truck,
-    title: "Quality & Export",
-    text: "Every journal is inspected, wrapped in tissue, boxed, and dispatched — from Sanganer to shelves across 40+ countries.",
-  },
-];
+const stepIcons = [Sprout, Droplet, Sun, BookOpen, Truck];
+const steps = craftProcessCopy.steps.map((s, i) => ({ n: String(i + 1).padStart(2, "0"), icon: stepIcons[i], ...s }));
 
 export default function CraftProcess() {
   return (
     <section className="bg-parchment-dark linen py-14 md:py-24 lg:py-32">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
         <EditorialHeading
-          eyebrow="The Craft Process"
-          count="05 steps"
-          line1="From Raw Cotton to"
-          line2="Finished Journal"
-          intro="Five hand-done steps, from Jaipur's cotton rags to a journal on your shelf."
+          eyebrow={craftProcessCopy.eyebrow}
+          count={craftProcessCopy.count}
+          line1={craftProcessCopy.line1}
+          line2={craftProcessCopy.line2}
+          intro={craftProcessCopy.intro}
         />
 
         {/* ── DESKTOP: 5-column grid (unchanged) ── */}

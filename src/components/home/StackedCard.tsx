@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { cardEnquirePill, cardSquareBtn, InfoTile, QuoteToggle } from "@/components/home/HomeProductCard";
+import { DEFAULT_LEAD_DAYS } from "@/data/catalogue";
 import type { EnquiryItem } from "@/lib/enquiryList";
 
 // Cards that stack as you scroll: each one pins under the header while the next slides up over it, and the ones
@@ -94,7 +95,7 @@ export type StackedCardProps = {
   /** when given, a labelled "Add to quote" button sits on the photo and puts this piece on the visitor's quote list */
   listItem?: EnquiryItem;
   moqValue: string; // e.g. "200+ pcs"
-  leadValue?: string; // e.g. "30 days" (the default)
+  leadValue?: string; // e.g. "25 days" (the default)
   /** called when the visitor presses Enquire or the WhatsApp button (for the popularity stats) */
   onEnquire?: () => void;
   chatHref: string;
@@ -103,7 +104,7 @@ export type StackedCardProps = {
   primary: { label: string; to?: string; href?: string };
 };
 
-export function StackedCard({ index, total, photo, photoTo, pill, tag, title, desc, moqLabel = "MOQ", listItem, moqValue, leadValue = "30 days", onEnquire, chatHref, chatLabel, secondary, primary }: StackedCardProps) {
+export function StackedCard({ index, total, photo, photoTo, pill, tag, title, desc, moqLabel = "MOQ", listItem, moqValue, leadValue = `${DEFAULT_LEAD_DAYS} days`, onEnquire, chatHref, chatLabel, secondary, primary }: StackedCardProps) {
   const pillCls = "rounded-full px-3 py-1.5";
   const photoCls = "group relative block aspect-[4/3] md:aspect-auto md:min-h-[420px] rounded-[20px] overflow-hidden img-shimmer";
   const photoInner = (

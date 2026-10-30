@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seoPages } from "@/data/seoPages";
 import PageHero from "@/components/shared/PageHero";
 import ProductCard from "@/components/shared/ProductCard";
 import { products, categoryMeta } from "@/data/products";
@@ -7,7 +8,7 @@ const slug = "stationery" as const;
 const meta = categoryMeta[slug];
 
 export const Route = createFileRoute("/products/stationery")({
-  head: () => ({ meta: [{ title: `${meta.label} | INS Overseas` }, { name: "description", content: meta.description }] }),
+  head: () => ({ meta: [{ title: seoPages["/products/stationery"].title }, { name: "description", content: seoPages["/products/stationery"].description }] }),
   component: CategoryPage,
 });
 

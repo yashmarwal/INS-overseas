@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { FOOTER_COLUMNS, FOOTER_CONTACT, LEGAL_LINKS } from "@/data/siteNav";
 
 
 export default function Footer() {
@@ -99,45 +100,27 @@ export default function Footer() {
           </div>
         </div>
 
-        <FooterCol
-          title="Products"
-          links={[
-            ["Leather Journals", "/products/leather-journals"],
-            ["Handmade Paper", "/products/handmade-paper"],
-            ["Artisan Stationery", "/products/stationery"],
-            ["Leather Accessories", "/products/leather-accessories"],
-            ["Custom Orders", "/wholesale"],
-            ["Wholesale Catalogue", "/wholesale"],
-          ]}
-        />
-        <FooterCol
-          title="Company"
-          links={[
-            ["About Us", "/about"],
-            ["Our Craft", "/our-craft"],
-            ["Sustainability", "/sustainability"],
-            ["Gallery", "/gallery"],
-            ["Journal", "/journal"],
-            ["Contact", "/contact"],
-          ]}
-        />
+        {FOOTER_COLUMNS.map((c) => (
+          <FooterCol key={c.title} title={c.title} links={c.links} />
+        ))}
 
         <div>
           <h4 className="text-cream uppercase tracking-[0.2em] text-xs mb-5">Contact</h4>
           <p className="text-sm leading-relaxed">
-            Jain Nasiya Road, Near Jain Hostel,
-            <br />
-            Sanganer, Jaipur – 302029
-            <br />
-            Rajasthan, India
+            {FOOTER_CONTACT.addressLines.map((line, i) => (
+              <span key={line}>
+                {i > 0 && <br />}
+                {line}
+              </span>
+            ))}
           </p>
           <p className="mt-4 text-sm">
-            <a href="tel:+919680478483" className="hover:text-gold">+91 96804 78483</a>
+            <a href={FOOTER_CONTACT.phoneHref} className="hover:text-gold">{FOOTER_CONTACT.phone}</a>
           </p>
           <p className="text-sm">
-            <a href="mailto:Sezan@ins-overseas.com" className="hover:text-gold">Sezan@ins-overseas.com</a>
+            <a href={`mailto:${FOOTER_CONTACT.email}`} className="hover:text-gold">{FOOTER_CONTACT.email}</a>
           </p>
-          <p className="text-sm mt-3 text-warm-grey">Mon–Sat · 24 Hours</p>
+          <p className="text-sm mt-3 text-warm-grey">{FOOTER_CONTACT.hours}</p>
         </div>
       </div>
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 pb-10">
@@ -150,20 +133,16 @@ export default function Footer() {
             © 2025 INS Overseas. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <Link
-              to="/privacy-policy"
-              className="text-warm-grey/50 hover:text-gold transition-colors"
-              style={{ fontFamily: "var(--font-body)", fontSize: 12 }}
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              to="/terms-of-use"
-              className="text-warm-grey/50 hover:text-gold transition-colors"
-              style={{ fontFamily: "var(--font-body)", fontSize: 12 }}
-            >
-              Terms of Use
-            </Link>
+            {LEGAL_LINKS.map(([label, href]) => (
+              <Link
+                key={href}
+                to={href}
+                className="text-warm-grey/50 hover:text-gold transition-colors"
+                style={{ fontFamily: "var(--font-body)", fontSize: 12 }}
+              >
+                {label}
+              </Link>
+            ))}
           </div>
         </div>
         <p

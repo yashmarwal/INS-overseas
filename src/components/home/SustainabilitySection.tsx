@@ -1,12 +1,10 @@
 import { motion } from "framer-motion";
 import { Leaf, Droplet, Recycle, ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { sustainabilityTeaserCopy } from "@/data/copy";
 
-const creds = [
-  { icon: Leaf, title: "100% Cotton Rag Paper", text: "Made from recycled textile waste. Zero deforestation." },
-  { icon: Droplet, title: "Chemical-Free Process", text: "No bleach, no acids. Safe for artists and the planet." },
-  { icon: Recycle, title: "Zero Waste Manufacturing", text: "Every offcut, every scrap is reused in our process." },
-];
+const credIcons = [Leaf, Droplet, Recycle];
+const creds = sustainabilityTeaserCopy.creds.map((c, i) => ({ icon: credIcons[i], ...c }));
 
 export default function SustainabilitySection() {
   return (
@@ -20,20 +18,20 @@ export default function SustainabilitySection() {
         >
           <div className="flex items-center gap-3">
             <span className="h-px w-10 bg-gold-light" />
-            <span className="text-cream uppercase text-[11px]" style={{ letterSpacing: "0.25em" }}>Sustainability</span>
+            <span className="text-cream uppercase text-[11px]" style={{ letterSpacing: "0.25em" }}>{sustainabilityTeaserCopy.eyebrow}</span>
           </div>
           <p
             className="mt-8 italic text-cream"
             style={{ fontFamily: "var(--font-accent)", fontWeight: 400, fontSize: "clamp(28px, 3.6vw, 44px)", lineHeight: 1.2 }}
           >
-            "No trees were harmed in making this page."
+            {sustainabilityTeaserCopy.quote}
           </p>
           <Link
             to="/sustainability"
             className="group mt-10 inline-flex items-center gap-2 uppercase text-[12px] border-b border-gold-light pb-1"
             style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.15em" }}
           >
-            Our Sustainability Commitment
+            {sustainabilityTeaserCopy.link}
             <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </motion.div>

@@ -5,6 +5,7 @@ import EditorialHeading, { headingLinkCls, headingLinkStyle } from "@/components
 import SiteImage from "@/components/shared/SiteImage";
 import TornTop from "@/components/shared/TornTop";
 import HomeProductCard from "@/components/home/HomeProductCard";
+import { homeCopy } from "@/data/copy";
 
 // The six bestsellers. Their photos are the "Bestsellers" photo slots in the admin (Homepage photos).
 const products = [
@@ -54,16 +55,16 @@ export default function FeaturedProducts() {
       <TornTop color="#566A4B" />
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
         <EditorialHeading
-          eyebrow="Bestsellers"
+          eyebrow={homeCopy.bestsellers.eyebrow}
           count={`${pad(products.length)} pieces`}
-          line1="Most Loved"
-          line2="This Season"
-          intro="Six pieces from our collection. Ask for pricing and samples on any of them."
+          line1={homeCopy.bestsellers.line1}
+          line2={homeCopy.bestsellers.line2}
+          intro={homeCopy.bestsellers.intro}
           aside={
             <>
               {/* desktop: a link to everything */}
               <Link to="/products" className={`${headingLinkCls} max-md:hidden`} style={headingLinkStyle}>
-                See all products
+                {homeCopy.bestsellers.link}
                 <span className="w-9 h-9 rounded-full bg-gold text-ink flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5"><ArrowRight size={16} /></span>
               </Link>
 

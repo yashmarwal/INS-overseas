@@ -4,11 +4,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, X, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import PageHero from "@/components/shared/PageHero";
 import { SITE_URL } from "@/lib/seo";
+import { seoPages } from "@/data/seoPages";
+import { manufacturingCopy as C, manufacturingInfo } from "@/data/copy";
+import InfoSection from "@/components/shared/InfoSection";
 
+const PAGE = seoPages["/manufacturing"];
 const CANONICAL = `${SITE_URL}/manufacturing`;
-const TITLE = "Manufacturing | INS Overseas — Watch Our Workspace in Jaipur";
-const DESCRIPTION =
-  "Watch how INS Overseas makes handmade leather journals and eco-friendly paper in Sanganer, Jaipur. Videos and photos from our workspace.";
+const TITLE = PAGE.title;
+const DESCRIPTION = PAGE.description;
 
 export const Route = createFileRoute("/manufacturing")({
   head: () => ({
@@ -17,7 +20,7 @@ export const Route = createFileRoute("/manufacturing")({
       { name: "description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: CANONICAL },
-      { property: "og:title", content: "Manufacturing — INS Overseas | Sanganer Workspace" },
+      { property: "og:title", content: PAGE.ogTitle ?? PAGE.title },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
       { property: "og:image:width", content: "1200" },
@@ -27,7 +30,7 @@ export const Route = createFileRoute("/manufacturing")({
       { property: "og:locale", content: "en_IN" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@ins_overseas" },
-      { name: "twitter:title", content: "Manufacturing — INS Overseas Workspace" },
+      { name: "twitter:title", content: PAGE.ogTitle ?? PAGE.title },
       { name: "twitter:description", content: DESCRIPTION },
       { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
       { name: "twitter:image:alt", content: "INS Overseas manufacturing workspace" },
@@ -162,9 +165,9 @@ function Manufacturing() {
   return (
     <>
       <PageHero
-        eyebrow="Our Workspace"
-        title={<>Made in <em className="italic font-light text-gold-light">Sanganer</em></>}
-        subtitle="Videos and photographs from inside our Jaipur workspace — where every journal and every sheet of paper is made by hand."
+        eyebrow={C.eyebrow}
+        title={<>{C.h1.plain} <em className="italic font-light text-gold-light">{C.h1.em}</em></>}
+        subtitle={C.subtitle}
       />
 
       {/* Tab filter */}
@@ -254,6 +257,8 @@ function Manufacturing() {
           </div>
         </div>
       </section>
+
+      <InfoSection blocks={manufacturingInfo} />
 
       {/* ── Media Modal ── */}
       <AnimatePresence>

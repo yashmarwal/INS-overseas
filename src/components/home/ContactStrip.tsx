@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useFormSubmit } from "@/hooks/useFormSubmit";
+import { contactStripCopy as C } from "@/data/copy";
 
 export default function ContactStrip() {
   const { submit, status } = useFormSubmit();
@@ -35,16 +36,16 @@ export default function ContactStrip() {
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}>
           <div className="flex items-center gap-3">
             <span className="h-px w-10 bg-gold-light" />
-            <span className="text-gold-light uppercase text-[11px]" style={{ letterSpacing: "0.25em" }}>Get in Touch</span>
+            <span className="text-gold-light uppercase text-[11px]" style={{ letterSpacing: "0.25em" }}>{C.eyebrow}</span>
           </div>
           <h2 className="mt-6" style={{ fontFamily: "var(--font-display)", fontWeight: 300, fontSize: "clamp(32px, 4vw, 56px)", lineHeight: 1.05 }}>
-            Let's Begin a<br /><em className="italic font-light text-gold-light">Conversation</em>
+            {C.h2.plain}<br /><em className="italic font-light text-gold-light">{C.h2.em}</em>
           </h2>
           <div className="mt-10 space-y-6">
-            <Row icon={MapPin}>Jain Nasiya Road, Near Jain Hostel, Sanganer, Jaipur – 302029, Rajasthan, India</Row>
-            <Row icon={Phone}><a href="tel:+919680478483" className="hover:text-gold-light">+91 96804 78483</a></Row>
-            <Row icon={Mail}><a href="mailto:Sezan@ins-overseas.com" className="hover:text-gold-light">Sezan@ins-overseas.com</a></Row>
-            <Row icon={Clock}>Mon – Sat · Available 24 hours</Row>
+            <Row icon={MapPin}>{C.address}</Row>
+            <Row icon={Phone}><a href={C.phoneHref} className="hover:text-gold-light">{C.phone}</a></Row>
+            <Row icon={Mail}><a href={`mailto:${C.email}`} className="hover:text-gold-light">{C.email}</a></Row>
+            <Row icon={Clock}>{C.hours}</Row>
           </div>
         </motion.div>
 

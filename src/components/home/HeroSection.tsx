@@ -4,6 +4,9 @@ import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { useSiteImage, refreshSiteImages } from "@/hooks/useSiteImage";
 import { preloader } from "@/components/ui/Preloader";
+import { homeCopy } from "@/data/copy";
+
+const H = homeCopy.hero;
 
 // Stamp-reveal: clips up from below with hard mechanical ease
 const stampUp = (delay: number) => ({
@@ -97,7 +100,7 @@ export default function HeroSection() {
               letterSpacing: "0.25em",
             }}
           >
-            Handcrafted in Jaipur since 1995
+            {H.eyebrow}
           </motion.span>
         </div>
 
@@ -117,19 +120,19 @@ export default function HeroSection() {
             {/* Line 1 */}
             <div className="overflow-hidden pb-[0.2em] -mb-[0.2em]">
               <motion.div {...stampUp(BASE + 0.1)}>
-                Where Every Page
+                {H.line1}
               </motion.div>
             </div>
 
             {/* Line 2 */}
             <div className="overflow-hidden mt-1 pb-[0.2em] -mb-[0.2em]">
               <motion.div {...stampUp(BASE + 0.3)}>
-                Tells a{" "}
+                {H.line2}{" "}
                 <span
                   className="italic text-gold-light"
                   style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 400 }}
                 >
-                  Story
+                  {H.em}
                 </span>
                 <span className="text-gold-light">.</span>
               </motion.div>
@@ -148,8 +151,7 @@ export default function HeroSection() {
               color: "rgba(250,247,240,0.8)",
             }}
           >
-            Premium handmade leather journals, artisan stationery and eco-conscious
-            paper — crafted by Rajasthani artisans, shipped to 40+ countries.
+            {H.lead}
           </motion.p>
 
           {/* CTA buttons — stamp up as a unit */}
@@ -165,7 +167,7 @@ export default function HeroSection() {
                 className="group inline-flex items-center justify-center gap-3 bg-gold text-ink px-9 uppercase text-[12px] hover:bg-gold-light transition-colors min-h-[52px] sm:min-h-0 sm:py-4"
                 style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.12em" }}
               >
-                Explore Collection
+                {H.cta1}
                 <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1.5" />
               </Link>
               <Link
@@ -173,7 +175,7 @@ export default function HeroSection() {
                 className="hidden sm:inline-flex group items-center justify-center gap-3 border border-cream text-cream px-9 py-4 uppercase text-[12px] hover:bg-cream hover:text-ink transition-colors"
                 style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.12em" }}
               >
-                Wholesale Enquiry
+                {H.cta2}
                 <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1.5" />
               </Link>
             </motion.div>

@@ -1,30 +1,10 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Plus, Minus, ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { homeCopy } from "@/data/copy";
 
-const faqs = [
-  {
-    q: "What is your minimum order quantity?",
-    a: "300 pieces per design for standard wholesale orders. 500 pieces for custom/OEM orders with your logo or specific design. You can mix different products to reach the MOQ.",
-  },
-  {
-    q: "Do you offer samples before placing a bulk order?",
-    a: "Yes — product samples are free of charge. You only pay the shipping cost to your location. Custom samples with your logo take approximately 10 days to produce.",
-  },
-  {
-    q: "How long does production and delivery take?",
-    a: "Production begins 30 days after order confirmation and payment. Delivery after dispatch: 7–10 days by air (DHL/FedEx), 35–40 days by sea freight.",
-  },
-  {
-    q: "Can you add our logo to the products?",
-    a: "Yes. We offer debossing, embossing, foil stamping (gold/silver), and screen printing. We also do fully custom packaging — branded boxes, tissue paper, ribbon, and hang tags.",
-  },
-  {
-    q: "Which payment methods and currencies do you accept?",
-    a: "We accept SWIFT wire transfer, PayPal, and Wise. Currencies: USD, EUR, and GBP. Standard terms are 50% advance on order confirmation, 50% before shipment.",
-  },
-];
+const faqs = homeCopy.faq.items;
 
 export default function HomeFaq() {
   const [open, setOpen] = useState<number | null>(0);
@@ -42,7 +22,7 @@ export default function HomeFaq() {
                 className="text-gold uppercase"
                 style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 11, letterSpacing: "0.22em" }}
               >
-                Common Questions
+                {homeCopy.faq.eyebrow}
               </span>
             </div>
             <h2
@@ -55,8 +35,8 @@ export default function HomeFaq() {
                 letterSpacing: "-0.01em",
               }}
             >
-              Before You{" "}
-              <em className="italic font-light text-umber">Place Your First Order</em>
+              {homeCopy.faq.h2.plain}{" "}
+              <em className="italic font-light text-umber">{homeCopy.faq.h2.em}</em>
             </h2>
           </div>
 
@@ -66,7 +46,7 @@ export default function HomeFaq() {
             className="hidden md:inline-flex group items-center gap-2 shrink-0 uppercase text-[12px] text-umber border-b border-umber pb-1 hover:gap-3 transition-all mb-2"
             style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.15em" }}
           >
-            View All FAQs
+            {homeCopy.faq.link}
             <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </div>
@@ -86,6 +66,7 @@ export default function HomeFaq() {
               >
                 <button
                   onClick={() => setOpen(isOpen ? null : i)}
+                  aria-expanded={isOpen}
                   className="w-full flex items-center justify-between gap-4 py-5 md:py-6 text-left group"
                 >
                   <span
@@ -114,15 +95,14 @@ export default function HomeFaq() {
                   </span>
                 </button>
 
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-                      className="overflow-hidden"
-                    >
+                {/* the answer stays in the page; closed = no height, invisible */}
+                <motion.div
+                  initial={false}
+                  animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
+                  style={{ visibility: isOpen ? "visible" : "hidden", transition: isOpen ? "visibility 0s" : "visibility 0s linear 0.32s" }}
+                  transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden"
+                >
                       <p
                         className="pb-6 md:pb-8 pr-12 text-umber-dark"
                         style={{
@@ -135,9 +115,7 @@ export default function HomeFaq() {
                       >
                         {f.a}
                       </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                </motion.div>
               </motion.div>
             );
           })}
@@ -150,7 +128,7 @@ export default function HomeFaq() {
             className="inline-flex items-center gap-2 uppercase text-[12px] text-umber border-b border-umber pb-1"
             style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.15em" }}
           >
-            View All FAQs
+            {homeCopy.faq.link}
             <ArrowRight size={14} />
           </Link>
         </div>

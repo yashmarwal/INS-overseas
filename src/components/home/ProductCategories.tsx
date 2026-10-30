@@ -4,40 +4,13 @@ import EditorialHeading from "@/components/shared/EditorialHeading";
 import SiteImage from "@/components/shared/SiteImage";
 import { StackedCard, StackPin, StackTail, useStack } from "@/components/home/StackedCard";
 import { absoluteUrl } from "@/lib/share";
+import { homeCopy } from "@/data/copy";
 
 // The four collections, as cards that stack while you scroll (see StackedCard).
 // The photos are the "Collection cards" slots in the admin (Homepage photos).
 // `moq` is the smallest minimum order in that collection (see data/catalogue.ts).
-const cats = [
-  {
-    title: "Leather Journals",
-    desc: "Full-grain buffalo leather, hand-stitched bindings, deckle-edge pages",
-    section: "category_leather_journals",
-    to: "/products/leather-journals",
-    moq: "200",
-  },
-  {
-    title: "Handmade Paper",
-    desc: "100% cotton rag, tree-free, fountain pen & watercolour friendly",
-    section: "category_handmade_paper",
-    to: "/products/handmade-paper",
-    moq: "200",
-  },
-  {
-    title: "Artisan Stationery",
-    desc: "Greeting cards, envelopes, paper bags — luxury gifting essentials",
-    section: "category_stationery",
-    to: "/products/stationery",
-    moq: "200",
-  },
-  {
-    title: "Leather Accessories",
-    desc: "Crossbody bags, travel journals, corporate leather gifts",
-    section: "category_leather_accessories",
-    to: "/products/leather-accessories",
-    moq: "150",
-  },
-] as const;
+const sections = ["category_leather_journals", "category_handmade_paper", "category_stationery", "category_leather_accessories"];
+const cats = homeCopy.collections.cards.map((c, i) => ({ ...c, section: sections[i] }));
 
 const WHATSAPP = "https://wa.me/919680478483";
 
@@ -47,7 +20,7 @@ export default function ProductCategories() {
   return (
     <section className="bg-parchment pt-14 md:pt-24 lg:pt-32" style={{ marginBottom: -hold }}>
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-        <EditorialHeading eyebrow="Our Collections" count={`${String(cats.length).padStart(2, "0")} collections`} line1="Crafted With" line2="Intention" intro="Leather, handmade paper and artisan stationery, made by hand in Jaipur and shipped worldwide." />
+        <EditorialHeading eyebrow={homeCopy.collections.eyebrow} count={`${String(cats.length).padStart(2, "0")} collections`} line1={homeCopy.collections.line1} line2={homeCopy.collections.line2} intro={homeCopy.collections.intro} />
         <div ref={ref} className="mt-6 md:mt-10">
           {cats.map((c, i) => (
             <StackPin key={c.title} i={i} n={cats.length} progress={progress}>

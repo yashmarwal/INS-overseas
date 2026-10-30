@@ -3,6 +3,7 @@ import { ArrowUpRight, Phone } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import TornTop from "@/components/shared/TornTop";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
+import { homeCopy } from "@/data/copy";
 
 const pill = "group relative overflow-hidden inline-flex items-center justify-between gap-6 h-14 pl-7 pr-1.5 rounded-full uppercase text-[12px] active:scale-[0.98] transition-[background-color,box-shadow,transform] duration-300";
 const pillStyle = { fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.12em" } as const;
@@ -22,33 +23,32 @@ export default function WholesaleCta() {
       >
         <div className="flex items-center justify-center gap-3">
           <span className="h-px w-10 bg-gold" />
-          <span className="text-gold uppercase text-[11px]" style={{ letterSpacing: "0.25em" }}>For Wholesale Buyers</span>
+          <span className="text-gold uppercase text-[11px]" style={{ letterSpacing: "0.25em" }}>{homeCopy.wholesaleCta.eyebrow}</span>
           <span className="h-px w-10 bg-gold" />
         </div>
         <h2
           className="mt-7"
           style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: "clamp(36px, 5vw, 72px)", lineHeight: 1.05 }}
         >
-          Your Next Bestseller
+          {homeCopy.wholesaleCta.h2.plain}
           <br />
-          <em className="italic font-light text-gold-light">Starts in Jaipur</em>
+          <em className="italic font-light text-gold-light">{homeCopy.wholesaleCta.h2.em}</em>
         </h2>
         <p className="mt-7 text-cream/85 max-w-xl mx-auto font-light leading-relaxed">
-          Join 500+ retailers worldwide who source handcrafted leather and paper goods from INS Overseas.
-          Request our full wholesale catalogue with pricing, MOQ details, and custom options.
+          {homeCopy.wholesaleCta.text}
         </p>
         {/* three pills in the site's button language: label on the left, a round icon chip on the right */}
         <div className="mt-10 flex flex-col sm:flex-row sm:flex-wrap md:flex-nowrap md:-mx-20 gap-3 sm:gap-4 justify-center">
           <Link to="/wholesale" className={`${pill} bg-gold text-ink hover:bg-gold-light hover:shadow-[0_10px_28px_-10px_rgba(201,151,58,0.7)]`} style={pillStyle}>
-            <span className="relative">Request Catalogue</span>
+            <span className="relative">{homeCopy.wholesaleCta.request}</span>
             <span className={`${chip} bg-ink text-gold`}><ArrowUpRight size={18} className={nudge} /></span>
           </Link>
           <a href="https://wa.me/919680478483" target="_blank" rel="noreferrer" className={`${pill} text-cream bg-cream/[0.06] shadow-[inset_0_0_0_1px_rgba(250,247,240,0.3)] hover:bg-cream/[0.12] hover:shadow-[inset_0_0_0_1px_rgba(250,247,240,0.55)]`} style={pillStyle}>
-            <span className="relative">WhatsApp Us</span>
+            <span className="relative">{homeCopy.wholesaleCta.whatsapp}</span>
             <span className={`${chip} bg-cream text-[#25D366]`}><WhatsAppGlyph size={20} /></span>
           </a>
           <Link to="/contact" className={`${pill} text-cream shadow-[inset_0_0_0_1px_rgba(201,151,58,0.55)] hover:bg-gold/10 hover:shadow-[inset_0_0_0_1px_rgba(201,151,58,0.9)]`} style={pillStyle}>
-            <span className="relative">Book a Call</span>
+            <span className="relative">{homeCopy.wholesaleCta.call}</span>
             <span className={`${chip} bg-gold/15 text-gold-light`}><Phone size={17} className={nudge} /></span>
           </Link>
         </div>

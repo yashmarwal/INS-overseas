@@ -5,21 +5,10 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { preloader } from "@/components/ui/Preloader";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { openCatalogue, warmCatalogue } from "@/lib/catalogueUi";
+import { MAIN_NAV, MOBILE_NAV } from "@/data/siteNav";
 
-const links = [
-  { to: "/", label: "Home" },
-  { to: "/products", label: "Products" },
-  { to: "/about", label: "About" },
-  { to: "/our-craft", label: "Our Craft" },
-  { to: "/manufacturing", label: "Manufacturing" },
-  { to: "/gallery", label: "Gallery" },
-  { to: "/sustainability", label: "Sustainability" },
-  { to: "/wholesale", label: "Wholesale" },
-  { to: "/contact", label: "Contact" },
-] as const;
-
-// The phone menu has room for one more entry than the desktop pill: the Journal sits right after the Gallery.
-const mobileLinks = [...links.slice(0, 6), { to: "/journal", label: "Journal" }, ...links.slice(6)] as const;
+const links = MAIN_NAV;
+const mobileLinks = MOBILE_NAV;
 
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);

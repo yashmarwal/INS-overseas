@@ -1,5 +1,7 @@
 import { lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { SITE_URL } from "@/lib/seo";
+import { seoPages } from "@/data/seoPages";
 import LazyMount from "@/components/shared/LazyMount";
 import HeroSection from "@/components/home/HeroSection";
 import TrustBar from "@/components/home/TrustBar";
@@ -20,18 +22,20 @@ import ContactStrip from "@/components/home/ContactStrip";
 // World map + d3 + its topology download are only needed once the section is about to be seen.
 const GlobalReach = lazy(() => import("@/components/home/GlobalReach"));
 
+const P = seoPages["/"];
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "INS Overseas — Handmade Leather Journals & Eco-Friendly Paper | Wholesale Jaipur" },
-      { name: "description", content: "India's largest manufacturer of handmade leather journals, cotton rag paper, seed paper & artisan gift products. Wholesale export to 40+ countries from Sanganer, Jaipur since 1995." },
+      { title: P.title },
+      { name: "description", content: P.description },
       { name: "keywords", content: "handmade leather journal wholesale India, cotton rag paper manufacturer Jaipur, leather journal exporter, handmade paper wholesale" },
-      { property: "og:title", content: "INS Overseas — Handmade Leather Journals & Eco-Friendly Paper" },
-      { property: "og:description", content: "Four-generation family craft from Sanganer, Jaipur. Wholesale leather journals, seed paper, gift boxes & artisan stationery exported to 40+ countries." },
-      { property: "og:url", content: "https://ins-overseas.com/" },
+      { property: "og:title", content: P.ogTitle ?? P.title },
+      { property: "og:description", content: P.description },
+      { property: "og:url", content: `${SITE_URL}/` },
     ],
     links: [
-      { rel: "canonical", href: "https://ins-overseas.com/" },
+      { rel: "canonical", href: `${SITE_URL}/` },
     ],
   }),
   component: Home,

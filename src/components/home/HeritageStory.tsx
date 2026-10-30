@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import SiteImage from "@/components/shared/SiteImage";
+import { homeCopy } from "@/data/copy";
 
 export default function HeritageStory() {
   return (
@@ -17,41 +18,31 @@ export default function HeritageStory() {
           <div className="flex items-center gap-3">
             <span className="h-px w-10 bg-gold" />
             <span className="text-gold uppercase text-[11px]" style={{ letterSpacing: "0.25em" }}>
-              Our Story
+              {homeCopy.heritage.eyebrow}
             </span>
           </div>
           <h2
             className="mt-6 text-ink"
             style={{ fontFamily: "var(--font-display)", fontWeight: 300, fontSize: "clamp(36px, 5vw, 72px)", lineHeight: 1.05, letterSpacing: "-0.015em" }}
           >
-            Thirty Years of
+            {homeCopy.heritage.h2.plain}
             <br />
-            <em className="italic font-light text-umber">Rajasthani Craft</em>
+            <em className="italic font-light text-umber">{homeCopy.heritage.h2.em}</em>
           </h2>
           <div
             className="mt-8 space-y-5 max-w-xl text-umber-dark"
             style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 16, lineHeight: 1.8 }}
           >
-            <p>
-              Founded in 1995 in Sanganer — the historic papermaking heart of Jaipur — INS Overseas was built
-              on a simple belief: that handcrafted objects carry a spirit no machine can replicate.
-            </p>
-            <p>
-              For three decades, our artisans have worked the same manual vats, pulled the same cotton-rag
-              sheets, and hand-stitched the same leather spines that have made Rajasthan's craft legacy
-              world-famous.
-            </p>
-            <p>
-              Today, our journals and papers travel to boutique retailers, artists, and designers across 40+
-              countries — carrying a little piece of Jaipur with them.
-            </p>
+            {homeCopy.heritage.paragraphs.map((t) => (
+              <p key={t}>{t}</p>
+            ))}
           </div>
           <Link
             to="/about"
             className="group inline-flex items-center gap-2 mt-8 uppercase text-[12px] text-umber border-b border-umber pb-1 hover:gap-3 transition-all"
             style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.15em" }}
           >
-            Read Our Full Story
+            {homeCopy.heritage.link}
             <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </motion.div>

@@ -13,13 +13,20 @@ import { LIST_MAX, toggleEnquiry, useEnquiryList } from "@/lib/enquiryList";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SITE_URL } from "@/lib/seo";
-import { CATEGORY_PILLS, categoryLabel, productLead, productMoq } from "@/data/catalogue";
+import { seoPages } from "@/data/seoPages";
+import { productsCopy, collectionCopy } from "@/data/copy";
+import InfoSection from "@/components/shared/InfoSection";
+import { CATEGORY_PILLS, categoryLabel, moqPcs, productLead, productMoq } from "@/data/catalogue";
 import { staticProducts } from "@/data/staticProducts";
 import { useProductTerms } from "@/hooks/useProductTerms";
 import { useCategories } from "@/hooks/useCategories";
 import { useProductDetails } from "@/hooks/useProductDetails";
 import { codeSuffix, getProductDetails, productCode, specLine } from "@/data/productDetails";
-import { productSlug } from "@/lib/productUrl";
+import { productPath, productSlug } from "@/lib/productUrl";
+
+// A card's photo and name are links to the product's own page (so search engines and "open in new tab" work);
+// a plain click keeps the quick-view popup, a click with Ctrl / Cmd / Shift or the middle button goes to the page.
+const plainClick = (e: React.MouseEvent) => !(e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey);
 
 // ── Filter definitions ────────────────────────────────────────────────────────
 const filters = [{ key: "all", label: "All" }, ...CATEGORY_PILLS] as const;
@@ -42,9 +49,8 @@ type DynamicProduct = {
 export const Route = createFileRoute("/products")({
   head: () => {
     const canonical = `${SITE_URL}/products`;
-    const title = "Products — Leather Journals, Seed Paper, Gift Boxes | INS Overseas";
-    const description =
-      "Browse our full range of handmade leather journals, seed paper, paper gift boxes, paper gift bags, leather bags and artisan stationery. Wholesale from Jaipur, India.";
+    const title = seoPages["/products"].title;
+    const description = seoPages["/products"].description;
 
     const itemList = {
       "@type": "ItemList",
@@ -89,7 +95,7 @@ export const Route = createFileRoute("/products")({
         { name: "keywords", content: "handmade leather journal wholesale, seed paper manufacturer, paper gift box wholesale India, leather bag manufacturer Jaipur, handmade stationery wholesale" },
         { property: "og:type", content: "website" },
         { property: "og:url", content: canonical },
-        { property: "og:title", content: "Products — Leather Journals, Seed Paper & Artisan Gifts | INS Overseas" },
+        { property: "og:title", content: seoPages["/products"].ogTitle ?? title },
         { property: "og:description", content: description },
         { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
         { property: "og:image:width", content: "1200" },
@@ -99,7 +105,7 @@ export const Route = createFileRoute("/products")({
         { property: "og:locale", content: "en_IN" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:site", content: "@ins_overseas" },
-        { name: "twitter:title", content: "Products — INS Overseas Wholesale Catalogue" },
+        { name: "twitter:title", content: seoPages["/products"].ogTitle ?? title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
         { name: "twitter:image:alt", content: "INS Overseas wholesale product catalogue" },
@@ -284,12 +290,17 @@ function Products() {
     return () => window.removeEventListener("keydown", onKey);
   }, [preview, currentIndex, visible, shareFor]);
 
+  // on a collection page (and while it is still the collection being shown) the heading, the subtitle and the text below the grid are that collection's own
+  const collection = collectionCopy[`/products/${slug}`];
+  const onCollection = !!collection && filter === filterForSlug(slug);
+  const hero = onCollection ? collection : productsCopy;
+
   return (
     <>
       <PageHero
-        eyebrow="The Collection"
-        title={<>Every Piece, <em className="italic font-light text-gold-light">Handmade</em></>}
-        subtitle="A curated catalogue of journals, papers, stationery and leather goods — crafted in Jaipur, shipped worldwide."
+        eyebrow={productsCopy.eyebrow}
+        title={<>{hero.h1.plain} <em className="italic font-light text-gold-light">{hero.h1.em}</em></>}
+        subtitle={hero.subtitle}
       />
 
       {/* Category pills */}
@@ -399,9 +410,9 @@ function Products() {
                   >
                     {/* Image — click to open the details lightbox */}
                     <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setPreview(p)}
+                    <a
+                      href={productPath(p.id, p.name, productCode(p.id))}
+                      onClick={(e) => { if (plainClick(e)) { e.preventDefault(); setPreview(p); } }}
                       aria-label={`View details: ${p.name}`}
                       className="relative block aspect-[4/5] w-full overflow-hidden bg-[#EFEBE3] text-left cursor-pointer"
                     >
@@ -432,7 +443,7 @@ function Products() {
                       <span className="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full bg-cream text-umber flex items-center justify-center shadow-md md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300" aria-hidden>
                         <Maximize2 size={15} strokeWidth={1.8} />
                       </span>
-                    </button>
+                    </a>
                     <button
                       type="button"
                       onClick={() => setShareFor(p)}
@@ -449,7 +460,12 @@ function Products() {
                         className="text-ink leading-snug line-clamp-2"
                         style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "clamp(16px, 1.7vw, 19px)" }}
                       >
-                        {p.name}
+                        <a
+                          href={productPath(p.id, p.name, productCode(p.id))}
+                          onClick={(e) => { if (plainClick(e)) { e.preventDefault(); setPreview(p); } }}
+                        >
+                          {p.name}
+                        </a>
                       </h3>
                       {productCode(p.id) && (
                         <p className="mt-1 tabular-nums uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 10.5, letterSpacing: "0.14em", color: "var(--umber-dark, #4A3219)" }}>{productCode(p.id)}</p>
@@ -464,7 +480,7 @@ function Products() {
                       )}
                       <div className="mt-auto pt-3.5 flex flex-col gap-2.5">
                         <span className="uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 10, letterSpacing: "0.14em", color: "var(--grey-ink)" }}>
-                          MOQ {moq}+
+                          {moq == null ? "MOQ: confirmed in quote" : `MOQ ${moq}+`}
                         </span>
                         <div className="flex items-center gap-2 w-full max-[399px]:flex-col">
                           <ListButton product={p} compact />
@@ -482,6 +498,8 @@ function Products() {
           {!loading && shown.length < visible.length && <div ref={setSentinel} className="h-px" aria-hidden />}
         </div>
       </section>
+
+      {onCollection && <InfoSection tone="parchment" eyebrow="About This Collection" title={{ plain: collection.label }} level={3} blocks={collection.blocks} />}
 
       {/* ── Product details ─────────────────────────────────────────────── */}
       <AnimatePresence>
@@ -633,7 +651,7 @@ function ActionRow({ product, className = "", onShare }: { product: DynamicProdu
     <div className={className}>
       <div className="flex items-center justify-between gap-3">
         <span className="inline-flex items-center h-11 px-4 rounded-full bg-[#F1EEE8] text-ink tabular-nums" style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 15 }}>
-          MOQ {productMoq(product.id, product.category)}+
+          {productMoq(product.id, product.category) == null ? "MOQ: confirmed in quote" : `MOQ ${productMoq(product.id, product.category)}+`}
         </span>
         <a
           href={enquiryHref(product)}
@@ -685,7 +703,7 @@ function ActionRow({ product, className = "", onShare }: { product: DynamicProdu
 // compact = the round button on a grid card; otherwise the labelled button in the details popup.
 function ListButton({ product, compact = false }: { product: DynamicProduct; compact?: boolean }) {
   const moq = productMoq(product.id, product.category);
-  const item = { id: product.id, name: product.name, code: productCode(product.id) || undefined, category: categoryLabel(product.category), moq: `${moq}+ pcs`, url: productShareUrl(product.id), productId: product.id };
+  const item = { id: product.id, name: product.name, code: productCode(product.id) || undefined, category: categoryLabel(product.category), moq: moqPcs(moq), url: productShareUrl(product.id), productId: product.id };
   const list = useEnquiryList();
   const on = list.some((i) => i.id === item.id);
   const full = !on && list.length >= LIST_MAX;
@@ -760,7 +778,7 @@ function detailRows(id: string, category: string): [string, string][] {
     ...(d?.size ? [["Size", d.size] as [string, string]] : []),
     ...(d?.material ? [["Material", d.material] as [string, string]] : []),
     ...(d?.colours ? [["Colours", d.colours] as [string, string]] : []),
-    ["MOQ", `${productMoq(id, category)} units minimum`],
+    ["MOQ", productMoq(id, category) == null ? "Confirmed in quote" : `${productMoq(id, category)} units minimum`],
     ["Lead Time", `${productLead(id)} days after order confirmation`],
     ["Custom", d?.custom || "Logo debossing, embossing, foil available"],
     ["Shipping", "Air 7–10 days · Sea 35–40 days"],

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useFormSubmit } from "@/hooks/useFormSubmit";
+import { seoPages } from "@/data/seoPages";
 import PageHero from "@/components/shared/PageHero";
 import ProductCard from "@/components/shared/ProductCard";
 import { products, categoryMeta } from "@/data/products";
@@ -9,7 +10,7 @@ const slug = "leather-journals" as const;
 const meta = categoryMeta[slug];
 
 export const Route = createFileRoute("/products/leather-journals")({
-  head: () => ({ meta: [{ title: `${meta.label} | INS Overseas` }, { name: "description", content: meta.description }] }),
+  head: () => ({ meta: [{ title: seoPages["/products/leather-journals"].title }, { name: "description", content: seoPages["/products/leather-journals"].description }] }),
   component: CategoryPage,
 });
 

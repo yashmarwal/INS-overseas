@@ -4,6 +4,7 @@ import { ComposableMap, Geographies, Geography, Marker, Line } from "react-simpl
 import { geoEqualEarth } from "d3-geo";
 import { useCounter } from "@/hooks/useCounter";
 import EditorialHeading from "@/components/shared/EditorialHeading";
+import { homeCopy } from "@/data/copy";
 
 const GEO_URL =
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -243,7 +244,7 @@ export default function GlobalReach() {
   return (
     <section className="bg-ink text-cream py-20 md:py-28 lg:py-32 overflow-hidden" style={{ background: "#0F0B08" }}>
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-        <EditorialHeading light eyebrow="Global Reach" count="40+ countries" line1="Crafted in Jaipur." line2="Loved in 40+ Countries." intro="Wholesale orders leave Sanganer by air and by sea, to buyers across Europe, the UK, the USA, the Middle East and Asia-Pacific." />
+        <EditorialHeading light eyebrow={homeCopy.globalReach.eyebrow} count={homeCopy.globalReach.count} line1={homeCopy.globalReach.line1} line2={homeCopy.globalReach.line2} intro={homeCopy.globalReach.intro} />
 
         <div
           className="mt-8 md:mt-16 relative w-full rounded-xl overflow-hidden max-sm:!aspect-[1.7]"
@@ -351,10 +352,9 @@ export default function GlobalReach() {
 
         {/* Stats */}
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 border-y border-warm-grey/15 py-8">
-          <Stat value={40} suffix="+" label="Countries" />
-          <Stat value={3} label="Continents" />
-          <Stat value={1995} label="Since" group={false} /> {/* a year: no thousands separator */}
-          <Stat value={895700} suffix="+" label="Products Shipped" />
+          {homeCopy.globalReach.stats.map((s) => (
+            <Stat key={s.label} {...s} />
+          ))}
         </div>
 
         <motion.div

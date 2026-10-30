@@ -5,12 +5,15 @@ import { X } from "lucide-react";
 import { useGalleryImages } from "@/hooks/useGalleryImages";
 import PageHero from "@/components/shared/PageHero";
 import { SITE_URL } from "@/lib/seo";
+import { seoPages } from "@/data/seoPages";
+import { galleryCopy as C, galleryInfo } from "@/data/copy";
+import InfoSection from "@/components/shared/InfoSection";
 import { isVideoUrl } from "@/lib/utils";
 
+const PAGE = seoPages["/gallery"];
 const CANONICAL = `${SITE_URL}/gallery`;
-const TITLE = "Gallery — Handmade Journals & Artisan Paper Products | INS Overseas";
-const DESCRIPTION =
-  "Browse our workspace and product gallery — handcrafted leather journals, seed paper, gift boxes and artisan stationery made in Sanganer, Jaipur.";
+const TITLE = PAGE.title;
+const DESCRIPTION = PAGE.description;
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
@@ -19,7 +22,7 @@ export const Route = createFileRoute("/gallery")({
       { name: "description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: CANONICAL },
-      { property: "og:title", content: "Gallery — INS Overseas Workspace & Products" },
+      { property: "og:title", content: PAGE.ogTitle ?? PAGE.title },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
       { property: "og:image:width", content: "1200" },
@@ -29,7 +32,7 @@ export const Route = createFileRoute("/gallery")({
       { property: "og:locale", content: "en_IN" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@ins_overseas" },
-      { name: "twitter:title", content: "Gallery — INS Overseas Workspace & Products" },
+      { name: "twitter:title", content: PAGE.ogTitle ?? PAGE.title },
       { name: "twitter:description", content: DESCRIPTION },
       { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
       { name: "twitter:image:alt", content: "INS Overseas gallery" },
@@ -77,9 +80,9 @@ function GalleryPage() {
   return (
     <>
       <PageHero
-        eyebrow="Our Work"
-        title={<>From Our <em className="italic font-light">Workspace</em></>}
-        subtitle="Handcrafted leather journals and artisan paper products made in Sanganer, Jaipur."
+        eyebrow={C.eyebrow}
+        title={<>{C.h1.plain} <em className="italic font-light">{C.h1.em}</em></>}
+        subtitle={C.subtitle}
       />
 
       <section className="bg-parchment py-14 md:py-20">
@@ -158,6 +161,8 @@ function GalleryPage() {
           )}
         </div>
       </section>
+
+      <InfoSection blocks={galleryInfo} />
 
       {/* Lightbox */}
       <AnimatePresence>

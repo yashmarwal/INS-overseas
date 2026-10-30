@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowUpRight, Check, Plus } from "lucide-react";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { tagLabel } from "@/hooks/useProductImages";
-import { moqNumber } from "@/data/catalogue";
+import { DEFAULT_LEAD_DAYS, moqNumber, moqPcs } from "@/data/catalogue";
 import { enquiryId, LIST_MAX, toggleEnquiry, useEnquiryList, type EnquiryItem } from "@/lib/enquiryList";
 import { collectionShareUrl } from "@/lib/share";
 
@@ -73,7 +73,7 @@ export default function HomeProductCard({ name, category, categoryId, tag, image
           {image}
           {hoverImage && <div className="absolute inset-0 opacity-0 transition-opacity duration-500 [@media(hover:hover)]:group-hover:opacity-100">{hoverImage}</div>}
         </div>
-        <QuoteToggle item={{ id: enquiryId(name), name, category, moq: `${moqNumber(categoryId)}+ pcs`, url: collectionShareUrl(categoryId) }} className="absolute bottom-3 left-3 z-[1]" />
+        <QuoteToggle item={{ id: enquiryId(name), name, category, moq: moqPcs(moqNumber(categoryId)), url: collectionShareUrl(categoryId) }} className="absolute bottom-3 left-3 z-[1]" />
         <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-1.5">
           {label && (
             <span
@@ -92,8 +92,8 @@ export default function HomeProductCard({ name, category, categoryId, tag, image
       {/* info tiles + quick actions */}
       <div className="@container mt-2.5">
        <div className="flex items-stretch gap-1.5 @[296px]:gap-2">
-        <InfoTile label="MOQ" value={`${moqNumber(categoryId)}+ pcs`} grow />
-        <InfoTile label="Lead" value="30 days" />
+        <InfoTile label="MOQ" value={moqPcs(moqNumber(categoryId))} grow />
+        <InfoTile label="Lead" value={`${DEFAULT_LEAD_DAYS} days`} />
         <a href={chat} target="_blank" rel="noreferrer" aria-label={`Chat on WhatsApp about ${name}`} className={cardSquareBtn}>
           <WhatsAppGlyph size={20} />
         </a>

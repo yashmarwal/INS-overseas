@@ -4,36 +4,11 @@ import { ArrowRight } from "lucide-react";
 import EditorialHeading, { headingLinkCls, headingLinkStyle } from "@/components/shared/EditorialHeading";
 import TornTop from "@/components/shared/TornTop";
 import { EASE } from "@/components/shared/Reveal";
+import { homeCopy } from "@/data/copy";
 
 // How a wholesale order runs, from the first message to a tracked shipment. The nine steps and their numbers are the
 // same ones the INS Assistant gives (and the shipping times are the ones on the Products page and in the FAQ).
-type Step = { t: string; d: string; chip?: string };
-const phases: { title: string; steps: Step[] }[] = [
-  {
-    title: "Brief & Quote",
-    steps: [
-      { t: "Share your brief and logo files", d: "Tell us the product, quantity and branding you have in mind." },
-      { t: "We confirm specs and send a quote", d: "Pricing depends on specs, quantity and customisation." },
-    ],
-  },
-  {
-    title: "Sample & Approval",
-    steps: [
-      { t: "Custom sample in about 10 days", d: "Made with your logo or design.", chip: "~10 days" },
-      { t: "You approve the sample", d: "Check the quality, colour and finish in hand." },
-      { t: "50% advance payment", d: "Half now, half before shipment.", chip: "50%" },
-    ],
-  },
-  {
-    title: "Production & Shipping",
-    steps: [
-      { t: "Production in 30 days", d: "Handmade in Sanganer, Jaipur.", chip: "30 days" },
-      { t: "Photos and video as it is made", d: "Step-by-step updates, so you see your order take shape." },
-      { t: "50% balance before shipment", d: "Paid before we dispatch.", chip: "50%" },
-      { t: "We dispatch and share tracking", d: "Air 7–10 days, sea 35–40 days.", chip: "Tracked" },
-    ],
-  },
-];
+const phases = homeCopy.ordering.phases;
 
 const colV = { hide: {}, show: { transition: { staggerChildren: 0.12 } } };
 const rise = { hide: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } } };
@@ -47,14 +22,14 @@ export default function OrderingSteps() {
       <TornTop color="#0F0B08" />
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
         <EditorialHeading
-          eyebrow="How Ordering Works"
-          count="09 steps"
-          line1="From Brief"
-          line2="To Your Door"
-          intro="Clear steps, clear terms. You always know what happens next."
+          eyebrow={homeCopy.ordering.eyebrow}
+          count={homeCopy.ordering.count}
+          line1={homeCopy.ordering.line1}
+          line2={homeCopy.ordering.line2}
+          intro={homeCopy.ordering.intro}
           aside={
             <Link to="/wholesale" className={`${headingLinkCls} max-md:hidden`} style={headingLinkStyle}>
-              Start your order
+              {homeCopy.ordering.link}
               <span className="w-9 h-9 rounded-full bg-gold text-ink flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5"><ArrowRight size={16} /></span>
             </Link>
           }

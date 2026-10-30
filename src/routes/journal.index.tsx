@@ -4,26 +4,21 @@ import PageHero from "@/components/shared/PageHero";
 import { motion } from "framer-motion";
 import { posts } from "@/data/blogPosts";
 import { SITE_URL } from "@/lib/seo";
+import { seoPages } from "@/data/seoPages";
+import { journalCopy as C } from "@/data/copy";
 
+const PAGE = seoPages["/journal"];
 const CANONICAL = `${SITE_URL}/journal`;
 
 export const Route = createFileRoute("/journal/")({
   head: () => ({
     meta: [
-      { title: "Journal | INS Overseas — Craft Stories & Jaipur Heritage" },
-      {
-        name: "description",
-        content:
-          "Essays on handmade paper, leather binding, Rajasthani craft, and care guides for your INS Overseas pieces.",
-      },
+      { title: PAGE.title },
+      { name: "description", content: PAGE.description },
       { property: "og:type", content: "website" },
       { property: "og:url", content: CANONICAL },
-      { property: "og:title", content: "The INS Overseas Journal — Craft Stories & Jaipur Heritage" },
-      {
-        property: "og:description",
-        content:
-          "Essays on handmade paper, leather binding, Rajasthani craft, and care guides for your INS Overseas pieces.",
-      },
+      { property: "og:title", content: PAGE.ogTitle ?? PAGE.title },
+      { property: "og:description", content: PAGE.description },
       { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
@@ -32,8 +27,8 @@ export const Route = createFileRoute("/journal/")({
       { property: "og:locale", content: "en_IN" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@ins_overseas" },
-      { name: "twitter:title", content: "The INS Overseas Journal" },
-      { name: "twitter:description", content: "Essays on handmade paper, leather craft, and Rajasthani heritage." },
+      { name: "twitter:title", content: PAGE.ogTitle ?? PAGE.title },
+      { name: "twitter:description", content: PAGE.description },
       { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
       { name: "twitter:image:alt", content: "INS Overseas Journal" },
     ],
@@ -80,14 +75,14 @@ function JournalIndex() {
   return (
     <>
       <PageHero
-        eyebrow="The Journal"
+        eyebrow={C.eyebrow}
         title={
           <>
-            Stories From{" "}
-            <em className="italic font-light text-gold-light">Sanganer</em>
+            {C.h1.plain}{" "}
+            <em className="italic font-light text-gold-light">{C.h1.em}</em>
           </>
         }
-        subtitle="Essays on handmade paper, leather craft, Rajasthani heritage, and guides for retailers and collectors."
+        subtitle={C.subtitle}
       />
       <section className="bg-cream py-20 lg:py-28">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">

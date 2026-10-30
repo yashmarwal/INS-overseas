@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { Play, ArrowRight } from "lucide-react";
+import { homeCopy } from "@/data/copy";
 
 // First 3 video IDs from the real Vimeo playlist
 const previewVideos = [
@@ -30,7 +31,7 @@ export default function ManufacturingTeaser() {
                 className="text-gold uppercase"
                 style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 11, letterSpacing: "0.25em" }}
               >
-                Inside Our Workspace
+                {homeCopy.manufacturing.eyebrow}
               </span>
             </div>
 
@@ -44,24 +45,20 @@ export default function ManufacturingTeaser() {
                 letterSpacing: "-0.01em",
               }}
             >
-              See How We<br />
-              <em className="italic font-light text-gold-light">Make Everything</em>
+              {homeCopy.manufacturing.h2.plain}<br />
+              <em className="italic font-light text-gold-light">{homeCopy.manufacturing.h2.em}</em>
             </h2>
 
             <p
               className="text-warm-grey mb-10 leading-relaxed max-w-sm"
               style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 15, lineHeight: 1.85 }}
             >
-              From recycled cotton rags pulled into handmade paper sheets, to buffalo leather hand-stitched around every journal spine — watch the full process in our Sanganer workspace.
+              {homeCopy.manufacturing.text}
             </p>
 
             {/* Stats row */}
             <div className="flex gap-8 mb-10 border-t border-white/10 pt-8">
-              {([
-                ["25+", "Artisans"],
-                ["400", "Years of craft"],
-                ["30",  "Years exporting"],
-              ] as [string, string][]).map(([num, label]) => (
+              {homeCopy.manufacturing.stats.map(([num, label]) => (
                 <div key={label}>
                   <p
                     className="text-gold"
@@ -86,7 +83,7 @@ export default function ManufacturingTeaser() {
               style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12, letterSpacing: "0.18em" }}
             >
               <Play size={14} fill="currentColor" />
-              Watch &amp; Explore
+              {homeCopy.manufacturing.link}
               <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </motion.div>

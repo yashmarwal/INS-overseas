@@ -4,11 +4,13 @@ import SustainabilitySection from "@/components/home/SustainabilitySection";
 import SectionHeading from "@/components/shared/SectionHeading";
 import { motion } from "framer-motion";
 import { SITE_URL } from "@/lib/seo";
+import { sustainabilityCopy as C } from "@/data/copy";
+import { seoPages } from "@/data/seoPages";
 
+const PAGE = seoPages["/sustainability"];
 const CANONICAL = `${SITE_URL}/sustainability`;
-const TITLE = "Sustainability — Eco-Friendly Handmade Paper | INS Overseas";
-const DESCRIPTION =
-  "100% recycled cotton rag paper, no trees, no harsh chemicals. INS Overseas champions eco-friendly papermaking with zero-waste manufacturing in Sanganer, Jaipur.";
+const TITLE = PAGE.title;
+const DESCRIPTION = PAGE.description;
 
 export const Route = createFileRoute("/sustainability")({
   head: () => ({
@@ -17,7 +19,7 @@ export const Route = createFileRoute("/sustainability")({
       { name: "description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: CANONICAL },
-      { property: "og:title", content: "Sustainability — Eco-Friendly Handmade Paper Manufacturing" },
+      { property: "og:title", content: PAGE.ogTitle ?? PAGE.title },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
       { property: "og:image:width", content: "1200" },
@@ -27,7 +29,7 @@ export const Route = createFileRoute("/sustainability")({
       { property: "og:locale", content: "en_IN" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@ins_overseas" },
-      { name: "twitter:title", content: "Sustainability — Eco-Friendly Paper Manufacturing" },
+      { name: "twitter:title", content: PAGE.ogTitle ?? PAGE.title },
       { name: "twitter:description", content: DESCRIPTION },
       { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
       { name: "twitter:image:alt", content: "Eco-friendly handmade paper at INS Overseas" },
@@ -48,7 +50,7 @@ export const Route = createFileRoute("/sustainability")({
               "about": {
                 "@type": "Thing",
                 "name": "Sustainable handmade paper manufacturing",
-                "description": "100% recycled cotton rag paper production, zero trees, no harsh chemicals, water recycling — INS Overseas, Sanganer, Jaipur.",
+                "description": "100% recycled cotton rag paper production, no wood pulp — INS Overseas, Sanganer, Jaipur.",
               },
               "publisher": { "@id": `${SITE_URL}/#organization` },
             },
@@ -68,38 +70,28 @@ export const Route = createFileRoute("/sustainability")({
 });
 
 
-const stats = [
-  { value: "0", label: "Trees Cut" },
-  { value: "300+", label: "Tonnes Textile Waste Repurposed" },
-  { value: "100%", label: "Chemical-Free Paper" },
-];
+const stats = C.stats;
 
 function Sust() {
   return (
     <>
       <PageHero
-        eyebrow="Sustainability"
-        title={<>Making Beautiful Things<br /><em className="italic font-light text-gold-light">Without Costing the Earth</em></>}
-        subtitle="Every sheet of paper we make starts as discarded cotton from Jaipur's textile mills."
+        eyebrow={C.eyebrow}
+        title={<>{C.h1.plain}<br /><em className="italic font-light text-gold-light">{C.h1.em}</em></>}
+        subtitle={C.subtitle}
       />
       <section className="bg-cream py-24">
         <div className="max-w-3xl mx-auto px-5 sm:px-8 space-y-6 text-umber-dark leading-relaxed" style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 17 }}>
-          <p>
-            The textile mills around Jaipur produce tonnes of cotton offcuts every year. For three
-            decades, we have been collecting that waste, cleaning it, pulping it, and turning it into
-            paper of remarkable warmth and texture.
-          </p>
-          <p>
-            No trees are felled. No chlorine, no acids. The water we use is recycled back into the vats.
-            Every offcut from our binding floor returns to the pulp.
-          </p>
+          {C.intro.map((t) => (
+            <p key={t}>{t}</p>
+          ))}
         </div>
       </section>
       <SustainabilitySection />
       <section className="bg-parchment py-24">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
-          <SectionHeading eyebrow="Our Impact" title={<>By the <em className="italic font-light">Numbers</em></>} />
-          <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <SectionHeading eyebrow={C.impact.eyebrow} title={<>{C.impact.h2.plain} <em className="italic font-light">{C.impact.h2.em}</em></>} />
+          <div className="mt-14 grid grid-cols-1 md:grid-cols-2 md:max-w-3xl md:mx-auto gap-8 text-center">
             {stats.map((s, i) => (
               <motion.div key={s.label}
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.1 }}

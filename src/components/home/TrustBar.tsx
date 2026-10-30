@@ -1,13 +1,9 @@
 import { motion } from "framer-motion";
 import { useCounter } from "@/hooks/useCounter";
 import { EASE } from "@/components/shared/Reveal";
+import { homeCopy } from "@/data/copy";
 
-const stats = [
-  { label: "Established", value: 1995, suffix: "", prefix: "EST. ", plain: true }, // a year: no thousands separator
-  { label: "Countries Served", value: 40, suffix: "+" },
-  { label: "Years of Craft", value: 30, suffix: "" },
-  { label: "Products Shipped", value: 895700, suffix: "+" },
-];
+const stats = homeCopy.trust;
 
 const rise = { hide: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: EASE } } };
 const draw = { hide: { scaleX: 0 }, show: { scaleX: 1, transition: { duration: 0.9, ease: EASE, delay: 0.25 } } };

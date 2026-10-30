@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import LazyMount from "@/components/shared/LazyMount";
+import { homeCopy } from "@/data/copy";
 
 // Loads the third-party widget script only when this mounts (see LazyMount in InstagramFeed).
 function BeholdFeed() {
@@ -33,7 +34,7 @@ export default function InstagramFeed() {
                 className="text-gold uppercase"
                 style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 400, letterSpacing: "0.25em" }}
               >
-                Follow Our Journey
+                {homeCopy.instagram.eyebrow}
               </p>
               <a
                 href="https://www.instagram.com/ins_overseas"
@@ -42,7 +43,7 @@ export default function InstagramFeed() {
                 className="text-ink hover:text-umber transition-colors"
                 style={{ fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(20px, 2.5vw, 32px)" }}
               >
-                @ins_overseas
+                {homeCopy.instagram.handle}
               </a>
             </div>
           </div>
@@ -53,7 +54,7 @@ export default function InstagramFeed() {
             className="inline-flex items-center gap-2 border border-umber text-umber uppercase px-5 py-2.5 hover:bg-umber hover:text-cream transition-colors shrink-0"
             style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11, letterSpacing: "0.15em" }}
           >
-            Follow on Instagram
+            {homeCopy.instagram.follow}
           </a>
         </div>
 

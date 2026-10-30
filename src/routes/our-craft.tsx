@@ -3,11 +3,13 @@ import PageHero from "@/components/shared/PageHero";
 import CraftProcess from "@/components/home/CraftProcess";
 import { motion } from "framer-motion";
 import { SITE_URL } from "@/lib/seo";
+import { ourCraftCopy as C } from "@/data/copy";
+import { seoPages } from "@/data/seoPages";
 
+const PAGE = seoPages["/our-craft"];
 const CANONICAL = `${SITE_URL}/our-craft`;
-const TITLE = "Our Craft — How We Make Handmade Paper & Leather Journals | INS Overseas";
-const DESCRIPTION =
-  "From recycled cotton rags to finished leather journals — discover the traditional Sanganer papermaking process passed down through four generations at INS Overseas.";
+const TITLE = PAGE.title;
+const DESCRIPTION = PAGE.description;
 
 export const Route = createFileRoute("/our-craft")({
   head: () => ({
@@ -16,7 +18,7 @@ export const Route = createFileRoute("/our-craft")({
       { name: "description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: CANONICAL },
-      { property: "og:title", content: "Our Craft — Traditional Sanganer Papermaking" },
+      { property: "og:title", content: PAGE.ogTitle ?? PAGE.title },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
       { property: "og:image:width", content: "1200" },
@@ -26,7 +28,7 @@ export const Route = createFileRoute("/our-craft")({
       { property: "og:locale", content: "en_IN" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@ins_overseas" },
-      { name: "twitter:title", content: "Our Craft — Sanganer Handmade Paper & Leather" },
+      { name: "twitter:title", content: PAGE.ogTitle ?? PAGE.title },
       { name: "twitter:description", content: DESCRIPTION },
       { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
       { name: "twitter:image:alt", content: "Traditional handmade paper craft at INS Overseas" },
@@ -63,32 +65,24 @@ export const Route = createFileRoute("/our-craft")({
 });
 
 
-const timeline = [
-  ["1995", "Founded in a single workspace in Sanganer, Jaipur."],
-  ["2000", "First overseas order shipped — a stationery boutique in London."],
-  ["2005", "Expanded to leather journal production."],
-  ["2010", "Reached 20 countries. Custom OEM line launched."],
-  ["2015", "Sustainability certification process initiated."],
-  ["2020", "Crossed 40 countries served, 5,000+ products shipped."],
-  ["2025", "895,700+ products. New atelier wing for accessories."],
-];
+const timeline = C.timeline;
 
 function OurCraft() {
   return (
     <>
       <PageHero
-        eyebrow="The Atelier"
-        title={<>The Craft, <em className="italic font-light text-gold-light">Step by Step</em></>}
-        subtitle="Walk through our Sanganer workspace — from cotton-rag pulping to leather binding to global export."
+        eyebrow={C.eyebrow}
+        title={<>{C.h1.plain} <em className="italic font-light text-gold-light">{C.h1.em}</em></>}
+        subtitle={C.subtitle}
         image="/manufacturing/workspace-3.jpg"
       />
       <CraftProcess />
 
       <section className="bg-ink text-cream py-24 lg:py-32">
         <div className="max-w-3xl mx-auto px-5 sm:px-8">
-          <p className="text-gold uppercase text-[11px] mb-3" style={{ letterSpacing: "0.25em" }}>Our Journey</p>
+          <p className="text-gold uppercase text-[11px] mb-3" style={{ letterSpacing: "0.25em" }}>{C.journey.eyebrow}</p>
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 300, fontSize: "clamp(36px, 5vw, 64px)", lineHeight: 1.05 }}>
-            Three Decades, <em className="italic font-light text-gold-light">One Atelier</em>
+            {C.journey.h2.plain} <em className="italic font-light text-gold-light">{C.journey.h2.em}</em>
           </h2>
           <ol className="mt-14 space-y-10 border-l border-gold/30 pl-10">
             {timeline.map(([year, text], i) => (

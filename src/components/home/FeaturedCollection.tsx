@@ -8,8 +8,9 @@ import { cardSquareBtn, InfoTile, QuoteToggle } from "@/components/home/HomeProd
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import FadeImg from "@/components/shared/FadeImg";
 import { EASE } from "@/components/shared/Reveal";
+import { homeCopy } from "@/data/copy";
 import { productShareUrl } from "@/lib/share";
-import { categoryLabel, productLead, productMoq } from "@/data/catalogue";
+import { categoryLabel, moqPcs, productLead, productMoq } from "@/data/catalogue";
 import { useProductTerms } from "@/hooks/useProductTerms";
 import { useProductDetails } from "@/hooks/useProductDetails";
 import { codeSuffix, productCode } from "@/data/productDetails";
@@ -144,7 +145,7 @@ export default function FeaturedCollection() {
   const front = ((slot % ring) + ring) % ring;
   const p = all[front % n];
   const name = p.product_name || "Handmade Product";
-  const moq = `${productMoq(p.id, p.category)}+ pcs`;
+  const moq = moqPcs(productMoq(p.id, p.category));
 
   const turn = (by_: number) => { by.current = "hand"; setTarget((v) => v + by_); };
   const pickSlot = (s: number) => { by.current = "hand"; setTarget((v) => v + around(s - v, ring)); };
@@ -158,14 +159,14 @@ export default function FeaturedCollection() {
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
         <EditorialHeading
           id="handpicked-title"
-          eyebrow="Handpicked"
+          eyebrow={homeCopy.handpicked.eyebrow}
           count={`${String(n).padStart(2, "0")} new`}
-          line1="Fresh From"
-          line2="The Workshop"
-          intro="A few pieces we are especially proud of right now. Ask for pricing and samples on any of them."
+          line1={homeCopy.handpicked.line1}
+          line2={homeCopy.handpicked.line2}
+          intro={homeCopy.handpicked.intro}
           aside={
             <Link to="/products" className={headingLinkCls} style={headingLinkStyle}>
-              See all products
+              {homeCopy.handpicked.link}
               <span className="w-9 h-9 rounded-full bg-gold text-ink flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5"><ArrowRight size={16} /></span>
             </Link>
           }

@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, Calendar } from "lucide-react";
 import { posts, type Post } from "@/data/blogPosts";
 import { SITE_URL, ORG_REF } from "@/lib/seo";
 import { revealProps } from "@/components/shared/Reveal";
+import { postParagraphs, isPostHeading } from "@/data/postText";
 
 const PUBLISHER = {
   "@type": "Organization",
@@ -29,18 +30,14 @@ export const Route = createFileRoute("/journal/$slug")({
       "@type": "BlogPosting",
       "@id": `${canonical}#article`,
       "headline": post.title,
-      "description": post.excerpt,
+      "description": post.seoDescription,
       "image": {
         "@type": "ImageObject",
         "url": ogImage,
       },
       "datePublished": post.datePublished,
       "dateModified": post.dateModified,
-      "author": {
-        "@type": "Person",
-        "name": "INS Overseas Team",
-        "url": `${SITE_URL}/about`,
-      },
+      "author": ORG_REF,
       "publisher": PUBLISHER,
       "mainEntityOfPage": {
         "@type": "WebPage",
@@ -63,13 +60,13 @@ export const Route = createFileRoute("/journal/$slug")({
 
     return {
       meta: [
-        { title: `${post.title} | INS Overseas Journal` },
-        { name: "description", content: post.excerpt },
+        { title: post.seoTitle },
+        { name: "description", content: post.seoDescription },
         // Open Graph
         { property: "og:type", content: "article" },
         { property: "og:url", content: canonical },
         { property: "og:title", content: post.title },
-        { property: "og:description", content: post.excerpt },
+        { property: "og:description", content: post.seoDescription },
         { property: "og:image", content: ogImage },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
@@ -84,7 +81,7 @@ export const Route = createFileRoute("/journal/$slug")({
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:site", content: "@ins_overseas" },
         { name: "twitter:title", content: post.title },
-        { name: "twitter:description", content: post.excerpt },
+        { name: "twitter:description", content: post.seoDescription },
         { name: "twitter:image", content: ogImage },
         { name: "twitter:image:alt", content: post.title },
       ],
@@ -114,10 +111,7 @@ const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
 function BlogPost() {
   const post = Route.useLoaderData() as Post;
 
-  const paragraphs = post.content
-    .split("\n\n")
-    .map((p: string) => p.trim())
-    .filter(Boolean);
+  const paragraphs = postParagraphs(post.content);
 
   const currentIndex = posts.findIndex((p) => p.slug === post.slug);
   const prevPost = currentIndex > 0 ? posts[currentIndex - 1] : null;
@@ -211,11 +205,7 @@ function BlogPost() {
           {/* Body paragraphs */}
           <div className="space-y-5">
             {paragraphs.map((para: string, i: number) => {
-              const isHeading =
-                para.length < 70 &&
-                !para.endsWith(".") &&
-                !para.endsWith(",") &&
-                !para.includes("—");
+              const isHeading = isPostHeading(para);
               return isHeading ? (
                 <motion.h2
                   key={i}

@@ -4,6 +4,7 @@ import EditorialHeading from "@/components/shared/EditorialHeading";
 import { headingLinkCls, headingLinkStyle } from "@/components/shared/EditorialHeading";
 import { ArrowRight } from "lucide-react";
 import { posts } from "@/data/blogPosts";
+import { homeCopy } from "@/data/copy";
 
 // Show first 3 posts from the shared data source
 const previewPosts = posts.slice(0, 3);
@@ -13,13 +14,13 @@ export default function BlogPreview() {
     <section className="hidden md:block bg-parchment py-24 lg:py-32">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-20">
         <EditorialHeading
-          eyebrow="The Journal"
-          line1="Notes From"
-          line2="The Workshop Floor"
-          intro="Stories on leather, paper and the people who make them."
+          eyebrow={homeCopy.blog.eyebrow}
+          line1={homeCopy.blog.line1}
+          line2={homeCopy.blog.line2}
+          intro={homeCopy.blog.intro}
           aside={
             <Link to="/journal" className={headingLinkCls} style={headingLinkStyle}>
-              Read the journal
+              {homeCopy.blog.link}
               <span className="w-9 h-9 rounded-full bg-gold text-ink flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5"><ArrowRight size={16} /></span>
             </Link>
           }
