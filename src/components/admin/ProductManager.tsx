@@ -584,12 +584,12 @@ function EditDialog({ product, terms, details, otherNames, otherCodes, extras, o
 
           <fieldset>
             <legend className="text-[14px] font-semibold">This product's own terms <span className="font-normal" style={{ color: MUTED }}>(optional)</span></legend>
-            <p className="mt-1 text-[13px]" style={{ color: MUTED }}>Leave empty to use the category's: minimum order {moqNumber(category)} pcs, lead time {DEFAULT_LEAD_DAYS} days.</p>
+            <p className="mt-1 text-[13px]" style={{ color: MUTED }}>Leave empty to use the category's: {moqNumber(category) ? `minimum order ${moqNumber(category)} pcs` : "no minimum order on record (shown as confirmed in quote)"}, lead time {DEFAULT_LEAD_DAYS} days.</p>
             <div className="mt-2 grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="edit-moq" className="text-[13px] font-medium">Minimum order</label>
                 <div className="relative mt-1">
-                  <input id="edit-moq" inputMode="numeric" value={moq} onChange={(e) => { setMoq(e.target.value.replace(/[^0-9]/g, "")); setTermsError(""); }} placeholder={moqNumber(category)} className={`${field} h-12 pl-4 pr-12 tabular-nums`} />
+                  <input id="edit-moq" inputMode="numeric" value={moq} onChange={(e) => { setMoq(e.target.value.replace(/[^0-9]/g, "")); setTermsError(""); }} placeholder={moqNumber(category) ?? ""} className={`${field} h-12 pl-4 pr-12 tabular-nums`} />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px]" style={{ color: MUTED }}>pcs</span>
                 </div>
               </div>

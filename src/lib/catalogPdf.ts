@@ -14,7 +14,7 @@ export type CatalogItem = {
   category: string; // shown label, e.g. "Leather Journal"
   description: string;
   image: string; // photo URL ("" for none)
-  moq: number;
+  moq: number | null; // null = no minimum on record, printed as "In quote"
   lead: number; // days
   url: string; // the product's own link
   tag?: string | null; // "Best seller" / "New"
@@ -367,7 +367,7 @@ export async function buildCatalogPdf(items: CatalogItem[], opts: BuildOptions):
     ink(GREY); font("helvetica", "normal", 5.9);
     spaced("MIN. ORDER", tx, fy + 3.7, 0.6); spaced("LEAD TIME", tx + 27, fy + 3.7, 0.6);
     ink(INK); font("helvetica", "bold", 9);
-    doc.text(`${it.moq} pcs`, tx, fy + 8); doc.text(`${it.lead} days`, tx + 27, fy + 8);
+    doc.text(it.moq == null ? "In quote" : `${it.moq} pcs`, tx, fy + 8); doc.text(`${it.lead} days`, tx + 27, fy + 8);
     ink(GOLD_DEEP); font("helvetica", "bold", 7.6);
     const lw = doc.getTextWidth("View online");
     const lx = x + CW - PAD - 1.5 - lw;

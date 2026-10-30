@@ -112,7 +112,7 @@ const lines = (list: EnquiryItem[]) =>
   list
     .map((i, n) => {
       const qty = i.qty && Number(i.qty) > 0 ? `\n   Quantity: ${Number(i.qty)} pcs` : "";
-      return `${n + 1}. ${i.name}${i.code ? ` [${clean(i.code, 24)}]` : ""} (${i.category}, MOQ from ${i.moq})${qty}${i.url ? `\n   ${i.url}` : ""}`;
+      return `${n + 1}. ${i.name}${i.code ? ` [${clean(i.code, 24)}]` : ""} (${i.category}, ${/\d/.test(i.moq) ? `MOQ from ${i.moq}` : `MOQ: ${i.moq.toLowerCase()}`})${qty}${i.url ? `\n   ${i.url}` : ""}`;
     })
     .join("\n");
 

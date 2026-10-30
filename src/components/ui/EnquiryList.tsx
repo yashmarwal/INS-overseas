@@ -129,7 +129,7 @@ export default function EnquiryList() {
                         ) : (
                           <p className="text-ink truncate" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, lineHeight: 1.15 }}>{it.name}</p>
                         )}
-                        <p className="mt-0.5 text-grey-ink tabular-nums lining-nums" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 12 }}>{it.category} · MOQ from {it.moq}</p>
+                        <p className="mt-0.5 text-grey-ink tabular-nums lining-nums" style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 12 }}>{it.category} · {/\d/.test(it.moq) ? `MOQ from ${it.moq}` : `MOQ: ${it.moq.toLowerCase()}`}</p>
                       </div>
                       <button type="button" onClick={() => removeEnquiry(it.id)} aria-label={`Remove ${it.name}`} className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-ink/70 hover:bg-ink/10 hover:text-ink transition-colors">
                         <Trash2 size={16} />

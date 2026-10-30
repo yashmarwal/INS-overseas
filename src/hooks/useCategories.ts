@@ -12,12 +12,12 @@ import { getCustomCategories, setCustomCategories, useCustomCategories, type Cus
 export const CATEGORY_SECTION = "product_category";
 export const DEFAULT_ICON = "🏷️";
 
-const parseMeta = (alt: unknown): { moq: number; icon: string } => {
+const parseMeta = (alt: unknown): { moq: number | undefined; icon: string } => {
   try {
     const m = JSON.parse(String(alt ?? ""));
     const moq = Math.round(Number(m.moq));
-    return { moq: Number.isFinite(moq) && moq >= 1 ? moq : 200, icon: typeof m.icon === "string" && m.icon.trim() ? m.icon.trim() : DEFAULT_ICON };
-  } catch { return { moq: 200, icon: DEFAULT_ICON }; }
+    return { moq: Number.isFinite(moq) && moq >= 1 ? moq : undefined, icon: typeof m.icon === "string" && m.icon.trim() ? m.icon.trim() : DEFAULT_ICON };
+  } catch { return { moq: undefined, icon: DEFAULT_ICON }; }
 };
 
 export const categoriesQuery = () =>

@@ -8,7 +8,7 @@ import { tagLabel, useProductImages, type ProductImage } from "@/hooks/useProduc
 import { useProductDetails } from "@/hooks/useProductDetails";
 import { useProductTerms } from "@/hooks/useProductTerms";
 import { useCategories } from "@/hooks/useCategories";
-import { categoryLabel, productLead, productMoq } from "@/data/catalogue";
+import { categoryLabel, moqPcs, productLead, productMoq } from "@/data/catalogue";
 import { specLine, type ProductDetails } from "@/data/productDetails";
 import { idPartOfSlug, productPageUrl, productPath, productSlug } from "@/lib/productUrl";
 import { productShareUrl, shortCode } from "@/lib/share";
@@ -32,7 +32,7 @@ function productHead(row: ProductImage, d?: Omit<ProductDetails, "rowId"> | null
   const moq = productMoq(row.id, row.category), lead = productLead(row.id);
   const spec = specLine(d ?? undefined);
   const title = `${name}${d?.code ? ` (${d.code})` : ""} | ${cat} | INS Overseas`;
-  const description = [descriptionOf(row), spec, `Wholesale ${cat.toLowerCase()} from Jaipur, India. Minimum order ${moq} pcs, lead time ${lead} days. Custom branding available.`]
+  const description = [descriptionOf(row), spec, `Wholesale ${cat.toLowerCase()} from Jaipur, India. ${moq == null ? "Minimum order confirmed in your quote" : `Minimum order ${moq} pcs`}, lead time ${lead} days. Custom branding available.`]
     .filter(Boolean).join(" ").replace(/\s+/g, " ").slice(0, 300);
   const images = [row.url, ...(d?.photos ?? []).map((p) => p.url)];
   const product = {
@@ -50,7 +50,7 @@ function productHead(row: ProductImage, d?: Omit<ProductDetails, "rowId"> | null
     ...(d?.colours ? { color: d.colours } : {}),
     ...(d?.size ? { size: d.size } : {}),
     additionalProperty: [
-      { "@type": "PropertyValue", name: "Minimum order quantity", value: `${moq} pcs` },
+      ...(moq == null ? [] : [{ "@type": "PropertyValue", name: "Minimum order quantity", value: `${moq} pcs` }]),
       { "@type": "PropertyValue", name: "Lead time", value: `${lead} days` },
       ...(d?.custom ? [{ "@type": "PropertyValue", name: "Customisation", value: d.custom }] : []),
     ],
@@ -165,7 +165,7 @@ function ProductPage() {
     ...(d?.size ? [["Size", d.size] as [string, string]] : []),
     ...(d?.material ? [["Material", d.material] as [string, string]] : []),
     ...(d?.colours ? [["Colours", d.colours] as [string, string]] : []),
-    ["Min. order", `${h.moq} units minimum`],
+    ["Min. order", h.moq == null ? "Confirmed in quote" : `${h.moq} units minimum`],
     ["Lead time", `${h.lead} days after order confirmation`],
     ["Custom", d?.custom || "Logo debossing, embossing, foil available"],
     ["Shipping", "Air 7–10 days · Sea 35–40 days"],
@@ -236,7 +236,7 @@ function ProductPage() {
                 Enquire
                 <span className="w-9 h-9 rounded-full bg-white text-ink flex items-center justify-center"><ArrowUpRight size={16} /></span>
               </a>
-              <QuoteToggle item={{ id: row.id, name, code: code || undefined, category: h.cat, moq: `${h.moq}+ pcs`, url: productShareUrl(row.id), productId: row.id }} className="!h-12 !px-5 !shadow-none border border-umber/40" />
+              <QuoteToggle item={{ id: row.id, name, code: code || undefined, category: h.cat, moq: moqPcs(h.moq), url: productShareUrl(row.id), productId: row.id }} className="!h-12 !px-5 !shadow-none border border-umber/40" />
               <a
                 href={`${WHATSAPP}?text=${encodeURIComponent(`Hi INS Overseas, I'm interested in "${name}"${code ? ` (${code})` : ""}. Please share wholesale pricing and MOQ.\n${productShareUrl(row.id)}`)}`}
                 target="_blank"

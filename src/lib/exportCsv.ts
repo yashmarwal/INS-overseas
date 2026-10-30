@@ -4,7 +4,7 @@ export type CsvProduct = {
   name: string;
   category: string;
   description: string;
-  moq: number;
+  moq: number | null; // empty in the file = "confirmed in quote"
   lead: number;
   size: string;
   material: string;
@@ -34,7 +34,7 @@ export function buildProductsCsv(rows: CsvProduct[]): string {
   const lines = [CSV_HEADER.map(csvCell).join(",")];
   for (const r of rows) {
     lines.push([
-      r.code, r.name, r.category, r.description, r.moq, r.lead, r.size, r.material, r.colours, r.custom, r.label,
+      r.code, r.name, r.category, r.description, r.moq ?? "", r.lead, r.size, r.material, r.colours, r.custom, r.label,
       r.onHomepage ? "Yes" : "No", r.photo, r.morePhotos.join(" "), r.page, r.id,
     ].map(csvCell).join(","));
   }

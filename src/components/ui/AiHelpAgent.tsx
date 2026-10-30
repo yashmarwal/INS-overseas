@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, ArrowUpRight, RotateCcw, X } from "lucide-react";
+import { LOWEST_MOQ } from "@/data/moq";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 const suggestedQuestions = [
@@ -12,6 +13,11 @@ const suggestedQuestions = [
 ];
 
 const knowledgeBase = [
+  // (first, so that "can I mix different products" is not taken for the general products question)
+  {
+    keywords: ["mix", "combine", "different products"],
+    response: "Minimums apply per product. If you want to combine products, tell us and we will confirm in your quote.",
+  },
   {
     keywords: ["product", "sell", "offer", "categories", "range", "what do you make"],
     response:
@@ -25,12 +31,12 @@ const knowledgeBase = [
   {
     keywords: ["paper", "handmade paper", "cotton", "gsm", "deckle", "fountain pen", "watercolour", "watercolor"],
     response:
-      "Our handmade paper is 100% recycled cotton rag — completely tree-free and chemical-free. Raw cotton comes from textile offcuts from Tirupur, Bengaluru, and Punjab. We can produce any GSM weight and any size. It's bleed-resistant and loved by fountain pen writers, calligraphers, and watercolour artists worldwide.",
+      "Our handmade paper is 100% recycled cotton rag — completely tree-free, with no wood pulp. Raw cotton comes from textile offcuts from Tirupur, Bengaluru, and Punjab. We can produce any GSM weight and any size. It's bleed-resistant and loved by fountain pen writers, calligraphers, and watercolour artists worldwide.",
   },
   {
     keywords: ["moq", "minimum", "minimum order", "how many"],
     response:
-      "Our MOQ is 300 pieces per design for standard wholesale orders, and 500 pieces for custom/OEM orders with your logo. You can mix different products across our catalogue to reach the MOQ.",
+      `Minimum order depends on the product, from ${LOWEST_MOQ} units. See the list on our Wholesale page. Custom and private-label orders are confirmed in your quote.`,
   },
   {
     keywords: ["sample", "samples", "try before", "test"],
@@ -40,12 +46,12 @@ const knowledgeBase = [
   {
     keywords: ["custom", "oem", "logo", "branding", "personalised", "personalized", "my logo", "deboss", "emboss", "foil"],
     response:
-      "We offer full customisation: debossing, embossing, foil stamping (gold/silver), screen printing, custom leather colors, custom hardware, and custom packaging. MOQ for custom orders is 500 pieces. Share your logo and brief and we'll send a sample within 10 days.",
+      "We offer full customisation: debossing, embossing, foil stamping (gold/silver), screen printing, custom leather colors, custom hardware, and custom packaging. Share your logo and brief and we'll send a sample within 10 days.",
   },
   {
     keywords: ["custom process", "how does custom work", "order process", "steps"],
     response:
-      "Our custom order process: 1) You share your brief and logo files 2) We confirm specs and send a quote 3) Custom sample in ~10 days 4) You approve the sample 5) 50% advance payment 6) Production in 30 days 7) We send step-by-step photos & video 8) 50% balance before shipment 9) We dispatch and share tracking.",
+      "Our custom order process: 1) You share your brief and logo files 2) We confirm specs and send a quote 3) Custom sample in ~10 days 4) You approve the sample 5) 30% advance payment 6) Production in 25 days 7) We send step-by-step photos & video 8) 70% balance when goods are ready 9) We dispatch and share tracking.",
   },
   {
     keywords: ["packaging", "box", "tissue", "ribbon", "gift box", "branded packaging"],
@@ -65,17 +71,17 @@ const knowledgeBase = [
   {
     keywords: ["payment", "pay", "transfer", "swift", "paypal", "wise", "wire"],
     response:
-      "We accept SWIFT bank wire transfer, PayPal, Wise, and Letter of Credit (for large orders). We accept USD, EUR, and GBP. Standard terms are 50% advance on order confirmation, 50% when goods are ready to ship.",
+      "We accept SWIFT bank wire transfer, PayPal, Wise, and Letter of Credit (for large orders). We accept USD, EUR, and GBP. Standard terms are 30% advance on order confirmation, 70% when goods are ready to ship.",
   },
   {
     keywords: ["payment terms", "advance", "deposit", "how to pay"],
     response:
-      "Our standard payment terms are 50% advance when you confirm the order, and 50% balance when goods are ready for shipment. For repeat buyers, we offer a 5% discount.",
+      "Our standard payment terms are 30% advance when you confirm the order, and 70% balance when goods are ready for shipment. For repeat buyers, we offer a 5% discount.",
   },
   {
     keywords: ["shipping", "ship", "delivery", "how long", "lead time", "dispatch"],
     response:
-      "Production takes 30 days after order and payment confirmation. Delivery after dispatch: by air (DHL/FedEx/UPS) — 7 to 10 days worldwide. By sea freight — 35 to 40 days. We ship to all countries — no restrictions.",
+      "Production takes 25 days after order and payment confirmation. Delivery after dispatch: by air (DHL/FedEx/UPS) — 7 to 10 days worldwide. By sea freight — 35 to 40 days. We ship to all countries — no restrictions.",
   },
   {
     keywords: ["dhl", "fedex", "ups", "sea", "air", "freight", "courier"],
@@ -110,17 +116,17 @@ const knowledgeBase = [
   {
     keywords: ["eco", "sustainable", "environment", "green", "tree free", "cotton", "recycled"],
     response:
-      "Our handmade paper is 100% recycled cotton rag — no trees, no chemicals. Cotton comes from textile offcuts from Tirupur, Bengaluru, and Punjab. Our leather is chrome-free, ethically sourced from Kanpur and Chennai. We are a four-generation family craft business, and sustainability is the foundation of everything we make.",
+      "Our handmade paper is 100% recycled cotton rag — no trees, no wood pulp. Cotton comes from textile offcuts from Tirupur, Bengaluru, and Punjab. Our leather is chrome-free, ethically sourced from Kanpur and Chennai. We are a four-generation family craft business, and sustainability is the foundation of everything we make.",
   },
   {
     keywords: ["certification", "certified", "iec", "msme", "fair trade"],
     response:
-      "We hold an IEC (Import Export Code) as a registered Indian exporter and are registered under MSME/Udyam. Our eco-friendly paper-making process aligns with fair trade principles. We are committed to responsible, sustainable manufacturing.",
+      "We hold an IEC (Import Export Code) as a registered Indian exporter and are registered under MSME/Udyam. Our paper is made from recycled cotton rag, not wood pulp.",
   },
   {
     keywords: ["story", "history", "founded", "heritage", "family", "how long", "generations"],
     response:
-      "Our family has practised the craft of handmade paper-making in Sanganer, Jaipur for over 400 years. INS Overseas was formally established as an export company 30 years ago. Today we are a four-generation family business with 25 skilled artisans, exporting to 40+ countries worldwide.",
+      "Sanganer has been a papermaking town for centuries, and our family has practised the craft there for four generations. INS Overseas was founded in 1995 and has been exporting since then. Today we are a four-generation family business with 25 skilled artisans, exporting to 40+ countries worldwide.",
   },
   {
     keywords: ["artisan", "craftsman", "workers", "team", "employees"],
@@ -135,7 +141,7 @@ const knowledgeBase = [
   {
     keywords: ["address", "location", "where are you", "visit", "showroom", "sanganer"],
     response:
-      "We're located at: Jain Nasiya Road, Near Jain Hostel, Sanganer, Jaipur – 302029, Rajasthan, India. Sanganer is the historic heart of Indian papermaking, and we've been here for generations. You're welcome to visit — we're available Monday to Saturday, 24 hours.",
+      "We're located at: Jain Nasiya Road, Near Jain Hostel, Sanganer, Jaipur – 302029, Rajasthan, India. Sanganer is the historic heart of Indian papermaking, and we've been here for generations. You're welcome to visit — we're available Monday to Saturday.",
   },
   {
     keywords: ["contact", "reach", "phone", "email", "whatsapp", "call"],
@@ -145,12 +151,12 @@ const knowledgeBase = [
   {
     keywords: ["hours", "open", "working hours", "available", "saturday", "sunday"],
     response:
-      "We are available 24 hours, Monday to Saturday. WhatsApp us at +91 96804 78483 or email Sezan@ins-overseas.com anytime.",
+      "We are available Monday to Saturday. WhatsApp us at +91 96804 78483 or email Sezan@ins-overseas.com anytime.",
   },
   {
     keywords: ["order", "start", "begin", "first step", "how to order", "place order", "get started"],
     response:
-      "Getting started is easy:\n1. WhatsApp us at +91 96804 78483 or fill the enquiry form on our website\n2. We send you our full catalogue and price list within 24 hours\n3. Request free samples if you'd like to check quality first\n4. Confirm your order and pay 50% advance\n5. Production in 30 days — we keep you updated with photos throughout\n6. Pay balance and we ship to your door with tracking",
+      "Getting started is easy:\n1. WhatsApp us at +91 96804 78483 or fill the enquiry form on our website\n2. We send you our full catalogue and price list within 24 hours\n3. Request free samples if you'd like to check quality first\n4. Confirm your order and pay 30% advance\n5. Production in 25 days — we keep you updated with photos throughout\n6. Pay balance and we ship to your door with tracking",
   },
 ];
 
