@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Mail, ShoppingBag, Trash2, X } from "lucide-react";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
+import { useBackToClose } from "@/hooks/useBackToClose";
 import { trackProduct } from "@/lib/track";
 import { clearBuyer, clearEnquiry, enquiryMailBody, enquiryMailSubject, enquiryWhatsAppText, removeEnquiry, setBuyerField, setQty, useBuyer, useEnquiryList } from "@/lib/enquiryList";
 
@@ -17,6 +18,7 @@ export default function EnquiryList() {
   const list = useEnquiryList();
   const buyer = useBuyer();
   const [open, setOpen] = useState(false);
+  const onOpenChange = useBackToClose(open, setOpen); // Back closes the sheet, not the page
   const [tucked, setTucked] = useState(false);
   const [tip, setTip] = useState(false);
   const prevLen = useRef(0);
@@ -54,7 +56,7 @@ export default function EnquiryList() {
   }, []);
 
   // an emptied list closes its own sheet
-  useEffect(() => { if (list.length === 0) setOpen(false); }, [list.length]);
+  useEffect(() => { if (list.length === 0) onOpenChange(false); }, [list.length, onOpenChange]);
 
   if (pathname.startsWith("/admin")) return null;
 
@@ -65,7 +67,7 @@ export default function EnquiryList() {
   const actionStyle = { fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 12, letterSpacing: "0.1em" } as const;
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <AnimatePresence>
         {list.length > 0 && (
           <motion.div

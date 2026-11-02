@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AlertCircle, Check, FileDown, Loader2, X } from "lucide-react";
+import { useBackToClose } from "@/hooks/useBackToClose";
 import { warmPhotos, type CatalogItem } from "@/lib/catalogPdf";
 
 export type CatalogOption = { key: string; label: string; items: CatalogItem[] };
@@ -41,6 +42,7 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
   }, [open, current]);
 
   const close = () => { abort.current?.abort(); setBusy(false); onClose(); };
+  const onOpenChange = useBackToClose(open, (o) => { if (!o) close(); }); // Back closes the dialog, not the page
 
   const generate = async () => {
     if (!current || busy) return;
@@ -75,7 +77,7 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
   const radio = (on: boolean) => `w-full flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition-colors disabled:opacity-60 ${on ? "bg-ink text-white" : "bg-[#F1EEE8] text-ink hover:bg-[#E8E3D8]"}`;
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={(o) => { if (!o) close(); }}>
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-[110] bg-ink/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
