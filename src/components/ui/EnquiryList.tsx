@@ -126,7 +126,7 @@ export default function EnquiryList() {
                   <li key={it.id} className="rounded-2xl bg-[#F1EEE8] pl-4 pr-2 py-2.5">
                     <div className="flex items-center gap-3">
                       <div className="min-w-0 flex-1">
-                        {it.url ? (
+                        {it.url && /^(https?:\/\/|\/(?!\/))/i.test(it.url) ? (
                           <a href={it.url} target="_blank" rel="noreferrer" className="block text-ink truncate hover:underline underline-offset-2" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, lineHeight: 1.15 }}>{it.name}</a>
                         ) : (
                           <p className="text-ink truncate" style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, lineHeight: 1.15 }}>{it.name}</p>

@@ -229,8 +229,10 @@ do $$ declare p record; begin
   end loop;
 end $$;
 
--- visitors can only ADD a row (nothing else); only this admin login can read or delete them
-create policy "Visitors can record an event" on public.product_events for insert to anon, authenticated with check (true);
+-- visitors can only ADD a row (nothing else), and only for a product that really exists on the site, so made-up ids are refused;
+-- only this admin login can read or delete them
+create policy "Visitors can record an event" on public.product_events for insert to anon, authenticated
+  with check (exists (select 1 from public.site_images s where s.section = 'product' and s.id::text = product_events.product_id));
 create policy "Only the admin can read events" on public.product_events for select to authenticated using (${isAdmin});
 create policy "Only the admin can delete events" on public.product_events for delete to authenticated using (${isAdmin});
 

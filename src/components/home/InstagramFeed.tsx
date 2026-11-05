@@ -5,6 +5,9 @@ import { homeCopy } from "@/data/copy";
 // Loads the third-party widget script only when this mounts (see LazyMount in InstagramFeed).
 function BeholdFeed() {
   useEffect(() => {
+    // The widget is third-party code. Never run it in a tab where the admin is signed in (the login lives in this tab's
+    // sessionStorage), e.g. when the admin opens the home page from /admin. Visitors never have that key, so nothing changes for them.
+    try { if (Object.keys(sessionStorage).some((k) => /^sb-.+-auth-token$/.test(k))) return; } catch { /* storage blocked: carry on */ }
     const script = document.createElement("script");
     script.src = "https://w.behold.so/widget.js";
     script.type = "module";

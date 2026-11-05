@@ -102,11 +102,12 @@ export async function loadCatalogue(fetchFn = fetch) {
 export const findProduct = (products, part) => products.find((p) => shortCode(p.id) === part || p.id === part);
 export const pathOf = (p) => `/product/${productSlug(p.id, p.name, p.code)}`;
 
-/** The origin to read the page template from: our own site (or a Vercel preview of it), never an arbitrary host. */
-export function originOf(req) {
+/** The origin to read the page template from: our own site, or THIS deployment's own Vercel address (so previews show their own template), never an arbitrary host. */
+export function originOf(req, env = process.env) {
   const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").toLowerCase().split(",")[0].trim();
   if (/^(www\.)?ins-overseas\.com$/.test(host)) return SITE;
-  if (/^[a-z0-9-]+\.vercel\.app$/.test(host)) return `https://${host}`;
+  const own = [env.VERCEL_URL, env.VERCEL_BRANCH_URL].filter(Boolean).map((h) => h.toLowerCase());
+  if (/^[a-z0-9-]+\.vercel\.app$/.test(host) && own.includes(host)) return `https://${host}`;
   return SITE;
 }
 
