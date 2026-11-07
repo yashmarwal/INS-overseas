@@ -149,14 +149,14 @@ export default function Footer() {
           className="mt-5 text-center text-warm-grey/50"
           style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 12 }}
         >
-          Developed by{" "}
+          Built by{" "}
           <a
             href="https://wa.me/918595475007?text=Hello%2C%20I%E2%80%99m%20interested%20in%20developing%20a%20website."
             target="_blank"
             rel="noreferrer"
             className="text-warm-grey/70 hover:text-gold transition-colors underline-offset-4 hover:underline"
           >
-            Yash Marwal
+            Phaseline
           </a>
         </p>
       </div>
