@@ -1,12 +1,15 @@
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSiteImage, refreshSiteImages } from "@/hooks/useSiteImage";
 import { preloader } from "@/components/ui/Preloader";
 import { homeCopy } from "@/data/copy";
 
 const H = homeCopy.hero;
+
+// Video heroes (MP4/WebM) play at the real 60 fps; GIFs cap out far lower in browsers, so the bundled hero is a video.
+const isVideo = (url: string) => /\.(mp4|webm)(\?|#|$)/i.test(url);
 
 // Stamp-reveal: clips up from below with hard mechanical ease
 const stampUp = (delay: number) => ({
@@ -34,6 +37,15 @@ export default function HeroSection() {
   const reduce = useReducedMotion();
   const [wide] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
   const parallax = wide && !reduce;
+  // Which hero variant to load. Tracks the viewport so rotating a tablet / resizing swaps the clip.
+  const [isWide, setIsWide] = useState(wide);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const on = () => setIsWide(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   const { scrollY } = useScroll();
   const mediaY = useTransform(scrollY, [0, 900], [0, parallax ? 150 : 0]);
   const mediaScale = parallax ? 1.12 : 1; // overscan, so the shifted photo never shows an edge
@@ -45,7 +57,28 @@ export default function HeroSection() {
     >
       {/* Hero media (GIF or image) — <picture> so only the matching variant downloads */}
       <motion.div className="absolute inset-0" style={{ y: mediaY, scale: mediaScale }}>
-        {desktopSrc && mobileSrc && (
+        {desktopSrc && mobileSrc && (isVideo(isWide ? desktopSrc : mobileSrc) ? (
+          <video
+            key={isWide ? desktopSrc : mobileSrc}
+            src={isWide ? desktopSrc : mobileSrc}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+            ref={(el) => {
+              if (!el) return;
+              el.muted = true; // React doesn't reflect `muted` to the DOM; iOS/Chrome need it for autoplay
+              if (el.readyState >= 2 && !ready) setReadyKey(mediaKey);
+            }}
+            onLoadedData={() => setReadyKey(mediaKey)}
+            onError={() => { refreshSiteImages().finally(() => setReadyKey(mediaKey)); }}
+            className="w-full h-full object-cover transition-opacity duration-700 pointer-events-none"
+            style={{ filter: "brightness(0.85)", opacity: ready ? 1 : 0 }}
+            data-no-round
+          />
+        ) : (
           <picture key={mediaKey} className="block w-full h-full">
             <source media="(min-width: 768px)" srcSet={desktopSrc} />
             <img
@@ -61,7 +94,7 @@ export default function HeroSection() {
               data-no-round
             />
           </picture>
-        )}
+        ))}
         {/* Dark overlay — unchanged */}
         <div
           className="absolute inset-0"
