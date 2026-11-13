@@ -3,6 +3,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, Pause, Play, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import { preloader } from "@/components/ui/Preloader";
+import { acquireScrollLock } from "@/hooks/useScrollLock";
+import { useScrollTucked } from "@/hooks/useScrollTucked";
 
 // The INS Overseas reel as a small round "video bubble" in the bottom-left corner. It plays a tiny muted preview; a tap
 // grows it into a proper player (sound on) in the middle of the screen; while the page scrolls the circle steps aside, like the dock; the little ✕ on the circle's edge removes it for as long as
@@ -23,7 +25,7 @@ export default function VideoBubble() {
   const [progress, setProgress] = useState(0);
   const [ended, setEnded] = useState(false);
   const [ready, setReady] = useState(false); // the full video has enough data to show frames
-  const [tucked, setTucked] = useState(false); // true while the page is scrolling (the circle steps aside, like the dock)
+  const [tucked, setTucked] = useScrollTucked(); // true while the page is scrolling (the circle steps aside, like the dock)
   const preview = useRef<HTMLVideoElement>(null);
   const full = useRef<HTMLVideoElement>(null);
   const bubbleBtn = useRef<HTMLButtonElement>(null);
@@ -43,22 +45,6 @@ export default function VideoBubble() {
   useEffect(() => {
     const t = window.setTimeout(() => setShown(true), preloader.active ? 3400 : 2000);
     return () => window.clearTimeout(t);
-  }, []);
-
-  // like the dock: while the page is scrolling the circle steps aside, and comes back once it is still
-  useEffect(() => {
-    let last = window.scrollY;
-    let idle = 0;
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (Math.abs(y - last) < 2) return;
-      last = y;
-      setTucked(true);
-      window.clearTimeout(idle);
-      idle = window.setTimeout(() => setTucked(false), 220);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); window.clearTimeout(idle); };
   }, []);
 
   // the little silent preview only runs while it is on screen and the circle is the thing being shown
@@ -104,17 +90,12 @@ export default function VideoBubble() {
   // these events alone (data-lenis-prevent on the backdrop and the player), and the browser's own scrolling is switched off.
   useEffect(() => {
     if (!open) return;
-    const html = document.documentElement;
-    const prev = { overflow: html.style.overflow, pad: html.style.paddingRight };
-    const bar = window.innerWidth - html.clientWidth; // the scrollbar's width, held so the page does not shift sideways
-    html.style.overflow = "hidden";
-    if (bar > 0) html.style.paddingRight = bar + "px";
+    const release = acquireScrollLock(true); // holds the scrollbar's width so the page does not shift sideways
     const stop = (e: Event) => { if (e.cancelable) e.preventDefault(); };
     window.addEventListener("wheel", stop, { passive: false });
     window.addEventListener("touchmove", stop, { passive: false });
     return () => {
-      html.style.overflow = prev.overflow;
-      html.style.paddingRight = prev.pad;
+      release();
       window.removeEventListener("wheel", stop);
       window.removeEventListener("touchmove", stop);
     };

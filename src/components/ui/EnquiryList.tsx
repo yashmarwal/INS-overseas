@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useScrollTucked } from "@/hooks/useScrollTucked";
 import { useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
@@ -19,7 +20,7 @@ export default function EnquiryList() {
   const buyer = useBuyer();
   const [open, setOpen] = useState(false);
   const onOpenChange = useBackToClose(open, setOpen); // Back closes the sheet, not the page
-  const [tucked, setTucked] = useState(false);
+  const [tucked] = useScrollTucked();
   const [tip, setTip] = useState(false);
   const prevLen = useRef(0);
 
@@ -39,21 +40,6 @@ export default function EnquiryList() {
     prevLen.current = list.length;
     return () => window.clearTimeout(t);
   }, [list.length]);
-
-  useEffect(() => {
-    let last = window.scrollY;
-    let idle = 0;
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (Math.abs(y - last) < 2) return;
-      last = y;
-      setTucked(true);
-      window.clearTimeout(idle);
-      idle = window.setTimeout(() => setTucked(false), 220);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); window.clearTimeout(idle); };
-  }, []);
 
   // an emptied list closes its own sheet
   useEffect(() => { if (list.length === 0) onOpenChange(false); }, [list.length, onOpenChange]);

@@ -1,3 +1,4 @@
+import { useScrollTucked } from "@/hooks/useScrollTucked";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
@@ -71,29 +72,13 @@ export default function FloatingDock() {
   const [chat, setChat] = useState(false);
   const [chatMounted, setChatMounted] = useState(false); // stays mounted after first use so the conversation is kept
   const [shown, setShown] = useState(false);
-  const [tucked, setTucked] = useState(false); // true while the page is scrolling
+  const [tucked, setTucked] = useScrollTucked(); // true while the page is scrolling (the dock steps aside, and comes back once it is still)
   const mouseX = useMotionValue(Infinity);
 
   // Appear once the splash has gone (or straight away when there is none)
   useEffect(() => {
     const t = setTimeout(() => setShown(true), preloader.active ? 1600 : 400);
     return () => clearTimeout(t);
-  }, []);
-
-  // While the page is moving the dock steps aside; once scrolling stops it comes back.
-  useEffect(() => {
-    let last = window.scrollY;
-    let idle = 0;
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (Math.abs(y - last) < 2) return;
-      last = y;
-      setTucked(true);
-      window.clearTimeout(idle);
-      idle = window.setTimeout(() => setTucked(false), 220);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); window.clearTimeout(idle); };
   }, []);
 
   // Fetch and mount the (closed, invisible) chat while the browser is idle, so the first tap on Ask opens instantly

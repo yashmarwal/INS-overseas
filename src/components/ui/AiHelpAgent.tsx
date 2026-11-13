@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { acquireScrollLock } from "@/hooks/useScrollLock";
 import { ArrowUp, ArrowUpRight, RotateCcw, X } from "lucide-react";
 import { LOWEST_MOQ } from "@/data/moq";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -326,15 +327,14 @@ export default function AiHelpAgent({ open, onClose }: { open: boolean; onClose:
   useLayoutEffect(() => {
     if (!open || unlockRef.current) return;
     const html = document.documentElement;
-    const prev = html.style.overflow;
     // Hiding the scrollbar would widen the page by its width and nudge everything sideways, so hold that width.
     // (Set directly on the few elements involved: a custom property or attribute on <html> would restyle the whole page.)
     const sw = window.innerWidth - html.clientWidth;
     const header = document.querySelector<HTMLElement>("header");
     const dock = document.querySelector<HTMLElement>("nav[aria-label=\"Quick contact\"]");
-    if (sw > 0) { html.style.paddingRight = sw + "px"; if (header) header.style.right = sw + "px"; if (dock) dock.style.marginRight = sw + "px"; }
-    html.style.overflow = "hidden";
-    unlockRef.current = () => { html.style.overflow = prev; html.style.paddingRight = ""; if (header) header.style.right = ""; if (dock) dock.style.marginRight = ""; };
+    if (sw > 0) { if (header) header.style.right = sw + "px"; if (dock) dock.style.marginRight = sw + "px"; }
+    const release = acquireScrollLock(true); // (counted, shared with the menu and the video player: the page is released only when the last one lets go)
+    unlockRef.current = () => { release(); if (header) header.style.right = ""; if (dock) dock.style.marginRight = ""; };
   }, [open]);
   useEffect(() => unlock, [unlock]);
 

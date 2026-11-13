@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { acquireScrollLock } from "@/hooks/useScrollLock";
 import { ArrowRight, ArrowUpRight, FileDown, Mail, Menu, Phone, X } from "lucide-react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { preloader } from "@/components/ui/Preloader";
@@ -40,12 +41,10 @@ export default function Navigation() {
   const closeIfSamePage = (to: string) => { if (to === renderedPath) setOpen(false); };
   useEffect(() => {
     if (!open) return;
-    const html = document.documentElement;
-    const prev = html.style.overflow;
-    html.style.overflow = "hidden";
+    const release = acquireScrollLock();
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     window.addEventListener("keydown", onKey);
-    return () => { html.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+    return () => { release(); window.removeEventListener("keydown", onKey); };
   }, [open]);
 
   useEffect(() => {
