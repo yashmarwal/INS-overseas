@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUpRight, Pause, Play, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
+import { ArrowUpRight, FileDown, Pause, Play, RotateCcw, ShoppingBag, Volume2, VolumeX, X } from "lucide-react";
+import { openCatalogue } from "@/lib/catalogueUi";
+import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { preloader } from "@/components/ui/Preloader";
 import { acquireScrollLock } from "@/hooks/useScrollLock";
 import { useScrollTucked } from "@/hooks/useScrollTucked";
@@ -10,6 +12,7 @@ import { useScrollTucked } from "@/hooks/useScrollTucked";
 // grows it into a proper player (sound on) in the middle of the screen; while the page scrolls the circle steps aside, like the dock; the little ✕ on the circle's edge removes it for as long as
 // the visitor stays on the site. Nothing is remembered: every refresh and every new visit shows the bubble again.
 // Three files in /public/video: the full reel (540x960, with sound), a tiny silent preview for the circle, and a poster.
+const endLink = "inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full text-cream border border-cream/35 hover:bg-cream/15 hover:border-cream/60 transition-colors";
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const FULL = "/video/ins-reel.mp4";
 const PREVIEW = "/video/ins-reel-preview.mp4";
@@ -305,9 +308,15 @@ export default function VideoBubble() {
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-ink/70 px-6 text-center">
                 <p className="text-cream" style={{ fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 24, lineHeight: 1.15 }}>Handmade in Jaipur.<br /><em className="text-gold-light">Shipped worldwide.</em></p>
                 <Link to="/wholesale" onClick={collapse} tabIndex={open ? 0 : -1} className="inline-flex items-center gap-2 h-11 pl-5 pr-1.5 rounded-full bg-gold text-ink uppercase" style={{ fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 12, letterSpacing: "0.1em" }}>
-                  Request catalogue
+                  Enquiry
                   <span className="w-8 h-8 rounded-full bg-ink text-gold flex items-center justify-center"><ArrowUpRight size={15} /></span>
                 </Link>
+                {/* more places to go once the reel is over */}
+                <div className="flex flex-wrap items-center justify-center gap-2 max-w-[300px]" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12, letterSpacing: "0.04em" }}>
+                  <Link to="/products" onClick={collapse} tabIndex={open ? 0 : -1} className={endLink}><ShoppingBag size={14} /> Browse products</Link>
+                  <button type="button" onClick={() => { collapse(); openCatalogue(); }} tabIndex={open ? 0 : -1} className={endLink}><FileDown size={14} /> Catalogue PDF</button>
+                  <a href="https://wa.me/919680478483" target="_blank" rel="noreferrer" tabIndex={open ? 0 : -1} className={endLink}><WhatsAppGlyph size={14} /> WhatsApp</a>
+                </div>
                 <button type="button" onClick={replay} tabIndex={open ? 0 : -1} className="inline-flex items-center gap-2 h-10 px-4 rounded-full text-cream/90 hover:text-white" style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 13 }}>
                   <RotateCcw size={15} /> Watch again
                 </button>

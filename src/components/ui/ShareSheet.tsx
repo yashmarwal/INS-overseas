@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { acquireScrollLock } from "@/hooks/useScrollLock";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Check, Copy, Mail, Share2, X } from "lucide-react";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
@@ -11,6 +12,9 @@ export type ShareProduct = { id: string; name: string; category: string; image: 
 export default function ShareSheet({ product, onClose, onShared }: { product: ShareProduct | null; onClose: () => void; onShared?: (productId: string) => void }) {
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState(false); // copy was blocked: the link is selected instead, ready for Ctrl+C / long-press
+  // the page behind stays still while it is open (Radix's own lock does not stop the wheel here)
+  const shown = !!product;
+  useEffect(() => { if (!shown) return; return acquireScrollLock(true); }, [shown]);
   const timer = useRef(0);
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => { setCopied(false); setSelected(false); window.clearTimeout(timer.current); }, [product?.id]);
@@ -47,8 +51,8 @@ export default function ShareSheet({ product, onClose, onShared }: { product: Sh
   return (
     <DialogPrimitive.Root open={!!product} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-[110] bg-ink/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <DialogPrimitive.Content
+        <DialogPrimitive.Overlay data-lenis-prevent className="fixed inset-0 z-[110] bg-ink/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content data-lenis-prevent
           aria-describedby={undefined}
           className="fixed z-[111] inset-x-0 bottom-0 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full md:max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl pb-[env(safe-area-inset-bottom)] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 max-md:data-[state=open]:slide-in-from-bottom max-md:data-[state=closed]:slide-out-to-bottom duration-300"
         >

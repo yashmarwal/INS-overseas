@@ -63,6 +63,9 @@ export default function Navigation() {
     <>
       <motion.header
         ref={headerRef}
+        // fixed to the screen: without this the pill's slide includes the page's scroll offset and comes up from far below
+        layoutRoot
+        layoutScroll
         initial={{ y: -60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: enterDelay, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -121,15 +124,15 @@ export default function Navigation() {
                       {active && (
                         <motion.span
                           layoutId="nav-active"
-                          transition={{ type: "spring", stiffness: 420, damping: 36 }}
-                          className="absolute inset-0 rounded-full"
+                          transition={{ type: "spring", stiffness: 300, damping: 32 }}
+                          className="absolute inset-0 rounded-full transition-colors duration-500"
                           style={{ background: scrolled ? "#6B4C2A" : "#C9973A" }}
                         />
                       )}
                       {hot && (
                         <motion.span
                           layoutId="nav-hover"
-                          transition={{ type: "spring", stiffness: 520, damping: 38 }}
+                          transition={{ type: "spring", stiffness: 380, damping: 34 }}
                           className="absolute inset-0 rounded-full"
                           style={{ background: scrolled ? "rgba(26,20,16,0.075)" : "rgba(250,247,240,0.17)" }}
                         />
@@ -163,12 +166,10 @@ export default function Navigation() {
             onFocus={warmCatalogue}
             aria-label="Download catalogue (PDF)"
             title="Download catalogue (PDF)"
-            className={`shrink-0 h-11 pl-3.5 pr-4 gap-2 rounded-full inline-flex items-center justify-center whitespace-nowrap uppercase text-[12px] active:scale-95 transition-[background-color,color,transform] duration-300 ${
-              scrolled ? "text-ink shadow-[inset_0_0_0_1px_rgba(26,20,16,0.3)] hover:bg-ink/5" : "text-cream shadow-[inset_0_0_0_1px_rgba(250,247,240,0.5)] hover:bg-cream/15"
-            }`}
+            className="pdf-glow shrink-0 h-11 pl-3.5 pr-4 gap-2 rounded-full inline-flex items-center justify-center whitespace-nowrap uppercase text-[12px] active:scale-95 transition-transform duration-300"
             style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.1em" }}
           >
-            <FileDown size={17} strokeWidth={1.7} />
+            <span aria-hidden className="pdf-glow-light" /><FileDown size={17} strokeWidth={1.7} className="pdf-glow-icon" />
             <span className="min-[1600px]:hidden">PDF</span>
             <span className="hidden min-[1600px]:inline">Catalogue PDF</span>
           </button>
@@ -183,7 +184,7 @@ export default function Navigation() {
               className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-[20deg] -translate-x-full group-hover:translate-x-[420%] motion-reduce:hidden transition-transform duration-[900ms] ease-out"
               style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent)" }}
             />
-            <span className="relative">Request Catalogue</span>
+            <span className="relative">Enquiry</span>
             <span className="relative w-8 h-8 rounded-full flex items-center justify-center bg-ink text-gold">
               <ArrowUpRight size={15} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </span>
@@ -197,10 +198,10 @@ export default function Navigation() {
               onClick={() => openCatalogue()}
               onPointerEnter={warmCatalogue}
               aria-label="Download catalogue (PDF)"
-              className={`max-[339px]:hidden h-9 pl-3 pr-3.5 gap-1.5 rounded-full inline-flex items-center active:scale-95 transition-transform uppercase text-[11px] ${scrolled ? "text-ink shadow-[inset_0_0_0_1px_rgba(26,20,16,0.3)]" : "text-cream shadow-[inset_0_0_0_1px_rgba(250,247,240,0.5)]"}`}
+              className="pdf-glow max-[339px]:hidden h-9 pl-3 pr-3.5 gap-1.5 rounded-full inline-flex items-center active:scale-95 transition-transform uppercase text-[11px]"
               style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: "0.1em" }}
             >
-              <FileDown size={16} strokeWidth={1.7} />
+              <span aria-hidden className="pdf-glow-light" /><FileDown size={16} strokeWidth={1.7} className="pdf-glow-icon" />
               <span className="min-[420px]:hidden">PDF</span>
               <span className="hidden min-[420px]:inline">Catalogue PDF</span>
             </button>
@@ -299,7 +300,7 @@ export default function Navigation() {
                 className="flex items-center justify-center gap-2.5 w-full py-4 bg-gold text-ink uppercase active:bg-gold-light transition-colors"
                 style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 12, letterSpacing: "0.16em" }}
               >
-                Request Catalogue
+                Enquiry
                 <ArrowRight size={15} />
               </Link>
               <button

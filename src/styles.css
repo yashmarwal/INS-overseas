@@ -381,21 +381,24 @@ section > div > img {
 .reel-x::before { content: ""; position: absolute; inset: -5px; } /* a slightly larger touch target, without stealing the circle's */
 .reel-x:hover { background: #b42318; color: #fff; transform: scale(1.08); }
 .reel[data-open="true"] .reel-x { opacity: 0; pointer-events: none; transform: scale(0.6); }
-/* a soft ring that pulses a few times to say "tap me", then stops */
-.reel::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  box-shadow: 0 0 0 0 rgba(201, 151, 58, 0.5);
-  animation: reelPulse 2.6s ease-out 1.2s 4;
-}
-.reel[data-open="true"]::after { display: none; }
-@keyframes reelPulse { 0% { box-shadow: 0 0 0 0 rgba(201, 151, 58, 0.5); } 70%, 100% { box-shadow: 0 0 0 16px rgba(201, 151, 58, 0); } }
 .reel-spinner { width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.25); border-top-color: #f1ca85; animation: reelSpin 0.9s linear infinite; }
 @keyframes reelSpin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
   .reel, .reel-full, .reel-ui, .reel-x { transition-duration: 0.01s; }
-  .reel::after, .reel-spinner { animation: none; }
+  .reel-spinner { animation: none; }
 }
+
+/* Catalogue PDF button: an ink pill lit by a slowly turning gold edge and a breathing highlight. Transform and opacity only, so it stays on the GPU. */
+.pdf-glow { position: relative; isolation: isolate; overflow: hidden; color: var(--cream); background: var(--ink); }
+.pdf-glow::before { content: ""; position: absolute; z-index: -2; left: 50%; top: 50%; width: 320%; aspect-ratio: 1; pointer-events: none;
+  background: conic-gradient(var(--gold), var(--gold-light), var(--cream), var(--gold-light), var(--gold), var(--gold-ink), var(--gold));
+  transform: translate(-50%, -50%) rotate(0deg); animation: pdf-turn 6s linear infinite; }
+.pdf-glow::after { content: ""; position: absolute; z-index: -1; inset: 2px; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(180deg, #2b2118, var(--ink)); box-shadow: inset 0 1px 0 rgba(241,202,133,.28), inset 0 -3px 5px rgba(0,0,0,.35); transition: background-color .3s; }
+.pdf-glow > .pdf-glow-light { position: absolute; z-index: -1; top: 4px; left: 14%; width: 72%; height: 36%; border-radius: 999px; pointer-events: none;
+  background: rgba(241,202,133,.38); filter: blur(5px); animation: pdf-breathe 3s ease-in-out infinite; }
+.pdf-glow:hover .pdf-glow-icon { transform: translateY(2px); }
+.pdf-glow-icon { transition: transform .3s ease; color: var(--gold-light); }
+@keyframes pdf-turn { to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes pdf-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .15; } }
+@media (prefers-reduced-motion: reduce) { .pdf-glow::before, .pdf-glow > .pdf-glow-light { animation: none; } }

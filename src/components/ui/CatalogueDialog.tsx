@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AlertCircle, Check, FileDown, Loader2, X } from "lucide-react";
 import { useBackToClose } from "@/hooks/useBackToClose";
+import { acquireScrollLock } from "@/hooks/useScrollLock";
 import { warmPhotos, type CatalogItem } from "@/lib/catalogPdf";
 
 export type CatalogOption = { key: string; label: string; items: CatalogItem[] };
@@ -53,6 +54,8 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
 
   const close = () => { abort.current?.abort(); setJob((j) => (j.k === "working" ? IDLE : j)); onClose(); };
   const onOpenChange = useBackToClose(open, (o) => { if (!o) close(); }); // Back closes the dialog, not the page
+  // the page behind stays still while it is open (Radix's own lock does not stop the wheel here)
+  useEffect(() => { if (!open) return; return acquireScrollLock(true); }, [open]);
 
   const generate = async () => {
     if (!current || busy) return;
@@ -85,8 +88,8 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-[110] bg-ink/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <DialogPrimitive.Content
+        <DialogPrimitive.Overlay data-lenis-prevent className="fixed inset-0 z-[110] bg-ink/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content data-lenis-prevent
           aria-describedby={undefined}
           className="fixed z-[111] inset-x-0 bottom-0 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full md:max-w-md max-h-[90vh] flex flex-col bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl pb-[env(safe-area-inset-bottom)] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 max-md:data-[state=open]:slide-in-from-bottom max-md:data-[state=closed]:slide-out-to-bottom duration-300"
         >

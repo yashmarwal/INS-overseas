@@ -6,6 +6,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Mail, ShoppingBag, Trash2, X } from "lucide-react";
 import { WhatsAppGlyph } from "@/components/ui/FloatingDock";
 import { useBackToClose } from "@/hooks/useBackToClose";
+import { acquireScrollLock } from "@/hooks/useScrollLock";
 import { trackProduct } from "@/lib/track";
 import { clearBuyer, clearEnquiry, enquiryMailBody, enquiryMailSubject, enquiryWhatsAppText, removeEnquiry, setBuyerField, setQty, useBuyer, useEnquiryList } from "@/lib/enquiryList";
 
@@ -20,6 +21,8 @@ export default function EnquiryList() {
   const buyer = useBuyer();
   const [open, setOpen] = useState(false);
   const onOpenChange = useBackToClose(open, setOpen); // Back closes the sheet, not the page
+  // the page behind stays still while it is open (Radix's own lock does not stop the wheel here)
+  useEffect(() => { if (!open) return; return acquireScrollLock(true); }, [open]);
   const [tucked] = useScrollTucked();
   const [tip, setTip] = useState(false);
   const prevLen = useRef(0);
@@ -90,8 +93,8 @@ export default function EnquiryList() {
       </AnimatePresence>
 
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-[70] bg-ink/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <DialogPrimitive.Content
+        <DialogPrimitive.Overlay data-lenis-prevent className="fixed inset-0 z-[70] bg-ink/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content data-lenis-prevent
           aria-describedby={undefined}
           className="fixed z-[71] inset-x-0 bottom-0 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full md:max-w-md max-h-[86vh] flex flex-col bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl pb-[env(safe-area-inset-bottom)] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 max-md:data-[state=open]:slide-in-from-bottom max-md:data-[state=closed]:slide-out-to-bottom duration-300"
         >
