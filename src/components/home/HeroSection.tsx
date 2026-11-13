@@ -1,7 +1,7 @@
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSiteImage, refreshSiteImages } from "@/hooks/useSiteImage";
 import { preloader } from "@/components/ui/Preloader";
 import { homeCopy } from "@/data/copy";
@@ -39,6 +39,25 @@ export default function HeroSection() {
   const parallax = wide && !reduce;
   // Which hero variant to load. Tracks the viewport so rotating a tablet / resizing swaps the clip.
   const [isWide, setIsWide] = useState(wide);
+  // A 60 fps clip keeps decoding even when scrolled out of sight, which starves everything below it (the carousel, the dock).
+  // Play it only while the hero is on screen and the tab is showing.
+  const videoEl = useRef<HTMLVideoElement | null>(null);
+  const heroEl = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const sec = heroEl.current;
+    if (!sec || typeof IntersectionObserver === "undefined") return;
+    let inView = true;
+    const sync = () => {
+      const v = videoEl.current;
+      if (!v) return;
+      if (inView && !document.hidden) v.play().catch(() => { /* autoplay blocked: the poster frame stays */ });
+      else v.pause();
+    };
+    const io = new IntersectionObserver(([e]) => { inView = e.isIntersecting; sync(); }, { threshold: 0.01 });
+    io.observe(sec);
+    document.addEventListener("visibilitychange", sync);
+    return () => { io.disconnect(); document.removeEventListener("visibilitychange", sync); };
+  }, []);
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
     const on = () => setIsWide(mq.matches);
@@ -53,6 +72,7 @@ export default function HeroSection() {
   const textOpacity = useTransform(scrollY, [0, 520], [1, parallax ? 0.15 : 1]);
   return (
     <section
+      ref={heroEl}
       className="relative min-h-[74svh] md:min-h-0 md:h-screen w-full overflow-hidden bg-ink"
     >
       {/* Hero media (GIF or image) — <picture> so only the matching variant downloads */}
@@ -68,6 +88,7 @@ export default function HeroSection() {
             preload="auto"
             aria-hidden="true"
             ref={(el) => {
+              videoEl.current = el;
               if (!el) return;
               el.muted = true; // React doesn't reflect `muted` to the DOM; iOS/Chrome need it for autoplay
               if (el.readyState >= 2 && !ready) setReadyKey(mediaKey);
