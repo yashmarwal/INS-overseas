@@ -55,6 +55,9 @@ export function useSavedOrder<T extends { id: string; sort_order: number }>(
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const orderRef = useRef<string[]>([]);
   const dirty = useRef(false);
+  const edits = useRef(0); // counts moves, so a save can tell whether the list was moved again while it was saving
+  const saving = useRef(false);
+  const again = useRef(false); // a save was asked for while one was running: do it right after
   const timer = useRef<number | undefined>(undefined);
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -66,23 +69,33 @@ export function useSavedOrder<T extends { id: string; sort_order: number }>(
     setOrder(ids);
   }, [items]);
 
-  const persist = async () => {
+  const persist = async (): Promise<void> => {
     window.clearTimeout(timer.current);
-    const current = new Map(itemsRef.current.map((p) => [p.id, p]));
-    const changed = orderRef.current.map((id, i) => ({ id, i })).filter(({ id, i }) => current.get(id) && current.get(id)!.sort_order !== i);
-    if (!changed.length) { dirty.current = false; setSaveState("idle"); return; }
-    setSaveState("saving");
-    let failed = false;
-    let permission = false;
-    await inBatches(changed, 6, async ({ id, i }) => {
-      const r = await updateRows([id], { sort_order: i });
-      if (!r.ok) { failed = true; if (r.kind === "permission") permission = true; }
-    });
-    dirty.current = false;
-    await refetch();
-    setSaveState(failed ? "error" : "saved");
-    if (failed) onFail(permission);
-    else window.setTimeout(() => setSaveState((s) => (s === "saved" ? "idle" : s)), 2500);
+    if (saving.current) { again.current = true; return; } // never two saves at once: the next one starts when this one ends
+    saving.current = true;
+    try {
+      const startedAt = edits.current;
+      const current = new Map(itemsRef.current.map((p) => [p.id, p]));
+      const changed = orderRef.current.map((id, i) => ({ id, i })).filter(({ id, i }) => current.get(id) && current.get(id)!.sort_order !== i);
+      if (!changed.length) { if (edits.current === startedAt) { dirty.current = false; setSaveState("idle"); } return; }
+      setSaveState("saving");
+      let failed = false;
+      let permission = false;
+      await inBatches(changed, 6, async ({ id, i }) => {
+        const r = await updateRows([id], { sort_order: i });
+        if (!r.ok) { failed = true; if (r.kind === "permission") permission = true; }
+      });
+      // moved again while saving: that newer order is still waiting to be saved, so it stays "dirty" (and is not overwritten by the refetch)
+      const movedMeanwhile = edits.current !== startedAt;
+      if (!movedMeanwhile) dirty.current = false;
+      await refetch();
+      if (!movedMeanwhile) setSaveState(failed ? "error" : "saved");
+      if (failed) onFail(permission);
+      else if (!movedMeanwhile) window.setTimeout(() => setSaveState((s) => (s === "saved" ? "idle" : s)), 2500);
+    } finally {
+      saving.current = false;
+      if (again.current) { again.current = false; void persistRef.current(); }
+    }
   };
   const persistRef = useRef(persist);
   persistRef.current = persist;
@@ -92,6 +105,7 @@ export function useSavedOrder<T extends { id: string; sort_order: number }>(
     const next = moveInList(orderRef.current, dragId, targetId);
     if (next === orderRef.current) return;
     orderRef.current = next;
+    edits.current++;
     dirty.current = true;
     setOrder(next);
     setSaveState("idle");

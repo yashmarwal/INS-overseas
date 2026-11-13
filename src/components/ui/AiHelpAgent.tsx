@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { acquireScrollLock } from "@/hooks/useScrollLock";
 import { ArrowUp, ArrowUpRight, RotateCcw, X } from "lucide-react";
 import { LOWEST_MOQ } from "@/data/moq";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -292,32 +293,34 @@ function Written({ text }: { text: string }) {
 export default function AiHelpAgent({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(1);
   const timers = useRef<number[]>([]);
+  const busy = msgs.some((m) => m.pending); // an answer is on its way (derived: it can never disagree with the messages)
   const reduce = useReducedMotion();
   // phone = full page that slides in; desktop = centred sheet that unrolls (decided at the moment it opens)
   const mobile = useMemo(() => open && window.matchMedia("(max-width: 767px)").matches, [open]);
 
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
-  // Android back button: push history state when chat opens,
-  // intercept popstate to close chat instead of navigating away
+  // Android back button: opening the chat adds ONE history entry; Back removes it and closes the chat instead of leaving the page.
+  // The entry belongs to the "open" period: however the chat closes (Back, X, Escape, the scrim, the dock's Ask button), it is
+  // still taken off when the chat goes, so no stray entry is ever left behind for a later Back to waste a press on.
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
-    if (open) {
-      window.history.pushState({ chatOpen: true }, "");
-      const handlePopState = () => onClose();
-      window.addEventListener("popstate", handlePopState);
-      return () => window.removeEventListener("popstate", handlePopState);
-    }
-  }, [open, onClose]);
+    if (!open) return;
+    window.history.pushState({ chatOpen: true }, "");
+    const handlePopState = () => closeRef.current();
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState); // (first, so taking the entry off does not close a second time)
+      if (window.history.state?.chatOpen) window.history.back(); // Back itself already took it off; every other way of closing lands here
+    };
+  }, [open]);
 
-  const handleClose = useCallback(() => {
-    onClose();
-    if (window.history.state?.chatOpen) window.history.back();
-  }, [onClose]);
+  const handleClose = useCallback(() => closeRef.current(), []);
 
   // Locking page scroll re-lays-out the whole page, so it must not happen in the middle of the open / close animation:
   // lock before the first frame is painted, release only after the exit animation has finished.
@@ -326,15 +329,14 @@ export default function AiHelpAgent({ open, onClose }: { open: boolean; onClose:
   useLayoutEffect(() => {
     if (!open || unlockRef.current) return;
     const html = document.documentElement;
-    const prev = html.style.overflow;
     // Hiding the scrollbar would widen the page by its width and nudge everything sideways, so hold that width.
     // (Set directly on the few elements involved: a custom property or attribute on <html> would restyle the whole page.)
     const sw = window.innerWidth - html.clientWidth;
     const header = document.querySelector<HTMLElement>("header");
     const dock = document.querySelector<HTMLElement>("nav[aria-label=\"Quick contact\"]");
-    if (sw > 0) { html.style.paddingRight = sw + "px"; if (header) header.style.right = sw + "px"; if (dock) dock.style.marginRight = sw + "px"; }
-    html.style.overflow = "hidden";
-    unlockRef.current = () => { html.style.overflow = prev; html.style.paddingRight = ""; if (header) header.style.right = ""; if (dock) dock.style.marginRight = ""; };
+    if (sw > 0) { if (header) header.style.right = sw + "px"; if (dock) dock.style.marginRight = sw + "px"; }
+    const release = acquireScrollLock(true); // (counted, shared with the menu and the video player: the page is released only when the last one lets go)
+    unlockRef.current = () => { release(); if (header) header.style.right = ""; if (dock) dock.style.marginRight = ""; };
   }, [open]);
   useEffect(() => unlock, [unlock]);
 
@@ -358,11 +360,9 @@ export default function AiHelpAgent({ open, onClose }: { open: boolean; onClose:
     const aid = nextId.current++;
     setMsgs((m) => [...m, { id: uid, role: "user", text: q }, { id: aid, role: "agent", text: "", pending: true }]);
     setInput("");
-    setBusy(true);
     timers.current.push(
       window.setTimeout(() => {
         setMsgs((m) => m.map((x) => (x.id === aid ? { ...x, text: getResponse(q), pending: false } : x)));
-        setBusy(false);
       }, THINK_MS),
     );
   };

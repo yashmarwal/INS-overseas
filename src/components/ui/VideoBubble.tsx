@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, Pause, Play, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import { preloader } from "@/components/ui/Preloader";
+import { acquireScrollLock } from "@/hooks/useScrollLock";
+import { useScrollTucked } from "@/hooks/useScrollTucked";
 
 // The INS Overseas reel as a small round "video bubble" in the bottom-left corner. It plays a tiny muted preview; a tap
 // grows it into a proper player (sound on) in the middle of the screen; while the page scrolls the circle steps aside, like the dock; the little ✕ on the circle's edge removes it for as long as
@@ -13,17 +15,40 @@ const FULL = "/video/ins-reel.mp4";
 const PREVIEW = "/video/ins-reel-preview.mp4";
 const POSTER = "/video/ins-reel-poster.jpg";
 
+// What the full player is doing, as one value. Every change comes through `reduce`, so impossible mixes (playing AND ended,
+// a stale "playing" after the video stopped) cannot exist: PLAY clears "ended", ENDED clears "playing".
+type Player = { playing: boolean; ended: boolean; muted: boolean; progress: number; ready: boolean };
+type PlayerAction =
+  | { t: "play" } // it is playing (from the video's own event, or play() succeeding)
+  | { t: "pause" } // it stopped (paused, closed, or the browser refused to play)
+  | { t: "ended" }
+  | { t: "time"; v: number } // 0..1
+  | { t: "ready" } // enough data to show frames
+  | { t: "mute"; v: boolean }
+  | { t: "unend" } // no longer finished (restarted or sought)
+  | { t: "rewind" }; // opened afresh: back to the start, nothing finished yet
+const PLAYER0: Player = { playing: false, ended: false, muted: false, progress: 0, ready: false };
+const reduce = (p: Player, a: PlayerAction): Player => {
+  switch (a.t) {
+    case "play": return p.playing && !p.ended ? p : { ...p, playing: true, ended: false };
+    case "pause": return p.playing ? { ...p, playing: false } : p;
+    case "ended": return { ...p, ended: true, playing: false };
+    case "time": return p.progress === a.v ? p : { ...p, progress: a.v };
+    case "ready": return p.ready ? p : { ...p, ready: true };
+    case "mute": return p.muted === a.v ? p : { ...p, muted: a.v };
+    case "unend": return p.ended ? { ...p, ended: false } : p;
+    case "rewind": return { ...p, ended: false, progress: 0 };
+  }
+};
+
 export default function VideoBubble() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [shown, setShown] = useState(false);
   const [gone, setGone] = useState(false); // set by the ✕; lives only as long as this page load, so a refresh brings it back
   const [open, setOpen] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [ended, setEnded] = useState(false);
-  const [ready, setReady] = useState(false); // the full video has enough data to show frames
-  const [tucked, setTucked] = useState(false); // true while the page is scrolling (the circle steps aside, like the dock)
+  const [player, act] = useReducer(reduce, PLAYER0);
+  const { playing, ended, muted, progress, ready } = player;
+  const [tucked, setTucked] = useScrollTucked(); // true while the page is scrolling (the circle steps aside, like the dock)
   const preview = useRef<HTMLVideoElement>(null);
   const full = useRef<HTMLVideoElement>(null);
   const bubbleBtn = useRef<HTMLButtonElement>(null);
@@ -45,22 +70,6 @@ export default function VideoBubble() {
     return () => window.clearTimeout(t);
   }, []);
 
-  // like the dock: while the page is scrolling the circle steps aside, and comes back once it is still
-  useEffect(() => {
-    let last = window.scrollY;
-    let idle = 0;
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (Math.abs(y - last) < 2) return;
-      last = y;
-      setTucked(true);
-      window.clearTimeout(idle);
-      idle = window.setTimeout(() => setTucked(false), 220);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); window.clearTimeout(idle); };
-  }, []);
-
   // the little silent preview only runs while it is on screen and the circle is the thing being shown
   useEffect(() => {
     const p = preview.current;
@@ -74,7 +83,7 @@ export default function VideoBubble() {
 
   const collapse = useCallback(() => {
     full.current?.pause();
-    setPlaying(false);
+    act({ t: "pause" });
     setOpen(false);
     window.setTimeout(() => bubbleBtn.current?.focus({ preventScroll: true }), 50);
   }, []);
@@ -82,17 +91,16 @@ export default function VideoBubble() {
   const expand = () => {
     const f = full.current;
     setOpen(true);
-    setEnded(false);
-    setProgress(0);
+    act({ t: "rewind" });
     if (f) {
       f.currentTime = 0;
       f.muted = false;
-      setMuted(false);
-      f.play().then(() => setPlaying(true)).catch(() => {
+      act({ t: "mute", v: false });
+      f.play().then(() => act({ t: "play" })).catch(() => {
         // the browser refused sound: start muted instead (the sound button is right there)
         f.muted = true;
-        setMuted(true);
-        f.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+        act({ t: "mute", v: true });
+        f.play().then(() => act({ t: "play" })).catch(() => act({ t: "pause" }));
       });
     }
     window.setTimeout(() => closeBtn.current?.focus({ preventScroll: true }), 120);
@@ -104,17 +112,12 @@ export default function VideoBubble() {
   // these events alone (data-lenis-prevent on the backdrop and the player), and the browser's own scrolling is switched off.
   useEffect(() => {
     if (!open) return;
-    const html = document.documentElement;
-    const prev = { overflow: html.style.overflow, pad: html.style.paddingRight };
-    const bar = window.innerWidth - html.clientWidth; // the scrollbar's width, held so the page does not shift sideways
-    html.style.overflow = "hidden";
-    if (bar > 0) html.style.paddingRight = bar + "px";
+    const release = acquireScrollLock(true); // holds the scrollbar's width so the page does not shift sideways
     const stop = (e: Event) => { if (e.cancelable) e.preventDefault(); };
     window.addEventListener("wheel", stop, { passive: false });
     window.addEventListener("touchmove", stop, { passive: false });
     return () => {
-      html.style.overflow = prev.overflow;
-      html.style.paddingRight = prev.pad;
+      release();
       window.removeEventListener("wheel", stop);
       window.removeEventListener("touchmove", stop);
     };
@@ -174,16 +177,16 @@ export default function VideoBubble() {
   const toggle = () => {
     const f = full.current;
     if (!f) return;
-    if (ended) { f.currentTime = 0; setEnded(false); }
-    if (f.paused) f.play().then(() => setPlaying(true)).catch(() => {}); else { f.pause(); setPlaying(false); }
+    if (ended) { f.currentTime = 0; act({ t: "unend" }); }
+    if (f.paused) f.play().then(() => act({ t: "play" })).catch(() => {}); else { f.pause(); act({ t: "pause" }); }
   };
-  const toggleMute = () => { const f = full.current; if (!f) return; f.muted = !f.muted; setMuted(f.muted); };
-  const replay = () => { const f = full.current; if (!f) return; f.currentTime = 0; setEnded(false); f.play().then(() => setPlaying(true)).catch(() => {}); };
+  const toggleMute = () => { const f = full.current; if (!f) return; f.muted = !f.muted; act({ t: "mute", v: f.muted }); };
+  const replay = () => { const f = full.current; if (!f) return; f.currentTime = 0; act({ t: "unend" }); f.play().then(() => act({ t: "play" })).catch(() => {}); };
   const seek = (e: React.MouseEvent<HTMLDivElement>) => {
     const f = full.current; if (!f || !f.duration) return;
     const r = e.currentTarget.getBoundingClientRect();
     f.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * f.duration;
-    setEnded(false);
+    act({ t: "unend" });
   };
 
   const visible = shown && (open || !tucked); // an open player never hides
@@ -247,11 +250,11 @@ export default function VideoBubble() {
             poster={POSTER}
             playsInline
             preload="none"
-            onCanPlay={() => setReady(true)}
-            onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setProgress(v.currentTime / v.duration); }}
-            onEnded={() => { setEnded(true); setPlaying(false); }}
-            onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
+            onCanPlay={() => act({ t: "ready" })}
+            onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) act({ t: "time", v: v.currentTime / v.duration }); }}
+            onEnded={() => act({ t: "ended" })}
+            onPlay={() => act({ t: "play" })}
+            onPause={() => act({ t: "pause" })}
             className="reel-full absolute inset-0 w-full h-full object-cover"
             style={{ opacity: open ? 1 : 0 }}
             aria-label="INS Overseas reel"
