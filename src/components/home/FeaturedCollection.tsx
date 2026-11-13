@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { animate, AnimatePresence, motion, useInView, useMotionValue, useMotionValueEvent, useReducedMotion, useTransform, type MotionValue } from "framer-motion";
+import { animate, AnimatePresence, motion, useMotionValue, useMotionValueEvent, useReducedMotion, useTransform, type MotionValue } from "framer-motion";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import EditorialHeading, { headingLinkCls, headingLinkStyle } from "@/components/shared/EditorialHeading";
 import { cardSquareBtn, InfoTile, QuoteToggle } from "@/components/home/HomeProductCard";
@@ -119,10 +119,19 @@ export default function FeaturedCollection() {
   const sizer = useRef<HTMLDivElement>(null);
   // every photo is fetched as soon as the section is near the screen: a card waiting off to the side of the ring is not
   // 'visible' to the browser, so a lazy photo would only start loading as the card slid in, and pop in half way
-  const area = useRef<HTMLElement>(null);
-  const near = useInView(area, { once: true, margin: "900px 0px 900px 0px" });
+  // (a state ref: the section does not exist until the products have loaded, so the observers must attach when it appears)
+  const [area, setArea] = useState<HTMLElement | null>(null);
+  const [near, setNear] = useState(false);
+  const [onScreen, setOnScreen] = useState(false);
+  useEffect(() => {
+    if (!area || typeof IntersectionObserver === "undefined") { setNear(true); setOnScreen(true); return; }
+    const a = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setNear(true); a.disconnect(); } }, { rootMargin: "900px 0px 900px 0px" });
+    const b = new IntersectionObserver(([e]) => setOnScreen(e.isIntersecting), { rootMargin: "80px 0px 80px 0px" });
+    a.observe(area);
+    b.observe(area);
+    return () => { a.disconnect(); b.disconnect(); };
+  }, [area]);
   // the carousel only turns by itself while it is on screen (and the tab is showing): off screen it would just burn the phone's CPU/GPU
-  const onScreen = useInView(area, { margin: "80px 0px 80px 0px" });
   const [tabShown, setTabShown] = useState(() => typeof document === "undefined" || !document.hidden);
   useEffect(() => {
     const on = () => setTabShown(!document.hidden);
@@ -163,7 +172,7 @@ export default function FeaturedCollection() {
 
   return (
     <section
-      ref={area}
+      ref={setArea}
       className="bg-cream pt-16 md:pt-24 lg:pt-32 pb-16 md:pb-24 lg:pb-32 overflow-x-clip"
       aria-labelledby="handpicked-title"
     >
