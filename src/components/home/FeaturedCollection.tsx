@@ -67,13 +67,15 @@ function Slot({ pos, s, ring, it, active, eager, onPick }: { pos: MotionValue<nu
   const dim = useTransform(d, (v) => dimAt(Math.abs(v)));
   const near = useTransform(d, (v) => nearAt(Math.abs(v)));
   const pointerEvents = useTransform(d, (v) => (Math.abs(v) > 2.4 ? "none" : "auto"));
+  // a card all the way round the back is fully faded: take it out of painting and compositing altogether
+  const visibility = useTransform(d, (v) => (fadeAt(Math.abs(v)) <= 0 ? "hidden" : "visible"));
   const tag = tagLabel(it.tag);
   const itName = it.product_name || "Handmade Product";
   return (
     <motion.div
       data-pid={it.id}
       className={`absolute inset-0 rounded-[26px] overflow-hidden img-shimmer bg-white ${active ? "" : "cursor-pointer"}`}
-      style={{ x, scale, opacity, zIndex, pointerEvents, boxShadow: "0 30px 56px -26px rgba(26,20,16,0.5)" }}
+      style={{ x, scale, opacity, zIndex, pointerEvents, visibility, willChange: "transform, opacity", backfaceVisibility: "hidden", boxShadow: "0 30px 56px -26px rgba(26,20,16,0.5)" }}
       aria-hidden={!active}
       onClick={active ? undefined : onPick}
       role={active ? undefined : "button"}
@@ -119,6 +121,15 @@ export default function FeaturedCollection() {
   // 'visible' to the browser, so a lazy photo would only start loading as the card slid in, and pop in half way
   const area = useRef<HTMLElement>(null);
   const near = useInView(area, { once: true, margin: "900px 0px 900px 0px" });
+  // the carousel only turns by itself while it is on screen (and the tab is showing): off screen it would just burn the phone's CPU/GPU
+  const onScreen = useInView(area, { margin: "80px 0px 80px 0px" });
+  const [tabShown, setTabShown] = useState(() => typeof document === "undefined" || !document.hidden);
+  useEffect(() => {
+    const on = () => setTabShown(!document.hidden);
+    document.addEventListener("visibilitychange", on);
+    return () => document.removeEventListener("visibilitychange", on);
+  }, []);
+  const live = onScreen && tabShown;
 
   useMotionValueEvent(pos, "change", (v) => {
     const r = Math.round(v);
@@ -135,10 +146,10 @@ export default function FeaturedCollection() {
 
   // the next turn, a while after this one began; any turn (also by hand) restarts the wait
   useEffect(() => {
-    if (n < 2 || dragging) return;
+    if (n < 2 || dragging || !live) return;
     const t = window.setTimeout(() => { by.current = "auto"; setTarget((v) => v + 1); }, autoMs());
     return () => window.clearTimeout(t);
-  }, [target, n, dragging]);
+  }, [target, n, dragging, live]);
 
   if (n === 0) return null;
 
