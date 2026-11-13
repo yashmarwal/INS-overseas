@@ -131,7 +131,7 @@ export default function Footer() {
             className="text-warm-grey/50"
             style={{ fontFamily: "var(--font-body)", fontWeight: 300, fontSize: 12 }}
           >
-            © 2025 INS Overseas. All rights reserved.
+            © {new Date().getFullYear()} INS Overseas. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             {LEGAL_LINKS.map(([label, href]) => (

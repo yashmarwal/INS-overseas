@@ -86,6 +86,7 @@ export default function HeroSection() {
             loop
             playsInline
             preload="auto"
+            poster={isWide ? "/hero-desktop-poster.webp" : "/hero-mobile-poster.webp"}
             aria-hidden="true"
             ref={(el) => {
               videoEl.current = el;
@@ -96,7 +97,7 @@ export default function HeroSection() {
             onLoadedData={() => setReadyKey(mediaKey)}
             onError={() => { refreshSiteImages().finally(() => setReadyKey(mediaKey)); }}
             className="w-full h-full object-cover transition-opacity duration-700 pointer-events-none"
-            style={{ filter: "brightness(0.85)", opacity: ready ? 1 : 0 }}
+            style={{ filter: "brightness(0.85)" }}
             data-no-round
           />
         ) : (

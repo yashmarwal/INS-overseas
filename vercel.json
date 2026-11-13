@@ -5,6 +5,7 @@
   "framework": null,
   "trailingSlash": false,
   "redirects": [
+    { "source": "/:path*", "has": [{ "type": "host", "value": "(www\\.)?insoverseas\\.com" }], "destination": "https://ins-overseas.com/:path*", "permanent": true },
     { "source": "/index.html", "destination": "/", "permanent": true },
     { "source": "/:path*/index.html", "destination": "/:path*", "permanent": true }
   ],
@@ -175,7 +176,7 @@
       ]
     },
     {
-      "source": "/(hero-desktop|hero-mobile)\\.(webp|mp4)",
+      "source": "/(hero-desktop|hero-mobile)(-poster)?\\.(webp|mp4)",
       "headers": [
         {
           "key": "Cache-Control",

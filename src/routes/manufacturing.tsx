@@ -211,7 +211,7 @@ function Manufacturing() {
                   loading="lazy"
                   decoding="async"
                   src={`https://vumbnail.com/${v.id}.jpg`}
-                  alt="Workspace video"
+                  alt={`INS Overseas factory video ${i + 1}`}
                   className="w-full h-full object-cover transition-transform duration-[2500ms] group-hover:scale-110"
                   style={{ filter: "brightness(0.7) sepia(0.1)" }}
                 />
@@ -244,7 +244,7 @@ function Manufacturing() {
                   loading="lazy"
                   decoding="async"
                   src={url}
-                  alt="Workspace photo"
+                  alt={`Artisans at work in the INS Overseas workshop, Sanganer, photo ${i + 1}`}
                   className="w-full object-cover transition-transform duration-[2500ms] group-hover:scale-105"
                   style={{ filter: "sepia(0.08) brightness(0.95)" }}
                 />
@@ -311,7 +311,7 @@ function Manufacturing() {
                   loading="lazy"
                   decoding="async"
                   src={active.url}
-                  alt="Workspace"
+                  alt="INS Overseas workshop, Sanganer"
                   className="w-full h-full object-contain rounded-sm"
                 />
               )}

@@ -218,11 +218,11 @@ Ask about raw material sourcing. Cotton rag paper is only as good as the cotton 
 
 Minimum order quantities
 
-Most serious manufacturers in Sanganer require a minimum of 250 units per design for wholesale orders. Be wary of manufacturers who accept orders of 20 or 50 units — they are likely middlemen, not manufacturers, and their pricing will not allow you to build a sustainable retail margin.
+Genuine manufacturers in Sanganer set a minimum order per design, and it depends on the product (ours are listed on our wholesale page). Be wary of manufacturers who accept orders of 20 or 50 units — they are likely middlemen, not manufacturers, and their pricing will not allow you to build a sustainable retail margin.
 
 Lead times
 
-Standard production takes 25–35 days after order confirmation and payment of advance. Custom orders with embossing, debossing, or non-standard sizes take 40–50 days. Build this into your buying calendar. Do not place your first order expecting to receive it in two weeks.
+At INS Overseas, production takes 25 days after order confirmation and payment of the advance. Custom work such as embossing, debossing or non-standard sizes can take longer, and we confirm the time in your quote. Build this into your buying calendar. Do not place your first order expecting to receive it in two weeks.
 
 Payment terms
 

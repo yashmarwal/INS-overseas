@@ -48,7 +48,7 @@
       "@type": "Organization",
       "@id": "__SITE_URL__/#organization",
       "name": "INS Overseas",
-      "alternateName": ["INS Overseas Jaipur", "INS Handmade Paper"],
+      "alternateName": ["INS Overseas Jaipur", "INS Handmade Paper", "INSOverseas", "INS Overseas India"],
       "url": "__SITE_URL__",
       "logo": {
         "@type": "ImageObject",
@@ -197,6 +197,9 @@
     <link rel="preload" href="/fonts/cormorant-garamond-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/cormorant-garamond-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/jost-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Hero poster frame: paints at once while the hero video buffers -->
+    <link rel="preload" as="image" href="/hero-desktop-poster.webp" media="(min-width: 768px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/hero-mobile-poster.webp" media="(max-width: 767px)" fetchpriority="high" />
     <!-- Start the TLS handshake to the image/data host before any request needs it -->
     <link rel="preconnect" href="https://ebmhkylrkcrhxyzclevz.supabase.co" crossorigin />
     <style>
