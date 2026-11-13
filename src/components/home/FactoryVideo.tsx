@@ -15,28 +15,27 @@ type Video = typeof videos[number];
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
 export default function FactoryVideo() {
-  const [activeVideo, setActiveVideo] = useState<Video | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  // Which video the lightbox shows: just its position (null = closed). The video itself is looked up from it, so the two can never disagree.
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const activeIndex = openIndex ?? 0;
+  const activeVideo: Video | null = openIndex === null ? null : videos[openIndex];
   const [visibleCount, setVisibleCount] = useState(3);
 
   const visibleVideos = videos.slice(0, visibleCount);
   const hasMore = visibleCount < videos.length;
 
-  const openVideo = (video: Video, index: number) => {
-    setActiveVideo(video);
-    setActiveIndex(index);
+  const openVideo = (index: number) => {
+    setOpenIndex(index);
   };
 
   const goPrev = () => {
     const newIndex = (activeIndex - 1 + videos.length) % videos.length;
-    setActiveVideo(videos[newIndex]);
-    setActiveIndex(newIndex);
+    setOpenIndex(newIndex);
   };
 
   const goNext = () => {
     const newIndex = (activeIndex + 1) % videos.length;
-    setActiveVideo(videos[newIndex]);
-    setActiveIndex(newIndex);
+    setOpenIndex(newIndex);
   };
 
   return (
@@ -87,7 +86,7 @@ export default function FactoryVideo() {
               transition={{ duration: 0.5, delay: i * 0.08 }}
               className="relative cursor-pointer group overflow-hidden"
               style={{ aspectRatio: "16/10" }}
-              onClick={() => openVideo(video, i)}
+              onClick={() => openVideo(i)}
             >
               <img
                 loading="lazy"
@@ -151,9 +150,9 @@ export default function FactoryVideo() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[100] bg-ink/97 flex flex-col items-center justify-center p-4 md:p-8"
-            onClick={() => setActiveVideo(null)}
+            onClick={() => setOpenIndex(null)}
             onKeyDown={(e) => {
-              if (e.key === "Escape") setActiveVideo(null);
+              if (e.key === "Escape") setOpenIndex(null);
               if (e.key === "ArrowLeft") goPrev();
               if (e.key === "ArrowRight") goNext();
             }}
@@ -161,7 +160,7 @@ export default function FactoryVideo() {
           >
             {/* Close */}
             <button
-              onClick={() => setActiveVideo(null)}
+              onClick={() => setOpenIndex(null)}
               className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 flex items-center justify-center text-cream/60 hover:text-cream transition-colors z-10 border border-cream/20 rounded-full"
               aria-label="Close"
             >
@@ -215,7 +214,7 @@ export default function FactoryVideo() {
                 {videos.map((_, i) => (
                   <button
                     key={i}
-                    onClick={(e) => { e.stopPropagation(); openVideo(videos[i], i); }}
+                    onClick={(e) => { e.stopPropagation(); openVideo(i); }}
                     className={`h-1 rounded-full transition-all duration-300 ${
                       i === activeIndex ? "bg-gold w-6" : "bg-warm-grey/40 w-1.5 hover:bg-warm-grey"
                     }`}

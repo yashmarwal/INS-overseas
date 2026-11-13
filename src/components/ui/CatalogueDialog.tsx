@@ -10,14 +10,24 @@ const pagesFor = (n: number) => 3 + Math.ceil(n / 6); // cover, our story, the p
 
 // "Download catalogue (PDF)": pick what to include (everything, one category, or your quote list), see how many products that is,
 // and build the PDF on the spot from the products loaded right now. The PDF tools are only fetched when "Download" is pressed.
+// Where the PDF is at: one value instead of six loose ones (busy, status, fraction, error, needsReload, doneName), so it can
+// only ever be in one of these places.
+type Job =
+  | { k: "idle" }
+  | { k: "working"; status: string; fraction: number }
+  | { k: "done"; status: string; name: string }
+  | { k: "failed"; msg: string; needsReload: boolean }; // needsReload: the PDF tools could not be downloaded, and the browser remembers that until the page is reloaded
+const IDLE: Job = { k: "idle" };
+
 export default function CatalogueDialog({ open, onClose, options, initialKey, loading = false }: { open: boolean; onClose: () => void; options: CatalogOption[]; initialKey: string; loading?: boolean }) {
   const [choice, setChoice] = useState(initialKey);
-  const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState("");
-  const [fraction, setFraction] = useState(0);
-  const [error, setError] = useState("");
-  const [needsReload, setNeedsReload] = useState(false); // the PDF tools could not be downloaded: the browser remembers that until the page is reloaded
-  const [doneName, setDoneName] = useState("");
+  const [job, setJob] = useState<Job>(IDLE);
+  const busy = job.k === "working";
+  const status = job.k === "working" || job.k === "done" ? job.status : "";
+  const fraction = job.k === "working" ? job.fraction : 0;
+  const error = job.k === "failed" ? job.msg : "";
+  const needsReload = job.k === "failed" && job.needsReload;
+  const doneName = job.k === "done" ? job.name : "";
   const abort = useRef<AbortController | null>(null);
 
   // each time it opens: start from the page's current filter (or "all"), forget the last run
@@ -25,7 +35,7 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
     if (!open) return;
     import("jspdf").catch(() => { /* Download will try again and say what went wrong */ }); // the PDF tools download while the visitor picks what to include, so the button is quick
     setChoice(options.some((o) => o.key === initialKey) ? initialKey : "all");
-    setError(""); setNeedsReload(false); setDoneName(""); setStatus(""); setFraction(0);
+    setJob(IDLE);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, loading]);
   // a choice that disappeared (e.g. the quote list was emptied) falls back to "all"
@@ -41,12 +51,12 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
     return () => window.clearTimeout(t);
   }, [open, current]);
 
-  const close = () => { abort.current?.abort(); setBusy(false); onClose(); };
+  const close = () => { abort.current?.abort(); setJob((j) => (j.k === "working" ? IDLE : j)); onClose(); };
   const onOpenChange = useBackToClose(open, (o) => { if (!o) close(); }); // Back closes the dialog, not the page
 
   const generate = async () => {
     if (!current || busy) return;
-    setBusy(true); setError(""); setDoneName(""); setFraction(0.01); setStatus("Starting...");
+    setJob({ k: "working", status: "Starting...", fraction: 0.01 });
     const ctl = new AbortController();
     abort.current = ctl;
     try {
@@ -54,22 +64,18 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
       const r = await buildCatalogPdf(current.items, {
         filterLabel: current.label,
         signal: ctl.signal,
-        onProgress: (s, f) => { setStatus(s); setFraction(f); },
+        onProgress: (s, f) => setJob((j) => (j.k === "working" ? { k: "working", status: s, fraction: f } : j)),
       });
       downloadBlob(r.blob, r.filename);
-      setDoneName(r.filename);
-      setStatus(`Downloaded: ${r.pages} page${r.pages === 1 ? "" : "s"}, ${(r.blob.size / 1024 / 1024).toFixed(1)} MB`);
+      setJob({ k: "done", name: r.filename, status: `Downloaded: ${r.pages} page${r.pages === 1 ? "" : "s"}, ${(r.blob.size / 1024 / 1024).toFixed(1)} MB` });
     } catch (e) {
-      if ((e as Error)?.name === "AbortError") { setStatus(""); }
+      if ((e as Error)?.name === "AbortError") { setJob(IDLE); }
       else {
         // the selection stays exactly as it was, so "Try again" is one tap
         const msg = e instanceof Error && e.message ? e.message : "something went wrong";
-        setNeedsReload(/dynamically imported module|importing a module script|loading chunk|failed to fetch/i.test(msg));
-        setError(msg);
-        setStatus("");
+        setJob({ k: "failed", msg, needsReload: /dynamically imported module|importing a module script|loading chunk|failed to fetch/i.test(msg) });
       }
     } finally {
-      setBusy(false);
       abort.current = null;
     }
   };
@@ -98,7 +104,7 @@ export default function CatalogueDialog({ open, onClose, options, initialKey, lo
               {options.map((o) => {
                 const on = o.key === choice;
                 return (
-                  <button key={o.key} type="button" role="radio" aria-checked={on} disabled={busy} onClick={() => { setChoice(o.key); setError(""); setDoneName(""); setStatus(""); }} className={radio(on)} style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 15 }}>
+                  <button key={o.key} type="button" role="radio" aria-checked={on} disabled={busy} onClick={() => { setChoice(o.key); setJob(IDLE); }} className={radio(on)} style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 15 }}>
                     <span className="min-w-0 truncate">{o.label}</span>
                     <span className={`shrink-0 text-[13px] tabular-nums lining-nums ${on ? "text-gold-light" : "text-grey-ink"}`}>{o.items.length}</span>
                   </button>

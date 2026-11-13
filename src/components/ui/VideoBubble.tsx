@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, Pause, Play, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
@@ -15,16 +15,39 @@ const FULL = "/video/ins-reel.mp4";
 const PREVIEW = "/video/ins-reel-preview.mp4";
 const POSTER = "/video/ins-reel-poster.jpg";
 
+// What the full player is doing, as one value. Every change comes through `reduce`, so impossible mixes (playing AND ended,
+// a stale "playing" after the video stopped) cannot exist: PLAY clears "ended", ENDED clears "playing".
+type Player = { playing: boolean; ended: boolean; muted: boolean; progress: number; ready: boolean };
+type PlayerAction =
+  | { t: "play" } // it is playing (from the video's own event, or play() succeeding)
+  | { t: "pause" } // it stopped (paused, closed, or the browser refused to play)
+  | { t: "ended" }
+  | { t: "time"; v: number } // 0..1
+  | { t: "ready" } // enough data to show frames
+  | { t: "mute"; v: boolean }
+  | { t: "unend" } // no longer finished (restarted or sought)
+  | { t: "rewind" }; // opened afresh: back to the start, nothing finished yet
+const PLAYER0: Player = { playing: false, ended: false, muted: false, progress: 0, ready: false };
+const reduce = (p: Player, a: PlayerAction): Player => {
+  switch (a.t) {
+    case "play": return p.playing && !p.ended ? p : { ...p, playing: true, ended: false };
+    case "pause": return p.playing ? { ...p, playing: false } : p;
+    case "ended": return { ...p, ended: true, playing: false };
+    case "time": return p.progress === a.v ? p : { ...p, progress: a.v };
+    case "ready": return p.ready ? p : { ...p, ready: true };
+    case "mute": return p.muted === a.v ? p : { ...p, muted: a.v };
+    case "unend": return p.ended ? { ...p, ended: false } : p;
+    case "rewind": return { ...p, ended: false, progress: 0 };
+  }
+};
+
 export default function VideoBubble() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [shown, setShown] = useState(false);
   const [gone, setGone] = useState(false); // set by the ✕; lives only as long as this page load, so a refresh brings it back
   const [open, setOpen] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [ended, setEnded] = useState(false);
-  const [ready, setReady] = useState(false); // the full video has enough data to show frames
+  const [player, act] = useReducer(reduce, PLAYER0);
+  const { playing, ended, muted, progress, ready } = player;
   const [tucked, setTucked] = useScrollTucked(); // true while the page is scrolling (the circle steps aside, like the dock)
   const preview = useRef<HTMLVideoElement>(null);
   const full = useRef<HTMLVideoElement>(null);
@@ -60,7 +83,7 @@ export default function VideoBubble() {
 
   const collapse = useCallback(() => {
     full.current?.pause();
-    setPlaying(false);
+    act({ t: "pause" });
     setOpen(false);
     window.setTimeout(() => bubbleBtn.current?.focus({ preventScroll: true }), 50);
   }, []);
@@ -68,17 +91,16 @@ export default function VideoBubble() {
   const expand = () => {
     const f = full.current;
     setOpen(true);
-    setEnded(false);
-    setProgress(0);
+    act({ t: "rewind" });
     if (f) {
       f.currentTime = 0;
       f.muted = false;
-      setMuted(false);
-      f.play().then(() => setPlaying(true)).catch(() => {
+      act({ t: "mute", v: false });
+      f.play().then(() => act({ t: "play" })).catch(() => {
         // the browser refused sound: start muted instead (the sound button is right there)
         f.muted = true;
-        setMuted(true);
-        f.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+        act({ t: "mute", v: true });
+        f.play().then(() => act({ t: "play" })).catch(() => act({ t: "pause" }));
       });
     }
     window.setTimeout(() => closeBtn.current?.focus({ preventScroll: true }), 120);
@@ -155,16 +177,16 @@ export default function VideoBubble() {
   const toggle = () => {
     const f = full.current;
     if (!f) return;
-    if (ended) { f.currentTime = 0; setEnded(false); }
-    if (f.paused) f.play().then(() => setPlaying(true)).catch(() => {}); else { f.pause(); setPlaying(false); }
+    if (ended) { f.currentTime = 0; act({ t: "unend" }); }
+    if (f.paused) f.play().then(() => act({ t: "play" })).catch(() => {}); else { f.pause(); act({ t: "pause" }); }
   };
-  const toggleMute = () => { const f = full.current; if (!f) return; f.muted = !f.muted; setMuted(f.muted); };
-  const replay = () => { const f = full.current; if (!f) return; f.currentTime = 0; setEnded(false); f.play().then(() => setPlaying(true)).catch(() => {}); };
+  const toggleMute = () => { const f = full.current; if (!f) return; f.muted = !f.muted; act({ t: "mute", v: f.muted }); };
+  const replay = () => { const f = full.current; if (!f) return; f.currentTime = 0; act({ t: "unend" }); f.play().then(() => act({ t: "play" })).catch(() => {}); };
   const seek = (e: React.MouseEvent<HTMLDivElement>) => {
     const f = full.current; if (!f || !f.duration) return;
     const r = e.currentTarget.getBoundingClientRect();
     f.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * f.duration;
-    setEnded(false);
+    act({ t: "unend" });
   };
 
   const visible = shown && (open || !tucked); // an open player never hides
@@ -228,11 +250,11 @@ export default function VideoBubble() {
             poster={POSTER}
             playsInline
             preload="none"
-            onCanPlay={() => setReady(true)}
-            onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setProgress(v.currentTime / v.duration); }}
-            onEnded={() => { setEnded(true); setPlaying(false); }}
-            onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
+            onCanPlay={() => act({ t: "ready" })}
+            onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) act({ t: "time", v: v.currentTime / v.duration }); }}
+            onEnded={() => act({ t: "ended" })}
+            onPlay={() => act({ t: "play" })}
+            onPause={() => act({ t: "pause" })}
             className="reel-full absolute inset-0 w-full h-full object-cover"
             style={{ opacity: open ? 1 : 0 }}
             aria-label="INS Overseas reel"

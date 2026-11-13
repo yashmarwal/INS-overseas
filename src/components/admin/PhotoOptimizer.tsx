@@ -4,6 +4,9 @@ import { applyPlan, inParallel, listBackups, MIN_PSNR, planPhoto, restorePhoto, 
 import { GhostButton, MUTED, PrimaryButton } from "@/components/admin/AdminUI";
 
 type Stage = "idle" | "checking" | "ready" | "applying" | "done" | "restoring";
+// What the "done" screen reports: the lighter-photos run, or the put-back run. (They used to share three loose values, told apart only by which was non-zero.)
+type Result = { kind: "none" } | { kind: "applied"; replaced: number; saved: number } | { kind: "restored"; note: string };
+const NO_RESULT: Result = { kind: "none" };
 const MB = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
 // "Make photos lighter": check what it would save (changes nothing), try it on 3 photos, then do the rest. Originals are saved first.
@@ -13,10 +16,8 @@ export default function PhotoOptimizer({ photos, onClose, showToast }: { photos:
   const [progress, setProgress] = useState({ n: 0, of: 0 });
   const [scope, setScope] = useState<"test" | "all">("test");
   const [failures, setFailures] = useState<{ name: string; msg: string }[]>([]);
-  const [saved, setSaved] = useState(0); // bytes saved by the last run
-  const [replaced, setReplaced] = useState(0);
+  const [result, setResult] = useState<Result>(NO_RESULT);
   const [backups, setBackups] = useState<number | null>(null);
-  const [note, setNote] = useState("");
   const stop = useRef(false);
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export default function PhotoOptimizer({ photos, onClose, showToast }: { photos:
   }, [onClose, stage]);
 
   const check = async () => {
-    stop.current = false; setStage("checking"); setFailures([]); setNote(""); setProgress({ n: 0, of: photos.length });
+    stop.current = false; setStage("checking"); setFailures([]); setResult(NO_RESULT); setProgress({ n: 0, of: photos.length });
     let n = 0;
     const out = await inParallel(photos, 4, async (p) => { const r = await planPhoto(p); setProgress({ n: ++n, of: photos.length }); return r; }, () => stop.current);
     const ok = out.filter((r): r is Plan => !!r && !(r instanceof Error));
@@ -52,8 +53,7 @@ export default function PhotoOptimizer({ photos, onClose, showToast }: { photos:
     const out = await inParallel(chosen, 3, async (p) => { await applyPlan(p); setProgress({ n: ++n, of: chosen.length }); return p; }, () => stop.current);
     const done = out.filter((r): r is Plan => !!r && !(r instanceof Error));
     setFailures(out.flatMap((r, i) => (r instanceof Error ? [{ name: chosen[i].ref.name, msg: r.message }] : [])));
-    setReplaced(done.length);
-    setSaved(done.reduce((s, p) => s + (p.before - p.after), 0));
+    setResult({ kind: "applied", replaced: done.length, saved: done.reduce((s, p) => s + (p.before - p.after), 0) });
     setPlans([]);
     setStage("done");
     void listBackups().then((l) => setBackups(l.length)).catch(() => undefined);
@@ -61,14 +61,14 @@ export default function PhotoOptimizer({ photos, onClose, showToast }: { photos:
   };
 
   const restore = async () => {
-    stop.current = false; setStage("restoring"); setFailures([]); setNote("");
+    stop.current = false; setStage("restoring"); setFailures([]); setResult(NO_RESULT);
     const names = await listBackups().catch(() => [] as string[]);
     setProgress({ n: 0, of: names.length });
     let n = 0;
     const out = await inParallel(names, 3, async (name) => { await restorePhoto(name); setProgress({ n: ++n, of: names.length }); return name; }, () => stop.current);
     setFailures(out.flatMap((r, i) => (r instanceof Error ? [{ name: names[i], msg: r.message }] : [])));
-    setNote(`${out.filter((r) => !(r instanceof Error)).length} of ${names.length} original photos were put back.`);
-    setPlans([]); setStage("done"); setReplaced(0); setSaved(0);
+    setResult({ kind: "restored", note: `${out.filter((r) => !(r instanceof Error)).length} of ${names.length} original photos were put back.` });
+    setPlans([]); setStage("done");
   };
 
   const busy = stage === "checking" || stage === "applying" || stage === "restoring";
@@ -131,12 +131,12 @@ export default function PhotoOptimizer({ photos, onClose, showToast }: { photos:
 
         {stage === "done" && (
           <div className="mt-5 space-y-3" role="status" data-testid="opt-done">
-            {replaced > 0 && (
+            {result.kind === "applied" && result.replaced > 0 && (
               <p className="rounded-xl bg-[#EEF7EF] border border-[#1F5A31]/25 px-4 py-3 text-[14.5px] leading-relaxed text-[#1F5A31] inline-flex gap-2"><Check size={17} className="mt-0.5 shrink-0" />
-                <span><b>{replaced} photo{replaced === 1 ? "" : "s"} made lighter</b>, saving {MB(saved)}. Refresh your website to see them. If you tried 3 first, open the website, check those products look right (and share one of their links on WhatsApp to see the preview), then check again and do the rest.</span>
+                <span><b>{result.replaced} photo{result.replaced === 1 ? "" : "s"} made lighter</b>, saving {MB(result.saved)}. Refresh your website to see them. If you tried 3 first, open the website, check those products look right (and share one of their links on WhatsApp to see the preview), then check again and do the rest.</span>
               </p>
             )}
-            {note && <p className="rounded-xl bg-[#EEF7EF] border border-[#1F5A31]/25 px-4 py-3 text-[14.5px] text-[#1F5A31]">{note}</p>}
+            {result.kind === "restored" && result.note && <p className="rounded-xl bg-[#EEF7EF] border border-[#1F5A31]/25 px-4 py-3 text-[14.5px] text-[#1F5A31]">{result.note}</p>}
             <GhostButton onClick={() => { setStage("idle"); setPlans([]); }}>Check again</GhostButton>
           </div>
         )}
